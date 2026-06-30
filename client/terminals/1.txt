@@ -1,0 +1,13 @@
+---
+pid: 20416
+cwd: "D:\Programming\Viz_Official_01\Astro-App\client"
+command: "Set-Location \"D:\\Programming\\Viz_Official_01\\Astro-App\\client\"; npx expo start --web --port 8081"
+started_at: 2026-06-29T07:10:50.866Z
+running_for_ms: 385000   
+---
+Starting project at D:\Programming\Viz_Official_01\Astro-App\client
+React Compiler enabled
+Starting Metro Bundler
+
+Waiting on http://localhost:8081
+Logs for your project will appear below.

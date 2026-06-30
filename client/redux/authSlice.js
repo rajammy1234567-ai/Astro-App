@@ -1,0 +1,131 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { authApi } from '../services/authApi';
+import { storage } from '../utils/storage';
+
+export const sendOtp = createAsyncThunk('auth/sendOtp', async (payload, { rejectWithValue }) => {
+  try {
+    return await authApi.sendOtp(payload);
+  } catch (err) {
+    return rejectWithValue(err);
+  }
+});
+
+export const verifyOtp = createAsyncThunk('auth/verifyOtp', async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authApi.verifyOtp(payload);
+    if (response.token) {
+      await storage.set('token', response.token);
+      await storage.set('user', response.user);
+    }
+    return response;
+  } catch (err) {
+    return rejectWithValue(err);
+  }
+});
+
+export const restoreSession = createAsyncThunk('auth/restoreSession', async (_, { rejectWithValue }) => {
+  try {
+    const token = await storage.get('token');
+    if (!token) {
+      return { user: null, token: null };
+    }
+
+    try {
+      const user = await authApi.getMe();
+      await storage.set('user', user);
+      return { user, token };
+    } catch {
+      await storage.remove('token');
+      await storage.remove('user');
+      return { user: null, token: null };
+    }
+  } catch (err) {
+    return rejectWithValue(err);
+  }
+});
+
+export const logout = createAsyncThunk('auth/logout', async () => {
+  try {
+    await authApi.logout();
+  } catch {
+    // logout locally even if API fails
+  }
+  await storage.remove('token');
+  await storage.remove('user');
+});
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: {
+    user: null,
+    token: null,
+    sessionLoading: false,
+    otpSending: false,
+    verifying: false,
+    error: null,
+    otpSent: false,
+    initialized: false,
+    isNewUser: false,
+  },
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(restoreSession.pending, (state) => {
+        state.sessionLoading = true;
+      })
+      .addCase(restoreSession.fulfilled, (state, action) => {
+        state.sessionLoading = false;
+        state.initialized = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+      })
+      .addCase(restoreSession.rejected, (state) => {
+        state.sessionLoading = false;
+        state.initialized = true;
+        state.user = null;
+        state.token = null;
+      })
+      .addCase(sendOtp.pending, (state) => {
+        state.otpSending = true;
+        state.error = null;
+      })
+      .addCase(sendOtp.fulfilled, (state) => {
+        state.otpSending = false;
+        state.otpSent = true;
+      })
+      .addCase(sendOtp.rejected, (state, action) => {
+        state.otpSending = false;
+        state.error = action.payload?.message || 'OTP send failed';
+      })
+      .addCase(verifyOtp.pending, (state) => {
+        state.verifying = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.verifying = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isNewUser = !!action.payload.isNewUser;
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.verifying = false;
+        state.error = action.payload?.message || 'OTP verification failed';
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.otpSent = false;
+        state.isNewUser = false;
+      });
+  },
+});
+
+export const { clearError, setUser } = authSlice.actions;
+export default authSlice.reducer;
