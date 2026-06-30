@@ -1,0 +1,16 @@
+{
+  "name": "astro-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run web",
+    "admin": "cd admin-panel && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev:all": "concurrently \"npm run server\" \"npm run client\" \"npm run admin\"",
+    "install:all": "cd server && npm install && cd ../client && npm install && cd ../admin-panel && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

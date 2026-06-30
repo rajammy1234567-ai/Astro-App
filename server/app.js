@@ -1,0 +1,53 @@
+const express = require('express');
+const cors = require('cors');
+
+const authRoutes = require('./routes/authRoutes');
+const astrologerRoutes = require('./routes/astrologerRoutes');
+const walletRoutes = require('./routes/walletRoutes');
+const blogRoutes = require('./routes/blogRoutes');
+const storeRoutes = require('./routes/storeRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const newsRoutes = require('./routes/newsRoutes');
+const poojaRoutes = require('./routes/poojaRoutes');
+const supportRoutes = require('./routes/supportRoutes');
+const testimonialRoutes = require('./routes/testimonialRoutes');
+const freeServiceRoutes = require('./routes/freeServiceRoutes');
+const giftCardRoutes = require('./routes/giftCardRoutes');
+const followingRoutes = require('./routes/followingRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
+const app = express();
+
+app.use(cors({ origin: '*', credentials: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Astro App API is running', timestamp: new Date().toISOString() });
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api/astrologers', astrologerRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/blog', blogRoutes);
+app.use('/api/store', storeRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/pooja', poojaRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/free-services', freeServiceRoutes);
+app.use('/api/gift-cards', giftCardRoutes);
+app.use('/api/following', followingRoutes);
+app.use('/api/admin', adminRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
+
+module.exports = app;

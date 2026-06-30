@@ -1,0 +1,384 @@
+---
+pid: 12440
+cwd: "D:\Programming\Viz_Official_01\Astro-App"
+command: "cd \"D:\\Programming\\Viz_Official_01\\Astro-App\\server\"; npm run dev"
+started_at: 2026-06-29T07:34:32.508Z
+running_for_ms: 16459994 
+---
+
+> astro-app-server@1.0.0 dev
+> nodemon server.js
+
+[nodemon] 3.1.14
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node server.js`
+D:\Programming\Viz_Official_01\Astro-App\server\node_modules\razorpay\dist\razorpay.js:34
+      throw new Error('`key_id` or `oauthToken` is mandatory');
+      ^
+
+Error: `key_id` or `oauthToken` is mandatory
+    at new Razorpay (D:\Programming\Viz_Official_01\Astro-App\server\node_modules\razorpay\dist\razorpay.js:34:13)
+    at Object.<anonymous> (D:\Programming\Viz_Official_01\Astro-App\server\config\razorpay.js:3:18)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.require (node:internal/modules/cjs/loader:1504:12)
+    at require (node:internal/modules/helpers:152:16)
+[nodemon] app crashed - waiting for file changes before starting...
+
+Node.js v24.13.0
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:15888) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+OTP sent to +919876543210: 123456
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:9460) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:18544) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:11908) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:10412) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:3392) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:5940) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:1784) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 5000
+}
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+[nodemon] app crashed - waiting for file changes before starting...
+
+Node.js v24.13.0
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:22716) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+(node:13896) [MONGOOSE] Warning: `isNew` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+  - 1 admin account (admin@astrotalk.com / admin123)
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Dev OTP: 123456
+
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+  - 1 admin account (admin@astrotalk.com / admin123)
+
+❌ Port 5000 is already in use.
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+   Another server instance is running. Fix:
+   Windows: netstat -ano | findstr :5000  then  taskkill /PID <pid> /F
+   Or close the other terminal running "npm run dev"
+
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+  - 1 admin account (admin@astrotalk.com / admin123)
+Database seeded successfully!
+
+❌ Port 5000 is already in use.
+   Another server instance is running. Fix:
+   Windows: netstat -ano | findstr :5000  then  taskkill /PID <pid> /F
+   Or close the other terminal running "npm run dev"
+
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+  - 1 admin account (admin@astrotalk.com / admin123)
+
+❌ Port 5000 is already in use.
+   Another server instance is running. Fix:
+   Windows: netstat -ano | findstr :5000  then  taskkill /PID <pid> /F
+   Or close the other terminal running "npm run dev"
+
+Database seeded successfully!
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+Using in-memory MongoDB (dev mode)
+MongoDB Connected: 127.0.0.1
+  - 1 admin account (admin@astrotalk.com / admin123)
+Database seeded successfully!
+
+❌ Port 5000 is already in use.
+  - 9 astrologers
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+[nodemon] app crashed - waiting for file changes before starting...
+   Another server instance is running. Fix:
+   Windows: netstat -ano | findstr :5000  then  taskkill /PID <pid> /F
+   Or close the other terminal running "npm run dev"
+
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+[nodemon] app crashed - waiting for file changes before starting...
+Starting the MongoMemoryServer Instance failed, enable debug log for more information. Error:
+ StdoutInstanceError: Mongod internal error (fassert() failure\n\n"})
+    at MongoInstance.checkErrorInLine (D:\Programming\Viz_Official_01\Astro-App\server\node_modules\mongodb-memory-server-core\lib\util\MongoInstance.js:425:58)
+    at MongoInstance.stdoutHandler (D:\Programming\Viz_Official_01\Astro-App\server\node_modules\mongodb-memory-server-core\lib\util\MongoInstance.js:365:14)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+DB Error: Mongod internal error (fassert() failure\n\n"})
