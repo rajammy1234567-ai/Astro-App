@@ -4,6 +4,7 @@ import astrologerReducer from './astrologerSlice';
 import walletReducer from './walletSlice';
 import blogReducer from './blogSlice';
 import storeReducer from './storeSlice';
+import { cartPersistMiddleware } from './cartPersist';
 
 export const store = configureStore({
   reducer: {
@@ -14,5 +15,5 @@ export const store = configureStore({
     store: storeReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ serializableCheck: false }),
+    getDefaultMiddleware({ serializableCheck: false }).concat(cartPersistMiddleware),
 });

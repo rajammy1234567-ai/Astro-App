@@ -9,8 +9,10 @@ import {
 } from 'react-native';
 import Screen from '../../components/common/Screen';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { useDispatch, useSelector } from 'react-redux';
+import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import RemedyHeader from '../../components/remedies/RemedyHeader';
 import DrawerMenu from '../../components/drawer/DrawerMenu';
@@ -19,7 +21,6 @@ import {
   REMEDY_CATEGORIES,
   REMEDY_PROBLEMS,
   REMEDY_SERVICES,
-  REMEDY_PRODUCTS,
   REMEDY_POOJAS,
   REMEDY_STATS,
   REMEDY_OFFERS,
@@ -27,6 +28,10 @@ import {
 } from '../../constants/remedyData';
 import { COLORS } from '../../constants/colors';
 import { SHADOW, SHADOW_MD } from '../../constants/theme';
+import { fetchProducts, addToCart, canAddToCart } from '../../redux/storeSlice';
+import { useAuth } from '../../hooks/useAuth';
+import { requireAuthForPurchase } from '../../utils/purchaseAuth';
+import { formatCurrency } from '../../utils/formatters';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = (SCREEN_W - 44) / 2;
@@ -101,34 +106,58 @@ function ServiceCard({ item, onPress, wide }) {
   );
 }
 
-function ProductCard({ item, onPress }) {
-  const discount = Math.round(((item.mrp - item.price) / item.mrp) * 100);
+function ProductCard({ item, onPress, onAddToCart, onBuyNow }) {
+  const inStock = item.stock > 0;
+  const tag = item.category || item.tag || 'Product';
+
   return (
     <TouchableOpacity style={styles.productCard} onPress={onPress} activeOpacity={0.88}>
       <View style={styles.productImgWrap}>
         <Image source={{ uri: item.image }} style={styles.productImg} contentFit="cover" />
         <View style={styles.productTag}>
-          <Text style={styles.productTagText}>{item.tag}</Text>
+          <Text style={styles.productTagText}>{tag}</Text>
         </View>
-        {discount > 0 ? (
+        {!inStock ? (
           <View style={styles.discountBadge}>
-            <Text style={styles.discountText}>{discount}% OFF</Text>
+            <Text style={styles.discountText}>SOLD OUT</Text>
           </View>
         ) : null}
       </View>
       <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-      <View style={styles.ratingRow}>
-        <Ionicons name="star" size={12} color={COLORS.star} />
-        <Text style={styles.ratingText}>{item.rating}</Text>
-        <Text style={styles.reviewText}>({item.reviews})</Text>
-      </View>
       <View style={styles.priceRow}>
-        <Text style={styles.price}>₹{item.price}</Text>
-        <Text style={styles.mrp}>₹{item.mrp}</Text>
+        <Text style={styles.price}>{formatCurrency(item.price)}</Text>
+        {item.stock > 0 && item.stock <= 5 ? (
+          <Text style={styles.lowStock}>{item.stock} left</Text>
+        ) : null}
       </View>
-      <TouchableOpacity style={styles.addBtn} onPress={onPress} activeOpacity={0.85}>
-        <Text style={styles.addBtnText}>View</Text>
-      </TouchableOpacity>
+      {inStock ? (
+        <View style={styles.productActions}>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={(e) => {
+              e.stopPropagation?.();
+              onAddToCart?.();
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.addBtnText}>Cart</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.buyBtn}
+            onPress={(e) => {
+              e.stopPropagation?.();
+              onBuyNow?.();
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.buyBtnText}>Buy</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.addBtnDisabled} activeOpacity={1}>
+          <Text style={styles.addBtnText}>Unavailable</Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }
@@ -168,11 +197,39 @@ function OfferBanner({ item, onPress }) {
 
 export default function RemediesScreen() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const safe = useScreenInsets();
+  const { products, cart } = useSelector((s) => s.store);
+  const { isAuthenticated } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeProblem, setActiveProblem] = useState('love');
 
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
+
   const goStore = () => router.push('/store');
+
+  const handleAddToCart = (product) => {
+    if (!requireAuthForPurchase(router, isAuthenticated)) return;
+    const check = canAddToCart(cart, product);
+    if (!check.ok) {
+      Alert.alert('Cannot Add', check.message);
+      return;
+    }
+    dispatch(addToCart(product));
+    Alert.alert('Added', `${product.name} cart mein add ho gaya.`, [
+      { text: 'OK', style: 'cancel' },
+      { text: 'Checkout', onPress: () => router.push('/store/cart') },
+    ]);
+  };
+
+  const handleBuyNow = (product) => {
+    if (!requireAuthForPurchase(router, isAuthenticated)) return;
+    router.push({ pathname: '/store/cart', params: { buy: product._id } });
+  };
+
+  const popularProducts = products.filter((p) => p.stock > 0).slice(0, 8);
 
   return (
     <Screen style={styles.screen}>
@@ -286,15 +343,28 @@ export default function RemediesScreen() {
 
         {/* Products */}
         <SectionHeader title="Popular Products" subtitle="Handpicked for you" action="Store" onAction={goStore} />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.productScroll}
-        >
-          {REMEDY_PRODUCTS.map((p) => (
-            <ProductCard key={p.id} item={p} onPress={goStore} />
-          ))}
-        </ScrollView>
+        {popularProducts.length ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.productScroll}
+          >
+            {popularProducts.map((p) => (
+              <ProductCard
+                key={p._id}
+                item={p}
+                onPress={() => router.push(`/store/${p._id}`)}
+                onAddToCart={() => handleAddToCart(p)}
+                onBuyNow={() => handleBuyNow(p)}
+              />
+            ))}
+          </ScrollView>
+        ) : (
+          <TouchableOpacity style={styles.emptyProducts} onPress={goStore} activeOpacity={0.85}>
+            <Ionicons name="bag-handle-outline" size={22} color={COLORS.textSecondary} />
+            <Text style={styles.emptyProductsText}>Store se products browse karo</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Pooja */}
         <SectionHeader title="Book a Pooja" action="All Poojas" onAction={() => router.push('/pooja')} />
@@ -590,8 +660,9 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   price: { fontSize: 14, fontWeight: '800', color: COLORS.text },
   mrp: { fontSize: 11, color: COLORS.textLight, textDecorationLine: 'line-through' },
+  productActions: { flexDirection: 'row', gap: 6, marginTop: 8 },
   addBtn: {
-    marginTop: 8,
+    flex: 1,
     backgroundColor: COLORS.yellowLight,
     borderRadius: 8,
     paddingVertical: 7,
@@ -599,7 +670,34 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.primary,
   },
+  buyBtn: {
+    flex: 1,
+    backgroundColor: COLORS.success,
+    borderRadius: 8,
+    paddingVertical: 7,
+    alignItems: 'center',
+  },
+  buyBtnText: { fontSize: 11, fontWeight: '800', color: '#FFF' },
+  addBtnDisabled: {
+    marginTop: 8,
+    backgroundColor: COLORS.borderLight,
+    borderRadius: 8,
+    paddingVertical: 7,
+    alignItems: 'center',
+  },
   addBtnText: { fontSize: 11, fontWeight: '800', color: COLORS.text },
+  lowStock: { fontSize: 10, color: COLORS.warning, fontWeight: '700' },
+  emptyProducts: {
+    marginHorizontal: 16,
+    padding: 20,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  emptyProductsText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600' },
   poojaScroll: { paddingHorizontal: 16, gap: 12 },
   poojaCard: {
     width: 140,

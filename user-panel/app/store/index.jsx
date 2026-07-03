@@ -1,4 +1,4 @@
-import { FlatList, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { FlatList, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Screen from '../../components/common/Screen';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
@@ -8,7 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import RemoteImage from '../../components/common/RemoteImage';
 import EmptyState from '../../components/common/EmptyState';
-import { fetchProducts, addToCart } from '../../redux/storeSlice';
+import { fetchProducts, addToCart, canAddToCart, selectCartCount } from '../../redux/storeSlice';
+import { useAuth } from '../../hooks/useAuth';
+import { requireAuthForPurchase } from '../../utils/purchaseAuth';
 import { COLORS } from '../../constants/colors';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -18,6 +20,8 @@ export default function StoreScreen() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { products, cart, loading, error } = useSelector((s) => s.store);
+  const cartCount = useSelector(selectCartCount);
+  const { isAuthenticated } = useAuth();
   const [category, setCategory] = useState('All');
 
   useFocusEffect(
@@ -30,10 +34,33 @@ export default function StoreScreen() {
     ? products
     : products.filter((p) => p.category?.toLowerCase() === category.toLowerCase());
 
-  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-
   const handleAddToCart = (item) => {
+    if (item.stock === 0) {
+      Alert.alert('Out of Stock', 'This product is currently unavailable.');
+      return;
+    }
+    if (!requireAuthForPurchase(router, isAuthenticated)) return;
+
+    const check = canAddToCart(cart, item);
+    if (!check.ok) {
+      Alert.alert('Cannot Add', check.message);
+      return;
+    }
+
     dispatch(addToCart(item));
+    Alert.alert('Added', `${item.name} cart mein add ho gaya.`, [
+      { text: 'OK', style: 'cancel' },
+      { text: 'Checkout', onPress: () => router.push('/store/cart') },
+    ]);
+  };
+
+  const handleBuyNow = (item) => {
+    if (item.stock === 0) {
+      Alert.alert('Out of Stock', 'This product is currently unavailable.');
+      return;
+    }
+    if (!requireAuthForPurchase(router, isAuthenticated)) return;
+    router.push({ pathname: '/store/cart', params: { buy: item._id } });
   };
 
   return (
@@ -107,15 +134,30 @@ export default function StoreScreen() {
               <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
               <View style={styles.priceRow}>
                 <Text style={styles.price}>{formatCurrency(item.price)}</Text>
-                <TouchableOpacity
-                  style={styles.cartBtn}
-                  onPress={(e) => {
-                    e.stopPropagation?.();
-                    handleAddToCart(item);
-                  }}
-                >
-                  <Ionicons name="cart" size={16} color="#FFF" />
-                </TouchableOpacity>
+                {item.stock > 0 ? (
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={styles.cartBtn}
+                      onPress={(e) => {
+                        e.stopPropagation?.();
+                        handleAddToCart(item);
+                      }}
+                    >
+                      <Ionicons name="cart" size={14} color="#FFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.buyBtn}
+                      onPress={(e) => {
+                        e.stopPropagation?.();
+                        handleBuyNow(item);
+                      }}
+                    >
+                      <Text style={styles.buyBtnText}>Buy</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <Text style={styles.outStock}>Sold out</Text>
+                )}
               </View>
               {item.stock <= 5 && item.stock > 0 && (
                 <Text style={styles.lowStock}>Only {item.stock} left</Text>
@@ -153,7 +195,10 @@ const styles = StyleSheet.create({
   name: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginTop: 8, lineHeight: 18 },
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
   price: { fontSize: 15, fontWeight: '800', color: COLORS.primary },
-  cartBtn: { backgroundColor: COLORS.primary, width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cartBtn: { backgroundColor: COLORS.primary, width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  buyBtn: { backgroundColor: COLORS.success, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 6 },
+  buyBtnText: { color: '#FFF', fontSize: 10, fontWeight: '800' },
   lowStock: { fontSize: 10, color: COLORS.warning, marginTop: 4, fontWeight: '600' },
   outStock: { fontSize: 10, color: COLORS.error, marginTop: 4, fontWeight: '600' },
 });

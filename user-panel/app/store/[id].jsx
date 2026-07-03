@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import Screen from '../../components/common/Screen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useDispatch } from 'react-redux';
-import { Ionicons } from '@expo/vector-icons';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../components/common/Header';
 import RemoteImage from '../../components/common/RemoteImage';
 import Button from '../../components/common/Button';
 import { storeApi } from '../../services/storeApi';
-import { addToCart } from '../../redux/storeSlice';
+import { addToCart, canAddToCart } from '../../redux/storeSlice';
+import { useAuth } from '../../hooks/useAuth';
+import { requireAuthForPurchase } from '../../utils/purchaseAuth';
 import { COLORS } from '../../constants/colors';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -16,6 +17,8 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
+  const { cart } = useSelector((s) => s.store);
+  const { isAuthenticated } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,11 +31,26 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!product || product.stock === 0) return;
+    if (!requireAuthForPurchase(router, isAuthenticated)) return;
+
+    const check = canAddToCart(cart, product);
+    if (!check.ok) {
+      Alert.alert('Cannot Add', check.message);
+      return;
+    }
+
     dispatch(addToCart(product));
     Alert.alert('Added to Cart', `${product.name} added to your cart.`, [
       { text: 'Continue Shopping', style: 'cancel' },
       { text: 'View Cart', onPress: () => router.push('/store/cart') },
     ]);
+  };
+
+  const handleBuyNow = () => {
+    if (!product || product.stock === 0) return;
+    if (!requireAuthForPurchase(router, isAuthenticated)) return;
+
+    router.push({ pathname: '/store/cart', params: { buy: product._id } });
   };
 
   if (loading) {
@@ -53,6 +71,8 @@ export default function ProductDetailScreen() {
     );
   }
 
+  const inStock = product.stock > 0;
+
   return (
     <Screen edges={['left', 'right', 'bottom']}>
       <Header title={product.name} />
@@ -62,7 +82,7 @@ export default function ProductDetailScreen() {
           <Text style={styles.category}>{product.category?.toUpperCase()}</Text>
           <Text style={styles.name}>{product.name}</Text>
           <Text style={styles.price}>{formatCurrency(product.price)}</Text>
-          {product.stock > 0 ? (
+          {inStock ? (
             <Text style={styles.stock}>{product.stock} in stock</Text>
           ) : (
             <Text style={styles.outStock}>Out of stock</Text>
@@ -74,10 +94,17 @@ export default function ProductDetailScreen() {
       </ScrollView>
       <View style={styles.footer}>
         <Button
-          title={product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+          title={inStock ? 'Add to Cart' : 'Out of Stock'}
+          variant="outline"
           onPress={handleAddToCart}
-          disabled={product.stock === 0}
-          style={{ flex: 1 }}
+          disabled={!inStock}
+          style={styles.footerBtn}
+        />
+        <Button
+          title={inStock ? 'Buy Now' : 'Unavailable'}
+          onPress={handleBuyNow}
+          disabled={!inStock}
+          style={styles.footerBtn}
         />
       </View>
     </Screen>
@@ -96,8 +123,10 @@ const styles = StyleSheet.create({
   desc: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22, marginTop: 16 },
   footer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row', gap: 10,
     padding: 16, paddingBottom: 24, backgroundColor: COLORS.surface,
     borderTopWidth: 1, borderTopColor: COLORS.borderLight,
   },
+  footerBtn: { flex: 1 },
   notFound: { textAlign: 'center', color: COLORS.textSecondary, marginTop: 40, padding: 20 },
 });

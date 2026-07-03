@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useDispatch } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
+import { hydrateCart } from '../../redux/storeSlice';
 import { COLORS } from '../../constants/colors';
 
 export default function AuthBootstrap({ children }) {
+  const dispatch = useDispatch();
   const { initialized, restoreSession } = useAuth();
 
   useEffect(() => {
     restoreSession();
-  }, [restoreSession]);
+    dispatch(hydrateCart());
+  }, [restoreSession, dispatch]);
 
   if (!initialized) {
     return (

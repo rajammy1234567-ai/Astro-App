@@ -1,0 +1,8 @@
+---
+pid: 20412
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "cd \"C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\server\"; node -e \"const mongoose=require('mongoose');require('dotenv').config();mongoose.connect(process.env.MONGO_URI||'mongodb://127.0.0.1:27017/astro-app').then(async()=>{const P=require('./models/Product');const c=await P.countDocuments({isActive:true,stock:{$gt:0}});const all=await P.find({isActive:true}).select('name stock price');console.log('active in-stock products:',c);console.log(all);process.exit(0)}).catch(e=>{console.error(e.message);process.exit(1)})\""
+started_at: 2026-07-03T18:40:17.020Z
+running_for_ms: 470009   
+---
+connect ECONNREFUSED 127.0.0.1:27017

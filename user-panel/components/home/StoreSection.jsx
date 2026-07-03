@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import RemoteImage from '../common/RemoteImage';
 import { COLORS } from '../../constants/colors';
+import { formatCurrency } from '../../utils/formatters';
 
 export default function StoreSection({ products = [] }) {
   const router = useRouter();
@@ -26,6 +27,18 @@ export default function StoreSection({ products = [] }) {
           >
             <RemoteImage uri={p.image} type="product" style={styles.image} fallbackIcon="diamond-outline" />
             <Text style={styles.name} numberOfLines={2}>{p.name}</Text>
+            <Text style={styles.price}>{formatCurrency(p.price)}</Text>
+            {p.stock > 0 ? (
+              <TouchableOpacity
+                style={styles.buyChip}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  router.push({ pathname: '/store/cart', params: { buy: p._id } });
+                }}
+              >
+                <Text style={styles.buyChipText}>Buy</Text>
+              </TouchableOpacity>
+            ) : null}
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -59,4 +72,13 @@ const styles = StyleSheet.create({
     borderColor: COLORS.borderLight,
   },
   name: { fontSize: 11, fontWeight: '600', color: COLORS.text, marginTop: 6, textAlign: 'center' },
+  price: { fontSize: 11, fontWeight: '800', color: COLORS.primary, marginTop: 4 },
+  buyChip: {
+    marginTop: 6,
+    backgroundColor: COLORS.success,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  buyChipText: { fontSize: 10, fontWeight: '800', color: '#FFF' },
 });
