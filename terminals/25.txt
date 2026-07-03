@@ -1,7 +1,0 @@
----
-pid: 14356
-cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
-command: "Set-Location 'C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\admin-app'; npx expo export --platform android --output-dir .expo-bundle-check 2>&1 | Select-String -Pattern \"Unable to resolve|error|Exported\" | Select-Object -Last 5"
-started_at: 2026-07-03T09:44:44.281Z
-running_for_ms: 95085    
----

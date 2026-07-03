@@ -1,0 +1,24 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Expo / build
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+
+# Server runtime data
+server/uploads/
+server/.data/
+
+# IDE / local
+.DS_Store
+*.log
+
+# Cursor / agent terminal logs (local only)
+terminals/
