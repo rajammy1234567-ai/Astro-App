@@ -1,0 +1,18 @@
+---
+pid: 17540
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "Set-Location 'C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\admin-app'; npm run fresh"
+started_at: 2026-07-03T09:44:29.586Z
+running_for_ms: 125010   
+---
+
+> astro-admin-app@1.0.0 fresh
+> expo start -c --clear --port 8082
+
+env: load .env
+env: export EXPO_PUBLIC_API_URL
+Starting project at C:\Users\hi\OneDrive\Desktop\all app\Astro-App\admin-app
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8082
+Logs for your project will appear below.

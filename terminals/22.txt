@@ -1,0 +1,22 @@
+---
+pid: 19496
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "Set-Location 'C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\admin-app'; if (Test-Path node_modules\\expo-image-picker\\package.json) { Get-Content node_modules\\expo-image-picker\\package.json | Select-Object -First 3 } else { 'MISSING' }; npm install expo-image-picker@~17.0.11 --legacy-peer-deps"
+started_at: 2026-07-03T09:40:06.554Z
+running_for_ms: 369958   
+---
+{
+  "name": "expo-image-picker",
+  "version": "17.0.11",
+
+up to date, audited 721 packages in 17s
+
+61 packages are looking for funding
+  run `npm fund` for details
+
+13 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.

@@ -9,6 +9,8 @@ const productSchema = new mongoose.Schema(
     category: { type: String },
     stock: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
+    isFeatured: { type: Boolean, default: false },
+    isNewLaunch: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

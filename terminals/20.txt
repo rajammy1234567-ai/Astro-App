@@ -1,0 +1,45 @@
+---
+pid: 13924
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "Set-Location 'C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\admin-app'; npx expo start -c --clear --port 8082"
+started_at: 2026-07-03T08:26:33.323Z
+running_for_ms: 4800065  
+---
+env: load .env
+env: export EXPO_PUBLIC_API_URL
+Starting project at C:\Users\hi\OneDrive\Desktop\all app\Astro-App\admin-app
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8082
+Logs for your project will appear below.
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+› Detected a change in babel.config.js. Restart the server to see the new results. You may need to clear the bundler cache with the --clear flag for your changes to take effect.
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+| (node:19092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+Android node_modules\expo-router\entry.js ▓▓▓░░░░░░░░░░░░░ 19.5% (23/57)
+Android node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% (107/276)
+Android node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% (167/359)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.7% (258/426)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 37.0% (259/426)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.9% (367/555)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 59.3% (446/579)
+| (node:7928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:17944) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.9% (521/612)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 86.1% (626/678)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.3% (662/754)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.3% (735/848)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.3% ( 884/1012)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.3% ( 994/1102)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 93.6% (1130/1168)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.6% (1228/1319)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.6% (1308/1405)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.6% (1407/1467)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.6% (1426/1469)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.2% (1579/1585)
+Android Bundled 75130ms node_modules\expo-router\entry.js (1594 modules)
+› Detected a change in metro.config.js. Restart the server to see the new results.
+› Detected a change in metro.config.js. Restart the server to see the new results.

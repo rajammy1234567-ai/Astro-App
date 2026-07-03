@@ -51,4 +51,30 @@ const sendOtpEmail = async (to, otp) => {
   return true;
 };
 
-module.exports = { isEmailConfigured, sendOtpEmail };
+const sendNotificationEmail = async (to, subject, body) => {
+  const transport = getTransporter();
+  if (!transport) return false;
+
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const appName = process.env.APP_NAME || 'Astrotalk';
+
+  await transport.sendMail({
+    from: `"${appName}" <${from}>`,
+    to,
+    subject: `${appName} — ${subject}`,
+    text: body,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+        <div style="background:#FDB913;border-radius:12px;padding:16px;text-align:center;margin-bottom:20px;">
+          <h2 style="margin:0;color:#1A1A1A;">${appName}</h2>
+        </div>
+        <h3 style="color:#1A1A1A;">${subject}</h3>
+        <p style="color:#444;font-size:15px;line-height:1.6;white-space:pre-line;">${body}</p>
+      </div>
+    `,
+  });
+
+  return true;
+};
+
+module.exports = { isEmailConfigured, sendOtpEmail, sendNotificationEmail };

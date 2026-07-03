@@ -1,0 +1,27 @@
+---
+pid: 5804
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "Set-Location 'C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\admin-app'; npx expo export --platform android --output-dir .expo-bundle-test 2>&1 | Select-Object -Last 20"
+started_at: 2026-07-03T08:26:54.276Z
+running_for_ms: 4765039  
+---
+node_modules\@react-navigation\elements\lib\module\assets\back-icon-mask.png (653 B)
+node_modules\@react-navigation\elements\lib\module\assets\back-icon.png (4 variations | 152 B)
+node_modules\@react-navigation\elements\lib\module\assets\clear-icon.png (4 variations | 425 B)
+node_modules\@react-navigation\elements\lib\module\assets\close-icon.png (4 variations | 235 B)
+node_modules\@react-navigation\elements\lib\module\assets\search-icon.png (4 variations | 599 B)
+node_modules\expo-router\assets\arrow_down.png (9.46 kB)
+node_modules\expo-router\assets\error.png (469 B)
+node_modules\expo-router\assets\file.png (138 B)
+node_modules\expo-router\assets\forward.png (188 B)
+node_modules\expo-router\assets\pkg.png (364 B)
+node_modules\expo-router\assets\sitemap.png (465 B)
+node_modules\expo-router\assets\unmatched.png (4.75 kB)
+
+› android bundles (1):
+_expo/static/js/android/entry-72d3de0a8b9e11d983eb96a6a2e26414.hbc (4.32 MB)
+
+› Files (1):
+metadata.json (3.03 kB)
+
+Exported: .expo-bundle-test

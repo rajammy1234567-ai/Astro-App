@@ -7,7 +7,7 @@ export default function Blogs() {
       subtitle="Manage astrology blog articles"
       endpoint="/blogs"
       wide
-      defaultItem={{ title: '', excerpt: '', content: '', author: 'Astrologer Anshika', category: 'Astrology', image: '', views: '0' }}
+      defaultItem={{ title: '', excerpt: '', content: '', author: 'Astrologer Anshika', category: 'Astrology', image: '', views: '0', isPublished: true }}
       columns={[
         { key: 'title', label: 'Title', render: (r) => (
           <div className="cell-with-img">
@@ -17,6 +17,7 @@ export default function Blogs() {
         )},
         { key: 'category', label: 'Category' },
         { key: 'views', label: 'Views' },
+        { key: 'isPublished', label: 'Live', render: (r) => (r.isPublished ? '✅' : '❌') },
       ]}
       fields={[
         { key: 'title', label: 'Title', required: true, full: true },
@@ -25,7 +26,8 @@ export default function Blogs() {
         { key: 'author', label: 'Author' },
         { key: 'category', label: 'Category' },
         { key: 'views', label: 'Views' },
-        { key: 'image', label: 'Image URL', full: true },
+        { key: 'image', label: 'Image', type: 'image', full: true },
+        { key: 'isPublished', label: 'Published', type: 'checkbox', checkboxLabel: 'Show in user app (Blog section)' },
       ]}
     />
   );

@@ -6,6 +6,7 @@ const NAV = [
   { section: 'Management' },
   { to: '/users', label: 'Users', icon: '👥' },
   { to: '/astrologers', label: 'Astrologers', icon: '🔮' },
+  { to: '/astrologer-applications', label: 'Applications', icon: '📋' },
   { to: '/products', label: 'Products', icon: '🛍️' },
   { to: '/orders', label: 'Orders', icon: '📦' },
   { to: '/transactions', label: 'Transactions', icon: '💳' },

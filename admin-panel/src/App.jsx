@@ -1,10 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Astrologers from './pages/Astrologers';
+import AstrologerApplications from './pages/AstrologerApplications';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
 import Transactions from './pages/Transactions';
@@ -31,6 +33,7 @@ function AppRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="users" element={<Users />} />
         <Route path="astrologers" element={<Astrologers />} />
+        <Route path="astrologer-applications" element={<AstrologerApplications />} />
         <Route path="products" element={<Products />} />
         <Route path="orders" element={<Orders />} />
         <Route path="transactions" element={<Transactions />} />
@@ -49,8 +52,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ToastProvider>
   );
 }

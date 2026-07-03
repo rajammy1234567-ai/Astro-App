@@ -6,7 +6,7 @@ export default function News() {
       title="News"
       subtitle="Manage press and news articles"
       endpoint="/news"
-      defaultItem={{ title: '', source: '', image: '' }}
+      defaultItem={{ title: '', source: '', image: '', isPublished: true }}
       columns={[
         { key: 'title', label: 'Title', render: (r) => (
           <div className="cell-with-img">
@@ -15,11 +15,13 @@ export default function News() {
           </div>
         )},
         { key: 'source', label: 'Source' },
+        { key: 'isPublished', label: 'Live', render: (r) => (r.isPublished ? '✅' : '❌') },
       ]}
       fields={[
         { key: 'title', label: 'Title', required: true, full: true },
         { key: 'source', label: 'Source' },
-        { key: 'image', label: 'Image URL', full: true },
+        { key: 'image', label: 'Image', type: 'image', full: true },
+        { key: 'isPublished', label: 'Published', type: 'checkbox', checkboxLabel: 'Show in user app (News section)' },
       ]}
     />
   );

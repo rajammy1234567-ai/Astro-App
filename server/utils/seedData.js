@@ -1,4 +1,7 @@
+const User = require('../models/User');
+const Wallet = require('../models/Wallet');
 const Astrologer = require('../models/Astrologer');
+const AstrologerApplication = require('../models/AstrologerApplication');
 const Blog = require('../models/Blog');
 const News = require('../models/News');
 const Product = require('../models/Product');
@@ -8,69 +11,78 @@ const Testimonial = require('../models/Testimonial');
 const FreeService = require('../models/FreeService');
 const GiftCard = require('../models/GiftCard');
 const Admin = require('../models/Admin');
+const Chat = require('../models/Chat');
 
-const ASTROLOGERS = [
+const PANEL_URL = process.env.ASTRO_PANEL_URL || 'astro-app://login';
+
+const APPROVED_DUMMY_ASTROLOGERS = [
   {
-    name: 'Nilanjik', image: 'https://i.pravatar.cc/150?img=11',
+    userPhone: '9000000001', userName: 'Sunaina Sharma', userEmail: 'sunaina@demo.com',
+    name: 'Nilanjik', phone: '9876543210', password: 'astro123',
+    image: 'https://i.pravatar.cc/150?img=11',
     specialty: 'Vedic', languages: ['Hindi', 'English'], experience: 12, orders: 5000,
     rating: 4.9, pricePerMin: 50, isOnline: true, isVerified: true, badge: 'Celebrity',
-    chatEnabled: true, callEnabled: true,
+    chatEnabled: true, callEnabled: true, isPublished: true,
   },
   {
-    name: 'Himant', image: 'https://i.pravatar.cc/150?img=12',
+    userPhone: '9000000002', userName: 'Rahul Verma', userEmail: 'rahul@demo.com',
+    name: 'Himant', phone: '9876543211', password: 'astro123',
+    image: 'https://i.pravatar.cc/150?img=12',
     specialty: 'Vedic, Tarot', languages: ['Hindi', 'English'], experience: 8, orders: 3200,
     rating: 4.8, pricePerMin: 31, isOnline: true, isVerified: true, badge: 'Celebrity',
-    chatEnabled: true, callEnabled: true,
+    chatEnabled: true, callEnabled: true, isPublished: true,
   },
   {
-    name: 'Vishvesh', image: 'https://i.pravatar.cc/150?img=15',
+    userPhone: '9000000003', userName: 'Priya Patel', userEmail: 'priya@demo.com',
+    name: 'Vishvesh', phone: '9876543212', password: 'astro123',
+    image: 'https://i.pravatar.cc/150?img=15',
     specialty: 'Vedic', languages: ['Hindi'], experience: 15, orders: 8900,
     rating: 4.9, pricePerMin: 23, isOnline: true, isVerified: true, badge: 'Top Choice',
-    chatEnabled: true, callEnabled: true,
+    chatEnabled: true, callEnabled: true, isPublished: true,
   },
   {
-    name: 'Bibhushan', image: 'https://i.pravatar.cc/150?img=13',
-    specialty: 'Vedic, AI Astrologer', languages: ['English', 'Hindi'], experience: 14, orders: 1200,
-    rating: 5, pricePerMin: 19, originalPrice: 24, isOnline: true, isVerified: true,
-    specialOffer: true, chatEnabled: true, callEnabled: true,
-  },
-  {
-    name: 'Richal', image: 'https://i.pravatar.cc/150?img=5',
-    specialty: 'Tarot', languages: ['English', 'Hindi', 'Assamese'], experience: 3, orders: 1100,
+    userPhone: '9000000004', userName: 'Anjali Singh', userEmail: 'anjali@demo.com',
+    name: 'Richal', phone: '9876543213', password: 'astro123',
+    image: 'https://i.pravatar.cc/150?img=5',
+    specialty: 'Tarot', languages: ['English', 'Hindi'], experience: 3, orders: 1100,
     rating: 5, pricePerMin: 17, isOnline: true, isVerified: true,
-    chatEnabled: true, callEnabled: true,
+    chatEnabled: true, callEnabled: true, isPublished: true,
   },
   {
-    name: 'Kuchit', image: 'https://i.pravatar.cc/150?img=8',
-    specialty: 'Vedic, Life Coach', languages: ['Hindi'], experience: 1, orders: 800,
-    rating: 5, pricePerMin: 13, originalPrice: 16, isNew: true, isOnline: true, isVerified: true,
-    specialOffer: true, chatEnabled: true, callEnabled: true,
-  },
-  {
-    name: 'Rupansh', image: 'https://i.pravatar.cc/150?img=14',
-    specialty: 'Vedic, Life Coach', languages: ['English', 'Hindi'], experience: 2, orders: 50,
-    rating: 5, pricePerMin: 14, isNew: true, isOnline: true, isVerified: true,
-    chatEnabled: true, callEnabled: true,
-  },
-  {
-    name: 'Mithilesh', image: 'https://i.pravatar.cc/150?img=16',
-    specialty: 'Vedic', languages: ['English', 'Hindi'], experience: 2, orders: 5200,
-    rating: 5, pricePerMin: 19, originalPrice: 24, isOnline: true, isVerified: true,
-    specialOffer: true, chatEnabled: true, callEnabled: true,
-  },
-  {
-    name: 'Nipun', image: 'https://i.pravatar.cc/150?img=18',
+    userPhone: '9000000005', userName: 'Amit Kumar', userEmail: 'amit@demo.com',
+    name: 'Nipun', phone: '9876543214', password: 'astro123',
+    image: 'https://i.pravatar.cc/150?img=18',
     specialty: 'Tarot', languages: ['English', 'Hindi'], experience: 7, orders: 10500,
-    rating: 5, pricePerMin: 18, isOnline: true, isVerified: true, waitTime: '8m',
-    chatEnabled: true, callEnabled: true,
+    rating: 5, pricePerMin: 18, isOnline: false, isVerified: true, waitTime: '8m',
+    chatEnabled: true, callEnabled: true, isPublished: false,
   },
 ];
 
 const PRODUCTS = [
-  { name: 'Bracelets', price: 499, image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=200&h=200&fit=crop', category: 'jewelry' },
-  { name: 'Rudraksha', price: 899, image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=200&h=200&fit=crop', category: 'rudraksha' },
-  { name: 'Gemstones', price: 1999, image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200&h=200&fit=crop', category: 'gemstones' },
-  { name: 'Gemstone Consultation', price: 299, image: 'https://i.pravatar.cc/150?img=11', category: 'consultation' },
+  {
+    name: 'Bracelets', price: 499,
+    description: 'Authentic energized bracelets for daily protection and positivity.',
+    image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=200&h=200&fit=crop',
+    category: 'jewelry', stock: 50, isFeatured: true, isNewLaunch: false,
+  },
+  {
+    name: 'Rudraksha', price: 899,
+    description: 'Certified Rudraksha beads blessed by expert pandits.',
+    image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=200&h=200&fit=crop',
+    category: 'rudraksha', stock: 30, isFeatured: true, isNewLaunch: false,
+  },
+  {
+    name: 'Gemstones', price: 1999,
+    description: 'Natural gemstones recommended by Vedic astrologers.',
+    image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200&h=200&fit=crop',
+    category: 'gemstones', stock: 20, isFeatured: true, isNewLaunch: true,
+  },
+  {
+    name: 'Gemstone Consultation', price: 299,
+    description: '1-on-1 consultation to find your perfect gemstone remedy.',
+    image: 'https://i.pravatar.cc/150?img=11',
+    category: 'consultation', stock: 100, isFeatured: false, isNewLaunch: true,
+  },
 ];
 
 const BLOGS = [
@@ -155,16 +167,152 @@ const seedAdmin = async () => {
   console.log('  - 1 admin account (admin@astrotalk.com / admin123)');
 };
 
-const seedDatabase = async () => {
-  await seedAdmin();
-
-  const astroCount = await Astrologer.countDocuments();
-  if (astroCount > 0) {
-    console.log('Database already seeded, skipping content seed...');
+const seedApprovedAstrologers = async () => {
+  const approvedCount = await Astrologer.countDocuments({ approvedViaApplication: true });
+  if (approvedCount > 0) {
+    console.log('Approved astrologers already exist, skipping astro seed...');
     return;
   }
 
-  await Astrologer.insertMany(ASTROLOGERS);
+  await Astrologer.deleteMany({ approvedViaApplication: { $ne: true } });
+
+  for (const data of APPROVED_DUMMY_ASTROLOGERS) {
+    let user = await User.findOne({ phone: data.userPhone });
+    if (!user) {
+      user = await User.create({
+        phone: data.userPhone,
+        name: data.userName,
+        email: data.userEmail,
+        isVerified: true,
+      });
+      const walletExists = await Wallet.findOne({ user: user._id });
+      if (!walletExists) await Wallet.create({ user: user._id, balance: 100 });
+    }
+
+    const astrologer = await Astrologer.create({
+      name: data.name,
+      phone: data.phone,
+      password: data.password,
+      email: data.userEmail,
+      image: data.image,
+      specialty: data.specialty,
+      languages: data.languages,
+      experience: data.experience,
+      orders: data.orders,
+      rating: data.rating,
+      pricePerMin: data.pricePerMin,
+      isOnline: data.isOnline,
+      isVerified: data.isVerified,
+      badge: data.badge,
+      waitTime: data.waitTime,
+      chatEnabled: data.chatEnabled,
+      callEnabled: data.callEnabled,
+      isPublished: data.isPublished,
+      approvedViaApplication: true,
+      user: user._id,
+    });
+
+    await AstrologerApplication.create({
+      user: user._id,
+      name: data.name,
+      phone: data.phone,
+      email: data.userEmail,
+      specialty: data.specialty,
+      experience: data.experience,
+      languages: data.languages,
+      bio: `Experienced ${data.specialty} astrologer`,
+      status: 'selected',
+      astrologer: astrologer._id,
+      panelCredentials: { loginId: data.phone, password: data.password },
+      interview: {
+        date: '2026-07-01',
+        day: 'Wednesday',
+        time: '11:00 AM',
+        googleMeetLink: 'https://meet.google.com/demo-astro-interview',
+      },
+    });
+
+    const credMsg = `Selected as Astrologer!\n\nPanel Login:\nID: ${data.phone}\nPassword: ${data.password}\nPanel: ${PANEL_URL}`;
+    await User.findByIdAndUpdate(user._id, {
+      $push: {
+        notifications: {
+          type: 'selected',
+          title: 'Selected as Astrologer!',
+          message: credMsg,
+          data: { loginId: data.phone, password: data.password, panelUrl: PANEL_URL },
+          read: true,
+          createdAt: new Date(),
+        },
+      },
+    });
+  }
+
+  const published = APPROVED_DUMMY_ASTROLOGERS.filter((a) => a.isPublished).length;
+  console.log(`  - ${APPROVED_DUMMY_ASTROLOGERS.length} approved astrologers (${published} live on user app)`);
+  console.log('  - Astro panel login: 9876543210 / astro123');
+  console.log('  - 1 astrologer (Nipun) approved but NOT published — admin must publish from Astrologers page');
+};
+
+const seedDemoChats = async () => {
+  const astro = await Astrologer.findOne({ phone: '9876543210' });
+  if (!astro) return;
+
+  const existing = await Chat.countDocuments({ astrologer: astro._id });
+  if (existing > 0) return;
+
+  const customers = [
+    { phone: '9111111111', name: 'Riya Kapoor', email: 'riya.chat@demo.com' },
+    { phone: '9222222222', name: 'Amit Singh', email: 'amit.chat@demo.com' },
+  ];
+
+  for (const c of customers) {
+    let user = await User.findOne({ phone: c.phone });
+    if (!user) {
+      user = await User.findOne({ email: c.email });
+    }
+    if (!user) {
+      user = await User.create({ phone: c.phone, name: c.name, email: c.email, isVerified: true });
+    }
+  }
+
+  const riya = await User.findOne({ phone: '9111111111' });
+  const amit = await User.findOne({ phone: '9222222222' });
+
+  await Chat.insertMany([
+    {
+      user: riya._id,
+      astrologer: astro._id,
+      isActive: true,
+      messages: [
+        { sender: 'user', content: 'Namaste! Mujhe career guidance chahiye.' },
+        { sender: 'astrologer', content: 'Namaste Riya! Apni date of birth aur time bataiye.' },
+        { sender: 'user', content: '15 Aug 1995, 10:30 AM, Delhi' },
+      ],
+    },
+    {
+      user: amit._id,
+      astrologer: astro._id,
+      isActive: true,
+      messages: [
+        { sender: 'user', content: 'Meri shaadi kab hogi?' },
+        { sender: 'astrologer', content: 'Amit ji, aapka kundli dekh kar batata hoon.' },
+      ],
+    },
+  ]);
+  console.log('  - 2 demo chats for astro panel (9876543210)');
+};
+
+const seedDatabase = async () => {
+  await seedAdmin();
+  await seedApprovedAstrologers();
+  await seedDemoChats();
+
+  const productCount = await Product.countDocuments();
+  if (productCount > 0) {
+    console.log('Other content already seeded, skipping...');
+    return;
+  }
+
   await Product.insertMany(PRODUCTS);
   await Blog.insertMany(BLOGS);
   await News.insertMany(NEWS);
@@ -175,7 +323,6 @@ const seedDatabase = async () => {
   await GiftCard.insertMany(GIFT_CARDS);
 
   console.log('Database seeded successfully!');
-  console.log(`  - ${ASTROLOGERS.length} astrologers`);
   console.log(`  - ${PRODUCTS.length} products`);
   console.log(`  - ${BLOGS.length} blogs`);
   console.log(`  - ${NEWS.length} news items`);

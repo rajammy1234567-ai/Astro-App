@@ -3,22 +3,38 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 
 let memoryServer = null;
 
+async function connectWithUri(uri, label) {
+  const conn = await mongoose.connect(uri);
+  console.log(`MongoDB Connected (${label}): ${conn.connection.host}`);
+  return conn;
+}
+
+async function startMemoryDb() {
+  memoryServer = await MongoMemoryServer.create();
+  const uri = memoryServer.getUri();
+  console.warn('\n⚠️  IN-MEMORY DATABASE — admin uploads DELETE hote hain jab server band/restart hota hai!');
+  console.warn('   Permanent fix: MongoDB Atlas me apna IP whitelist karo, phir USE_MEMORY_DB=false rakho.\n');
+  return connectWithUri(uri, 'in-memory dev');
+}
+
 const connectDB = async () => {
+  if (process.env.USE_MEMORY_DB === 'true') {
+    return startMemoryDb();
+  }
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    return startMemoryDb();
+  }
+
   try {
-    let uri = process.env.MONGODB_URI;
-
-    if (process.env.USE_MEMORY_DB === 'true') {
-      memoryServer = await MongoMemoryServer.create();
-      uri = memoryServer.getUri();
-      console.log('Using in-memory MongoDB (dev mode)');
-    }
-
-    const conn = await mongoose.connect(uri);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
+    return await connectWithUri(uri, 'Atlas');
   } catch (error) {
-    console.error(`DB Error: ${error.message}`);
-    process.exit(1);
+    console.error(`Atlas DB Error: ${error.message}`);
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect().catch(() => {});
+    }
+    return startMemoryDb();
   }
 };
 

@@ -1,0 +1,20 @@
+---
+pid: 20372
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "Get-NetTCPConnection -LocalPort 8082 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Set-Location 'C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\admin-app'; if (Test-Path .expo) { Remove-Item -Recurse -Force .expo }; if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache }; npm install --legacy-peer-deps; node -e \"console.log(require.resolve('expo-image-picker'))\""
+started_at: 2026-07-03T09:42:13.053Z
+running_for_ms: 245003   
+---
+
+up to date, audited 721 packages in 10s
+
+61 packages are looking for funding
+  run `npm fund` for details
+
+13 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+C:\Users\hi\OneDrive\Desktop\all app\Astro-App\admin-app\node_modules\expo-image-picker\build\ImagePicker.js

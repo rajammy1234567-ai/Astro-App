@@ -1,10 +1,12 @@
 const express = require('express');
 const ctrl = require('../controllers/adminController');
+const uploadCtrl = require('../controllers/uploadController');
 const { adminProtect } = require('../middleware/adminAuth');
 
 const router = express.Router();
 
 router.post('/login', ctrl.login);
+router.post('/upload', adminProtect, uploadCtrl.uploadImage);
 router.get('/me', adminProtect, ctrl.getMe);
 router.get('/dashboard', adminProtect, ctrl.getDashboard);
 
@@ -61,5 +63,11 @@ router.get('/free-services', adminProtect, ctrl.freeServices.list);
 router.post('/free-services', adminProtect, ctrl.freeServices.create);
 router.put('/free-services/:id', adminProtect, ctrl.freeServices.update);
 router.delete('/free-services/:id', adminProtect, ctrl.freeServices.remove);
+
+const appCtrl = require('../controllers/astrologerApplicationController');
+router.get('/astrologer-applications', adminProtect, appCtrl.listApplications);
+router.put('/astrologer-applications/:id/schedule-interview', adminProtect, appCtrl.scheduleInterview);
+router.put('/astrologer-applications/:id/approve', adminProtect, appCtrl.approveApplication);
+router.put('/astrologer-applications/:id/reject', adminProtect, appCtrl.rejectApplication);
 
 module.exports = router;

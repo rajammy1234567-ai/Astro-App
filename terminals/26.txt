@@ -1,0 +1,47 @@
+---
+pid: 15600
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "Set-Location \"C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\server\"; npm run dev"
+started_at: 2026-07-03T10:06:33.285Z
+running_for_ms: 1074991  
+---
+
+> astro-app-server@1.0.0 dev
+> nodemon server.js
+
+[nodemon] 3.1.14
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node server.js`
+[nodemon] app crashed - waiting for file changes before starting...
+DB Error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+[nodemon] restarting due to changes...
+[nodemon] starting `node server.js`
+Atlas DB Error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+
+⚠️  IN-MEMORY DATABASE — admin uploads DELETE hote hain jab server band/restart hota hai!
+   Permanent fix: MongoDB Atlas me apna IP whitelist karo, phir USE_MEMORY_DB=false rakho.
+
+MongoDB Connected (in-memory dev): 127.0.0.1
+  - 1 admin account (admin@astrotalk.com / admin123)
+  - 5 approved astrologers (4 live on user app)
+  - Astro panel login: 9876543210 / astro123
+  - 1 astrologer (Nipun) approved but NOT published — admin must publish from Astrologers page
+  - 2 demo chats for astro panel (9876543210)
+Database seeded successfully!
+  - 4 products
+  - 2 blogs
+  - 2 news items
+  - 6 pooja services
+  - 5 support FAQs
+  - 3 testimonials
+  - 6 free services
+  - 3 gift cards
+
+🚀 Astro App API running on http://localhost:5000
+   Health: http://localhost:5000/api/health
+   Gmail OTP: ✅ enabled (vizdigitalofficial@gmail.com)
+   Dev OTP fallback: 123456
+
+[nodemon] app crashed - waiting for file changes before starting...

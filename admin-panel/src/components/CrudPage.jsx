@@ -1,11 +1,34 @@
 import { useState } from 'react';
 import { useCrud } from '../hooks/useCrud';
+import { useToast } from '../context/ToastContext';
 import PageHeader from './PageHeader';
 import DataTable from './DataTable';
 import Modal from './Modal';
+import ImageField from './ImageField';
 
-export default function CrudPage({ title, subtitle, endpoint, columns, fields, defaultItem = {}, wide }) {
-  const { items, loading, create, update, remove } = useCrud(endpoint);
+function initForm(fields, item, defaultItem) {
+  const form = { ...defaultItem };
+  fields.forEach((f) => {
+    const val = item?.[f.key];
+    if (f.type === 'number') form[f.key] = val != null ? val : (defaultItem[f.key] ?? '');
+    else if (f.type === 'checkbox') form[f.key] = !!val;
+    else form[f.key] = val ?? defaultItem[f.key] ?? '';
+  });
+  return form;
+}
+
+export default function CrudPage({
+  title,
+  subtitle,
+  endpoint,
+  columns,
+  fields,
+  defaultItem = {},
+  wide,
+  allowCreate = true,
+}) {
+  const { items, loading, error, create, update, remove, refresh } = useCrud(endpoint);
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(defaultItem);
@@ -13,20 +36,26 @@ export default function CrudPage({ title, subtitle, endpoint, columns, fields, d
 
   const openCreate = () => {
     setEditing(null);
-    setForm(defaultItem);
+    setForm(initForm(fields, null, defaultItem));
     setOpen(true);
   };
 
   const openEdit = (item) => {
     setEditing(item);
-    const values = {};
-    fields.forEach((f) => { values[f.key] = item[f.key] ?? ''; });
-    setForm(values);
+    setForm(initForm(fields, item, defaultItem));
     setOpen(true);
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
+    const missing = fields.filter((f) => f.required && !String(form[f.key] ?? '').trim());
+    if (missing.length) {
+      toast.error(`Required: ${missing.map((f) => f.label).join(', ')}`);
+      return;
+    }
+    if (endpoint === '/products' && !form.isActive && !editing) {
+      if (!confirm('Warning: "Show in store" is OFF — product save hoga par user shop mein hidden rahega. Continue?')) return;
+    }
     setSaving(true);
     try {
       const payload = { ...form };
@@ -34,22 +63,31 @@ export default function CrudPage({ title, subtitle, endpoint, columns, fields, d
         if (f.type === 'number') payload[f.key] = Number(payload[f.key]) || 0;
         if (f.type === 'checkbox') payload[f.key] = !!payload[f.key];
       });
-      if (editing) await update(editing._id, payload);
-      else await create(payload);
+      if (editing) {
+        await update(editing._id, payload);
+        toast.success(`${title} updated successfully`);
+      } else {
+        await create(payload);
+        const msg = endpoint === '/products'
+          ? 'Product added! User app → Remedies tab → Astro Store mein dikhega.'
+          : `${title} created successfully`;
+        toast.success(msg);
+      }
       setOpen(false);
     } catch (err) {
-      alert(err.message || 'Save failed');
+      toast.error(err.message || 'Save failed — check backend is running');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (item) => {
-    if (!confirm(`Delete this ${title.slice(0, -1).toLowerCase()}?`)) return;
+    if (!confirm(`Delete "${item.name || item.title || item.code || 'this item'}"?`)) return;
     try {
       await remove(item._id);
+      toast.success('Deleted successfully');
     } catch (err) {
-      alert(err.message || 'Delete failed');
+      toast.error(err.message || 'Delete failed');
     }
   };
 
@@ -60,7 +98,7 @@ export default function CrudPage({ title, subtitle, endpoint, columns, fields, d
       label: 'Actions',
       width: '140px',
       render: (row) => (
-        <div className="action-btns">
+        <div className="action-btns" onClick={(e) => e.stopPropagation()}>
           <button type="button" className="btn-sm btn-outline" onClick={() => openEdit(row)}>Edit</button>
           <button type="button" className="btn-sm btn-danger" onClick={() => handleDelete(row)}>Delete</button>
         </div>
@@ -73,8 +111,19 @@ export default function CrudPage({ title, subtitle, endpoint, columns, fields, d
       <PageHeader
         title={title}
         subtitle={subtitle}
-        action={<button type="button" className="btn-primary" onClick={openCreate}>+ Add New</button>}
+        action={
+          allowCreate ? (
+            <button type="button" className="btn-primary" onClick={openCreate}>+ Add New</button>
+          ) : null
+        }
       />
+
+      {error && (
+        <div className="page-error">
+          ⚠️ {error} — <button type="button" className="link-btn" onClick={refresh}>Retry</button>
+        </div>
+      )}
+
       <DataTable columns={tableColumns} data={items} loading={loading} />
 
       <Modal open={open} title={editing ? `Edit ${title}` : `Add ${title}`} onClose={() => setOpen(false)} wide={wide}>
@@ -107,6 +156,13 @@ export default function CrudPage({ title, subtitle, endpoint, columns, fields, d
                   />
                   {field.checkboxLabel || field.label}
                 </label>
+              ) : field.type === 'image' ? (
+                <ImageField
+                  label={field.label}
+                  value={form[field.key] ?? ''}
+                  onChange={(v) => setForm({ ...form, [field.key]: v })}
+                  placeholder={field.placeholder}
+                />
               ) : (
                 <input
                   type={field.type || 'text'}
@@ -121,7 +177,7 @@ export default function CrudPage({ title, subtitle, endpoint, columns, fields, d
           <div className="form-actions full">
             <button type="button" className="btn-outline" onClick={() => setOpen(false)}>Cancel</button>
             <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
+              {saving ? 'Saving...' : editing ? 'Update' : endpoint === '/products' ? 'Add Product' : 'Create'}
             </button>
           </div>
         </form>

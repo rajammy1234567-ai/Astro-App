@@ -1,16 +1,25 @@
 {
-  "name": "astro-app",
+  "name": "astro-app-monorepo",
   "version": "1.0.0",
   "private": true,
+  "description": "AstroTalk — 1 backend, 3 Play Store apps (User, Admin, Astro)",
   "scripts": {
+    "setup:env": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-mobile-env.ps1",
     "server": "cd server && npm run dev",
-    "client": "cd client && npm run web",
-    "admin": "cd admin-panel && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "dev:all": "concurrently \"npm run server\" \"npm run client\" \"npm run admin\"",
-    "install:all": "cd server && npm install && cd ../client && npm install && cd ../admin-panel && npm install"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
+    "server:start": "cd server && npm start",
+    "user:dev": "cd client && npm run dev",
+    "user:android": "cd client && npm run android",
+    "user:apk": "cd client && npm run build:apk",
+    "user:playstore": "cd client && npm run build:playstore",
+    "admin:dev": "cd admin-app && npm run dev",
+    "admin:web": "cd admin-panel && npm run dev",
+    "admin:android": "cd admin-app && npm run android",
+    "admin:apk": "cd admin-app && npm run build:apk",
+    "admin:playstore": "cd admin-app && npm run build:playstore",
+    "astro:dev": "cd astro-app && npm run dev",
+    "astro:android": "cd astro-app && npm run android",
+    "astro:apk": "cd astro-app && npm run build:apk",
+    "astro:playstore": "cd astro-app && npm run build:playstore",
+    "install:all": "cd server && npm install && cd ../client && npm install && cd ../admin-app && npm install && cd ../astro-app && npm install"
   }
 }

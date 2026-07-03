@@ -11,9 +11,15 @@ export function useCrud(endpoint) {
     setError(null);
     try {
       const data = await api.get(endpoint);
-      setItems(data);
+      setItems(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || 'Failed to load');
+      const msg = err.message || 'Failed to load data';
+      setError(
+        msg.includes('Network') || msg.includes('fetch')
+          ? 'Backend connect nahi ho raha — server chalao (cd server && npm run dev)'
+          : msg
+      );
+      setItems([]);
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,14 @@
+---
+pid: 7120
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "cd \"C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\server\" && npm run dev"
+started_at: 2026-07-03T06:27:00.697Z
+running_for_ms: 11970036 
+---
+At line:1 char:60
++ cd "C:\Users\hi\OneDrive\Desktop\all app\Astro-App\server" && npm run ...
++                                                            ~~
+The token '&&' is not a valid statement separator in this version.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : InvalidEndOfLine
+ 

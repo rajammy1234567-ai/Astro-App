@@ -1,0 +1,18 @@
+---
+pid: 2348
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "Set-Location \"C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\admin-panel\"; npm run dev"
+started_at: 2026-07-03T07:44:01.465Z
+running_for_ms: 7350011  
+---
+
+> astro-app-admin@1.0.0 dev
+> vite
+
+
+  VITE v6.4.3  ready in 781 ms
+
+  ➜  Local:   http://localhost:3001/
+  ➜  Network: use --host to expose
+1:35:34 pm [vite] vite.config.js changed, restarting server...
+1:35:35 pm [vite] server restarted.

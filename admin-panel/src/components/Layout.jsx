@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import BackendBanner from './BackendBanner';
 
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -10,6 +11,7 @@ export default function Layout() {
     <div className="admin-shell">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       <div className="main-area">
+        <BackendBanner />
         <Header />
         <main className="page-content">
           <Outlet />

@@ -23,7 +23,7 @@ export default function Testimonials() {
         { key: 'location', label: 'Location' },
         { key: 'rating', label: 'Rating', type: 'number' },
         { key: 'quote', label: 'Quote', type: 'textarea', full: true },
-        { key: 'thumbnail', label: 'Thumbnail URL', full: true },
+        { key: 'thumbnail', label: 'Thumbnail', type: 'image', full: true },
         { key: 'videoUrl', label: 'Video URL', full: true },
         { key: 'isActive', label: 'Active', type: 'checkbox', checkboxLabel: 'Show on app' },
       ]}
