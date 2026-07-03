@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { colors } from '../../constants/theme';
+import { colors, COLORS } from '../../constants/theme';
 
 export default function Profile() {
   const { astrologer, logout, setOnline, updateProfile } = useAuth();
@@ -56,7 +56,10 @@ export default function Profile() {
       </View>
 
       <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/profile/edit')}>
-        <Text style={styles.editText}>✏️ Edit Profile</Text>
+        <Text style={styles.editText}>✏️ Edit Profile & Photos</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.reviewsBtn} onPress={() => router.push('/profile/reviews')}>
+        <Text style={styles.reviewsText}>⭐ Manage Reviews</Text>
       </TouchableOpacity>
 
       <View style={styles.settingsCard}>
@@ -106,7 +109,12 @@ const styles = StyleSheet.create({
     marginTop: 16, backgroundColor: colors.primary, borderRadius: 10,
     padding: 14, alignItems: 'center',
   },
-  editText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  editText: { color: colors.text, fontWeight: '800', fontSize: 15 },
+  reviewsBtn: {
+    marginTop: 10, backgroundColor: colors.primaryLight, borderRadius: 10,
+    padding: 14, alignItems: 'center',
+  },
+  reviewsText: { color: COLORS.primaryDark, fontWeight: '700', fontSize: 15 },
   settingsCard: {
     marginTop: 16, backgroundColor: colors.card, borderRadius: 14, padding: 16,
     borderWidth: 1, borderColor: colors.border,

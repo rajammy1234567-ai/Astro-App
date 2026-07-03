@@ -1,4 +1,4 @@
-# Auto-set EXPO_PUBLIC_API_URL for all 3 apps using PC LAN IP
+# Auto-set EXPO_PUBLIC_API_URL for all mobile apps using PC LAN IP
 $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
   $_.InterfaceAlias -notmatch 'Loopback|vEthernet|WSL' -and $_.IPAddress -notmatch '^169\.'
 } | Select-Object -First 1).IPAddress
@@ -12,7 +12,7 @@ $apiUrl = "http://${ip}:5000/api"
 Write-Host "Detected PC IP: $ip" -ForegroundColor Green
 Write-Host "API URL: $apiUrl" -ForegroundColor Green
 
-$apps = @("client", "admin-app", "astro-app")
+$apps = @("user-panel", "admin-app", "astro-app")
 foreach ($app in $apps) {
   $envFile = Join-Path $PSScriptRoot "..\$app\.env"
   $content = "EXPO_PUBLIC_API_URL=$apiUrl`n"
@@ -20,8 +20,15 @@ foreach ($app in $apps) {
   Write-Host "  Updated $app/.env" -ForegroundColor Cyan
 }
 
-Write-Host "`nDone! Ab server + expo start karo." -ForegroundColor Yellow
-Write-Host "  npm run server" -ForegroundColor White
-Write-Host "  npm run user:dev   (port 8081)" -ForegroundColor White
-Write-Host "  npm run admin:dev  (port 8082)" -ForegroundColor White
-Write-Host "  npm run astro:dev  (port 8083)" -ForegroundColor White
+# Windows Firewall — allow phone to reach port 5000
+$ruleName = "Astro App API Port 5000"
+$existing = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+if (-not $existing) {
+  New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow | Out-Null
+  Write-Host "  Firewall rule added for port 5000" -ForegroundColor Cyan
+}
+
+Write-Host "`nDone! Ab ye chalao:" -ForegroundColor Yellow
+Write-Host "  cd server && npm run dev" -ForegroundColor White
+Write-Host "  cd user-panel && npx expo start -c" -ForegroundColor White
+Write-Host "`nPhone aur PC same WiFi par hone chahiye." -ForegroundColor Yellow

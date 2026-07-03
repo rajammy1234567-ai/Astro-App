@@ -1,28 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Screen from '../../components/common/Screen';
+import { useFocusEffect } from 'expo-router';
 import ArticleModal from '../../components/common/ArticleModal';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import RemoteImage from '../../components/common/RemoteImage';
+import EmptyState from '../../components/common/EmptyState';
+import ServerBanner from '../../components/common/ServerBanner';
 import { blogApi } from '../../services/blogApi';
-import { BLOGS } from '../../constants/mockData';
 import { COLORS } from '../../constants/colors';
 import { formatDate } from '../../utils/formatters';
 
 export default function BlogScreen() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
 
-  useEffect(() => {
+  const loadBlogs = useCallback(() => {
+    setLoading(true);
+    setError(null);
     blogApi.getAll()
       .then(setBlogs)
-      .catch(() => setBlogs(BLOGS))
+      .catch((err) => {
+        setBlogs([]);
+        setError(err.message || 'Blog load failed');
+      })
       .finally(() => setLoading(false));
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadBlogs();
+    }, [loadBlogs])
+  );
+
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Astrology Blog" />
       {loading ? (
         <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
@@ -32,11 +47,23 @@ export default function BlogScreen() {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
-            <View style={styles.hero}>
-              <Ionicons name="book" size={28} color="#FFF" />
-              <Text style={styles.heroTitle}>Learn Astrology</Text>
-              <Text style={styles.heroSub}>Expert articles on planets, remedies & more</Text>
-            </View>
+            <>
+              <ServerBanner message={error} />
+              <View style={styles.hero}>
+                <Ionicons name="book" size={28} color="#FFF" />
+                <Text style={styles.heroTitle}>Learn Astrology</Text>
+                <Text style={styles.heroSub}>Expert articles on planets, remedies & more</Text>
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            !error ? (
+              <EmptyState
+                icon="newspaper-outline"
+                title="No blogs yet"
+                subtitle="Admin se blog add karo — yahan dikhega."
+              />
+            ) : null
           }
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => setSelected(item)}>
@@ -58,12 +85,11 @@ export default function BlogScreen() {
         />
       )}
       <ArticleModal visible={!!selected} type="blog" item={selected} onClose={() => setSelected(null)} />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 32 },
   hero: { backgroundColor: COLORS.primary, borderRadius: 12, padding: 20, marginBottom: 16, alignItems: 'center' },
   heroTitle: { color: '#FFF', fontSize: 18, fontWeight: '800', marginTop: 8 },

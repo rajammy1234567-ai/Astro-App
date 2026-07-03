@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Input from '../../components/common/Input';
@@ -30,7 +31,7 @@ export default function GiftCardScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Redeem Gift Card" />
 
       <View style={styles.content}>
@@ -58,12 +59,11 @@ export default function GiftCardScreen() {
           </Text>
         </View>
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   content: { padding: 16 },
   hero: {
     backgroundColor: COLORS.primary, borderRadius: 12, padding: 24,

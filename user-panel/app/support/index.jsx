@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { safeOpenUrl } from '../../utils/openUrl';
+import Screen from '../../components/common/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import { supportApi } from '../../services/supportApi';
@@ -20,7 +22,7 @@ export default function SupportScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Customer Support" />
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -31,11 +33,11 @@ export default function SupportScreen() {
         </View>
 
         <View style={styles.contactRow}>
-          <TouchableOpacity style={styles.contactCard} onPress={() => Linking.openURL('mailto:support@astrotalk.com')}>
+          <TouchableOpacity style={styles.contactCard} onPress={() => safeOpenUrl('mailto:support@astrotalk.com', 'email')}>
             <Ionicons name="mail-outline" size={22} color={COLORS.primary} />
             <Text style={styles.contactText}>Email Us</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.contactCard} onPress={() => Linking.openURL('tel:+9118001234567')}>
+          <TouchableOpacity style={styles.contactCard} onPress={() => safeOpenUrl('tel:+9118001234567', 'phone')}>
             <Ionicons name="call-outline" size={22} color={COLORS.primary} />
             <Text style={styles.contactText}>Call Us</Text>
           </TouchableOpacity>
@@ -66,12 +68,11 @@ export default function SupportScreen() {
           ))
         )}
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   scroll: { padding: 16, paddingBottom: 32 },
   hero: {
     backgroundColor: COLORS.primary, borderRadius: 12, padding: 20,

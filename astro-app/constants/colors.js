@@ -1,3 +1,4 @@
+/** Matches user-panel COLORS — Astrotalk golden brand */
 export const COLORS = {
   primary: '#FDB913',
   primaryDark: '#E5A800',
@@ -34,4 +35,20 @@ export const COLORS = {
   continueDisabled: '#E8E8E8',
   continueText: '#AAAAAA',
   logoYellow: '#FDB913',
+};
+
+/** Backward-compatible alias used across astro-app screens */
+export const colors = {
+  bg: COLORS.cream,
+  card: COLORS.surface,
+  border: COLORS.border,
+  primary: COLORS.primary,
+  primaryLight: COLORS.yellowLight,
+  text: COLORS.text,
+  textMuted: COLORS.textSecondary,
+  success: COLORS.success,
+  danger: COLORS.error,
+  warning: COLORS.warning,
+  bannerDark: COLORS.bannerDark,
+  link: COLORS.link,
 };

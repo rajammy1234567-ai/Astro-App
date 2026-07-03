@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../../hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import { COLORS } from '../../constants/colors';
@@ -12,14 +14,14 @@ export default function WalletScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const balance = useSelector((s) => s.wallet.balance);
-  const isAuthenticated = useSelector((s) => s.auth.isAuthenticated);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) dispatch(fetchWallet());
   }, [dispatch, isAuthenticated]);
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Wallet" light />
       <View style={styles.balanceCard}>
         <Text style={styles.label}>Available Balance</Text>
@@ -39,12 +41,11 @@ export default function WalletScreen() {
         <Text style={styles.rowText}>Redeem Gift Card</Text>
         <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
       </TouchableOpacity>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   balanceCard: {
     backgroundColor: COLORS.yellow, margin: 14, borderRadius: 12, padding: 24, alignItems: 'center',
   },

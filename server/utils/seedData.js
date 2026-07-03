@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const User = require('../models/User');
 const Wallet = require('../models/Wallet');
 const Astrologer = require('../models/Astrologer');
@@ -14,6 +16,7 @@ const Admin = require('../models/Admin');
 const Chat = require('../models/Chat');
 
 const PANEL_URL = process.env.ASTRO_PANEL_URL || 'astro-app://login';
+const SEED_MARKER = path.join(__dirname, '..', '.data', '.seed-complete');
 
 const APPROVED_DUMMY_ASTROLOGERS = [
   {
@@ -169,12 +172,7 @@ const seedAdmin = async () => {
 
 const seedApprovedAstrologers = async () => {
   const approvedCount = await Astrologer.countDocuments({ approvedViaApplication: true });
-  if (approvedCount > 0) {
-    console.log('Approved astrologers already exist, skipping astro seed...');
-    return;
-  }
-
-  await Astrologer.deleteMany({ approvedViaApplication: { $ne: true } });
+  if (approvedCount > 0) return;
 
   for (const data of APPROVED_DUMMY_ASTROLOGERS) {
     let user = await User.findOne({ phone: data.userPhone });
@@ -188,6 +186,9 @@ const seedApprovedAstrologers = async () => {
       const walletExists = await Wallet.findOne({ user: user._id });
       if (!walletExists) await Wallet.create({ user: user._id, balance: 100 });
     }
+
+    const existingAstro = await Astrologer.findOne({ phone: data.phone });
+    if (existingAstro) continue;
 
     const astrologer = await Astrologer.create({
       name: data.name,
@@ -212,45 +213,31 @@ const seedApprovedAstrologers = async () => {
       user: user._id,
     });
 
-    await AstrologerApplication.create({
-      user: user._id,
-      name: data.name,
-      phone: data.phone,
-      email: data.userEmail,
-      specialty: data.specialty,
-      experience: data.experience,
-      languages: data.languages,
-      bio: `Experienced ${data.specialty} astrologer`,
-      status: 'selected',
-      astrologer: astrologer._id,
-      panelCredentials: { loginId: data.phone, password: data.password },
-      interview: {
-        date: '2026-07-01',
-        day: 'Wednesday',
-        time: '11:00 AM',
-        googleMeetLink: 'https://meet.google.com/demo-astro-interview',
-      },
-    });
-
-    const credMsg = `Selected as Astrologer!\n\nPanel Login:\nID: ${data.phone}\nPassword: ${data.password}\nPanel: ${PANEL_URL}`;
-    await User.findByIdAndUpdate(user._id, {
-      $push: {
-        notifications: {
-          type: 'selected',
-          title: 'Selected as Astrologer!',
-          message: credMsg,
-          data: { loginId: data.phone, password: data.password, panelUrl: PANEL_URL },
-          read: true,
-          createdAt: new Date(),
+    const appExists = await AstrologerApplication.findOne({ user: user._id, astrologer: astrologer._id });
+    if (!appExists) {
+      await AstrologerApplication.create({
+        user: user._id,
+        name: data.name,
+        phone: data.phone,
+        email: data.userEmail,
+        specialty: data.specialty,
+        experience: data.experience,
+        languages: data.languages,
+        bio: `Experienced ${data.specialty} astrologer`,
+        status: 'selected',
+        astrologer: astrologer._id,
+        panelCredentials: { loginId: data.phone, password: data.password },
+        interview: {
+          date: '2026-07-01',
+          day: 'Wednesday',
+          time: '11:00 AM',
+          googleMeetLink: 'https://meet.google.com/demo-astro-interview',
         },
-      },
-    });
+      });
+    }
   }
 
-  const published = APPROVED_DUMMY_ASTROLOGERS.filter((a) => a.isPublished).length;
-  console.log(`  - ${APPROVED_DUMMY_ASTROLOGERS.length} approved astrologers (${published} live on user app)`);
-  console.log('  - Astro panel login: 9876543210 / astro123');
-  console.log('  - 1 astrologer (Nipun) approved but NOT published — admin must publish from Astrologers page');
+  console.log(`  - ${APPROVED_DUMMY_ASTROLOGERS.length} demo astrologers (first install only)`);
 };
 
 const seedDemoChats = async () => {
@@ -282,7 +269,14 @@ const seedDemoChats = async () => {
     {
       user: riya._id,
       astrologer: astro._id,
+      type: 'chat',
+      status: 'active',
       isActive: true,
+      pricePerMin: astro.pricePerMin,
+      startedAt: new Date(),
+      lastTickAt: new Date(),
+      freeSecondsRemaining: 0,
+      paidSecondsRemaining: 600,
       messages: [
         { sender: 'user', content: 'Namaste! Mujhe career guidance chahiye.' },
         { sender: 'astrologer', content: 'Namaste Riya! Apni date of birth aur time bataiye.' },
@@ -292,26 +286,50 @@ const seedDemoChats = async () => {
     {
       user: amit._id,
       astrologer: astro._id,
+      type: 'chat',
+      status: 'active',
       isActive: true,
+      pricePerMin: astro.pricePerMin,
+      startedAt: new Date(),
+      lastTickAt: new Date(),
+      freeSecondsRemaining: 45,
+      paidSecondsRemaining: 0,
       messages: [
         { sender: 'user', content: 'Meri shaadi kab hogi?' },
         { sender: 'astrologer', content: 'Amit ji, aapka kundli dekh kar batata hoon.' },
       ],
     },
   ]);
-  console.log('  - 2 demo chats for astro panel (9876543210)');
+  console.log('  - 2 demo chats (first install only)');
+};
+
+const hasSavedContent = async () => {
+  const [products, blogs, news, poojas] = await Promise.all([
+    Product.countDocuments(),
+    Blog.countDocuments(),
+    News.countDocuments(),
+    Pooja.countDocuments(),
+  ]);
+  return products > 0 || blogs > 0 || news > 0 || poojas > 0;
 };
 
 const seedDatabase = async () => {
   await seedAdmin();
-  await seedApprovedAstrologers();
-  await seedDemoChats();
 
-  const productCount = await Product.countDocuments();
-  if (productCount > 0) {
-    console.log('Other content already seeded, skipping...');
+  if (fs.existsSync(SEED_MARKER) || await hasSavedContent()) {
+    console.log('✅ Saved data found — admin uploads safe (no demo overwrite)');
     return;
   }
+
+  if (process.env.SEED_DEMO_DATA === 'false') {
+    fs.mkdirSync(path.dirname(SEED_MARKER), { recursive: true });
+    fs.writeFileSync(SEED_MARKER, new Date().toISOString());
+    console.log('✅ Fresh database — demo seed skipped (SEED_DEMO_DATA=false)');
+    return;
+  }
+
+  await seedApprovedAstrologers();
+  await seedDemoChats();
 
   await Product.insertMany(PRODUCTS);
   await Blog.insertMany(BLOGS);
@@ -322,15 +340,13 @@ const seedDatabase = async () => {
   await FreeService.insertMany(FREE_SERVICES);
   await GiftCard.insertMany(GIFT_CARDS);
 
-  console.log('Database seeded successfully!');
-  console.log(`  - ${PRODUCTS.length} products`);
-  console.log(`  - ${BLOGS.length} blogs`);
-  console.log(`  - ${NEWS.length} news items`);
-  console.log(`  - ${POOJAS.length} pooja services`);
-  console.log(`  - ${SUPPORT_FAQS.length} support FAQs`);
-  console.log(`  - ${TESTIMONIALS.length} testimonials`);
-  console.log(`  - ${FREE_SERVICES.length} free services`);
-  console.log(`  - ${GIFT_CARDS.length} gift cards`);
+  fs.mkdirSync(path.dirname(SEED_MARKER), { recursive: true });
+  fs.writeFileSync(SEED_MARKER, new Date().toISOString());
+
+  console.log('Database seeded (first install only):');
+  console.log(`  - ${PRODUCTS.length} demo products`);
+  console.log(`  - ${BLOGS.length} demo blogs`);
+  console.log(`  - ${NEWS.length} demo news items`);
 };
 
 module.exports = seedDatabase;

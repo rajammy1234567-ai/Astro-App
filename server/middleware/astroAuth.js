@@ -18,6 +18,9 @@ const astroProtect = async (req, res, next) => {
     if (!astrologer) {
       return res.status(401).json({ message: 'Astrologer account not found' });
     }
+    if (astrologer.isBlocked) {
+      return res.status(403).json({ message: astrologer.blockReason || 'Account blocked by admin' });
+    }
     req.astrologer = astrologer;
     next();
   } catch {

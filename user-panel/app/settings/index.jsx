@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +23,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background}>
       <Header title="Settings" />
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -76,12 +77,11 @@ export default function SettingsScreen() {
         <Button title="Logout" variant="secondary" onPress={handleLogout} style={styles.logout} />
         <Text style={styles.version}>AstroTalk v1.0.0</Text>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
   scroll: { padding: 16, paddingBottom: 32 },
   section: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 8, marginTop: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   card: { backgroundColor: COLORS.surface, borderRadius: 12, marginBottom: 12, ...SHADOW },

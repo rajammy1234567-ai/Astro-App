@@ -1,6 +1,8 @@
 const Astrologer = require('../models/Astrologer');
+const AstrologerReview = require('../models/AstrologerReview');
+const { formatPublicAstrologer } = require('../utils/astrologerHelpers');
 
-const publicFilter = { isPublished: true, approvedViaApplication: true };
+const publicFilter = { isPublished: true, approvedViaApplication: true, isOnline: true, isBlocked: { $ne: true } };
 
 const getAstrologers = async (req, res) => {
   try {
@@ -13,7 +15,7 @@ const getAstrologers = async (req, res) => {
     }
 
     const astrologers = await Astrologer.find(filter).select('-password').sort({ rating: -1 });
-    res.json(astrologers);
+    res.json(astrologers.map((a) => formatPublicAstrologer(a)));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -21,8 +23,11 @@ const getAstrologers = async (req, res) => {
 
 const getChatList = async (req, res) => {
   try {
-    const astrologers = await Astrologer.find({ ...publicFilter, chatEnabled: true }).select('-password').sort({ rating: -1 });
-    res.json(astrologers);
+    const astrologers = await Astrologer.find({
+      ...publicFilter,
+      chatEnabled: true,
+    }).select('-password').sort({ rating: -1 });
+    res.json(astrologers.map((a) => formatPublicAstrologer(a)));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -30,8 +35,11 @@ const getChatList = async (req, res) => {
 
 const getCallList = async (req, res) => {
   try {
-    const astrologers = await Astrologer.find({ ...publicFilter, callEnabled: true }).select('-password').sort({ rating: -1 });
-    res.json(astrologers);
+    const astrologers = await Astrologer.find({
+      ...publicFilter,
+      callEnabled: true,
+    }).select('-password').sort({ rating: -1 });
+    res.json(astrologers.map((a) => formatPublicAstrologer(a)));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -43,33 +51,25 @@ const getAstrologerById = async (req, res) => {
       _id: req.params.id,
       ...publicFilter,
     }).select('-password');
-    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
-    res.json(astrologer);
+    if (!astrologer) {
+      return res.status(404).json({ message: 'Astrologer is offline or not available' });
+    }
+
+    const reviews = await AstrologerReview.find({
+      astrologer: astrologer._id,
+      isVisible: true,
+    }).sort({ createdAt: -1 });
+
+    res.json(formatPublicAstrologer(astrologer, reviews));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
 const bookAstrologer = async (req, res) => {
-  try {
-    const { astrologerId, type, duration } = req.body;
-    const astrologer = await Astrologer.findOne({ _id: astrologerId, ...publicFilter });
-    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
-
-    res.json({
-      message: 'Booking created successfully',
-      booking: {
-        astrologerId,
-        astrologerName: astrologer.name,
-        type,
-        duration: duration || 5,
-        pricePerMin: astrologer.pricePerMin,
-        estimatedCost: (duration || 5) * astrologer.pricePerMin,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  req.url = '/book';
+  const { createSession } = require('./sessionController');
+  return createSession(req, res);
 };
 
 module.exports = {

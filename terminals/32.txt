@@ -1,0 +1,16 @@
+---
+pid: 22804
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "$lines = netstat -ano | findstr \":5000.*LISTENING\"; if ($lines) { $lines | ForEach-Object { $parts = $_ -split '\\s+'; $pid = $parts[-1]; if ($pid -match '^\\d+$') { Write-Host \"Killing PID $pid\"; taskkill /PID $pid /F 2>$null } } } else { Write-Host \"No process on 5000\" }; Start-Sleep -Seconds 2; Set-Location \"C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\server\"; npm run dev"
+started_at: 2026-07-03T18:24:17.215Z
+running_for_ms: 764991   
+---
+Killing PID 22804
+Cannot overwrite variable PID because it is read-only or constant.
+At line:1 char:119
++ ...  ForEach-Object { $parts = $_ -split '\s+'; $pid = $parts[-1]; if ($p ...
++                                                 ~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (PID:String) [], SessionStateUnauthorizedAccessException
+    + FullyQualifiedErrorId : VariableNotWritable
+ 
+SUCCESS: The process with PID 22804 has been terminated.

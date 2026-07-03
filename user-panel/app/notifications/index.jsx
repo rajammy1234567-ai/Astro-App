@@ -1,14 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, ActivityIndicator,
-  TouchableOpacity, RefreshControl, Linking,
+  TouchableOpacity, RefreshControl,
 } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import { useAuth } from '../../hooks/useAuth';
 import { astrologerApplicationApi } from '../../services/astrologerApplicationApi';
 import { COLORS } from '../../constants/colors';
+import { safeOpenUrl } from '../../utils/openUrl';
 
 const TYPE_ICONS = {
   application: 'document-text-outline',
@@ -20,7 +22,7 @@ const TYPE_ICONS = {
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, initialized, sessionLoading } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,12 +37,13 @@ export default function NotificationsScreen() {
   }, []);
 
   useEffect(() => {
+    if (!initialized || sessionLoading) return;
     if (!isAuthenticated) {
       setLoading(false);
       return;
     }
     load().finally(() => setLoading(false));
-  }, [isAuthenticated, load]);
+  }, [isAuthenticated, initialized, sessionLoading, load]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -58,7 +61,7 @@ export default function NotificationsScreen() {
       } catch { /* ignore */ }
     }
     if (item.data?.googleMeetLink) {
-      Linking.openURL(item.data.googleMeetLink);
+      safeOpenUrl(item.data.googleMeetLink, 'Google Meet link');
     } else if (item.type === 'application' || item.type === 'interview' || item.type === 'selected') {
       router.push('/become-astrologer');
     }
@@ -71,19 +74,34 @@ export default function NotificationsScreen() {
     } catch { /* ignore */ }
   };
 
+  if (!initialized || sessionLoading) {
+    return (
+      <Screen edges={['left', 'right', 'bottom']}>
+        <Header title="Notifications" />
+        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
+      </Screen>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
-      <View style={styles.container}>
+      <Screen edges={['left', 'right', 'bottom']}>
         <Header title="Notifications" />
         <View style={styles.empty}>
           <Text style={styles.emptyText}>Login to see notifications</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.authBtn}>
+            <Text style={styles.authBtnText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login?mode=signup')} style={styles.authBtnOutline}>
+            <Text style={styles.authBtnOutlineText}>Create Account</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Notifications" />
       {notifications.some((n) => !n.read) && (
         <TouchableOpacity style={styles.markAll} onPress={markAllRead}>
@@ -130,18 +148,27 @@ export default function NotificationsScreen() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   markAll: { alignSelf: 'flex-end', paddingHorizontal: 16, paddingVertical: 8 },
   markAllText: { fontSize: 13, color: COLORS.primary, fontWeight: '600' },
   list: { padding: 16, paddingBottom: 32 },
   emptyList: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { fontSize: 15, color: COLORS.textSecondary, marginTop: 12 },
+  emptyText: { fontSize: 15, color: COLORS.textSecondary, marginTop: 12, textAlign: 'center' },
+  authBtn: {
+    marginTop: 20, backgroundColor: COLORS.primary, paddingHorizontal: 32,
+    paddingVertical: 12, borderRadius: 8,
+  },
+  authBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
+  authBtnOutline: {
+    marginTop: 10, borderWidth: 1.5, borderColor: COLORS.primary, paddingHorizontal: 32,
+    paddingVertical: 12, borderRadius: 8,
+  },
+  authBtnOutlineText: { color: COLORS.primary, fontWeight: '700', fontSize: 15 },
   card: {
     flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 10,
     padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.borderLight,

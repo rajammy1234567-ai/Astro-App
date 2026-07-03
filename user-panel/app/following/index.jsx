@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { FlatList, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import Screen from '../../components/common/Screen';
 import RemoteImage from '../../components/common/RemoteImage';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,7 +34,7 @@ export default function FollowingScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="My Following" />
 
       {loading ? (
@@ -80,12 +81,11 @@ export default function FollowingScreen() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 32 },
   emptyList: { flexGrow: 1, padding: 16 },
   browseBtn: { marginTop: 8 },

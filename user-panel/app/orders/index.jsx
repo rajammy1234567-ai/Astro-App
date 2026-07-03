@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import EmptyState from '../../components/common/EmptyState';
@@ -34,7 +35,7 @@ export default function OrdersScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Order History" />
 
       {loading ? (
@@ -74,12 +75,11 @@ export default function OrdersScreen() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 32 },
   emptyList: { flexGrow: 1 },
   card: {

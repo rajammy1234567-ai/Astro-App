@@ -51,5 +51,5 @@ const styles = StyleSheet.create({
   apiHint: { fontSize: 11, color: colors.textMuted, marginBottom: 12 },
   steps: { fontSize: 13, color: colors.textMuted, lineHeight: 22, textAlign: 'center', marginBottom: 20 },
   btn: { backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  btnText: { color: colors.text, fontWeight: '700', fontSize: 15 },
 });

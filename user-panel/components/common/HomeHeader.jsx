@@ -1,16 +1,16 @@
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function HomeHeader({ balance = 0, onMenuPress }) {
-  const insets = useSafeAreaInsets();
+  const safe = useScreenInsets();
   const router = useRouter();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+    <View style={[styles.container, { paddingTop: safe.top(8) }]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.row}>
         <TouchableOpacity onPress={onMenuPress} style={styles.iconBtn}>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert,
 } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -72,7 +73,7 @@ export default function CartScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="My Cart" />
 
       {cart.length === 0 ? (
@@ -141,12 +142,11 @@ export default function CartScreen() {
           </View>
         </>
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 280 },
   item: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

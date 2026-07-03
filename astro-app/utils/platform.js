@@ -15,22 +15,20 @@ function getExpoDevHost() {
 }
 
 export function getApiBaseUrl() {
-  const configUrl = Constants.expoConfig?.extra?.apiUrl;
-  const envUrl = process.env.EXPO_PUBLIC_API_URL || configUrl;
   const devHost = getExpoDevHost();
 
-  // Expo Go dev: auto-use PC's current LAN IP (changes per WiFi/network)
-  if (__DEV__ && isNative && devHost) {
+  // Expo Go on phone — PC ka current IP (WiFi change par auto)
+  if (isNative && devHost && devHost !== 'localhost' && devHost !== '127.0.0.1') {
     return `http://${devHost}:5000/api`;
   }
+
+  const configUrl = Constants.expoConfig?.extra?.apiUrl;
+  const envUrl = process.env.EXPO_PUBLIC_API_URL || configUrl;
 
   if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
     return envUrl.replace(/\/$/, '');
   }
 
-  if (isNative && devHost) {
-    return `http://${devHost}:5000/api`;
-  }
   if (isAndroid) return 'http://10.0.2.2:5000/api';
   return 'http://localhost:5000/api';
 }

@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useAuth } from '../../hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Input from '../../components/common/Input';
@@ -16,7 +18,7 @@ import { fetchWallet } from '../../redux/walletSlice';
 export default function AddMoneyScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((s) => s.auth.isAuthenticated);
+  const { isAuthenticated } = useAuth();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,8 +26,9 @@ export default function AddMoneyScreen() {
 
   const handlePay = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Login Required', 'Wallet recharge ke liye pehle login karo.', [
+      Alert.alert('Login Required', 'Wallet recharge ke liye pehle login ya account banao.', [
         { text: 'Cancel', style: 'cancel' },
+        { text: 'Create Account', onPress: () => router.push('/(auth)/login?mode=signup') },
         { text: 'Login', onPress: () => router.push('/(auth)/login') },
       ]);
       return;
@@ -52,7 +55,7 @@ export default function AddMoneyScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background}>
       <Header title="Add Money" />
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -107,12 +110,11 @@ export default function AddMoneyScreen() {
 
         <Button title="Proceed to Pay" onPress={handlePay} loading={loading} disabled={numAmount < 1} />
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
   content: { padding: 16, paddingBottom: 32 },
   secureRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
   secureText: { color: COLORS.success, fontSize: 13, fontWeight: '500' },

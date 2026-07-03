@@ -1,8 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { storeApi } from '../services/storeApi';
 
-export const fetchProducts = createAsyncThunk('store/fetchProducts', async (params) => {
-  return storeApi.getAll(params);
+export const fetchProducts = createAsyncThunk('store/fetchProducts', async (params, { rejectWithValue }) => {
+  try {
+    return await storeApi.getAll(params);
+  } catch (err) {
+    return rejectWithValue(err);
+  }
 });
 
 const storeSlice = createSlice({
@@ -49,7 +53,7 @@ const storeSlice = createSlice({
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload?.message || action.error?.message;
         state.products = [];
       });
   },

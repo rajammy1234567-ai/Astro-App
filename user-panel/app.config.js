@@ -27,6 +27,7 @@ export default {
     android: {
       package: 'com.astrotalk.user',
       versionCode: 1,
+      edgeToEdgeEnabled: true,
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/images/android-icon-foreground.png',

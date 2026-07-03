@@ -17,6 +17,9 @@ const giftCardRoutes = require('./routes/giftCardRoutes');
 const followingRoutes = require('./routes/followingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const astroRoutes = require('./routes/astroRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
+const agoraRoutes = require('./routes/agoraRoutes');
+const liveRoutes = require('./routes/liveRoutes');
 const astrologerApplicationRoutes = require('./routes/astrologerApplicationRoutes');
 
 const app = express();
@@ -45,6 +48,9 @@ app.use('/api/gift-cards', giftCardRoutes);
 app.use('/api/following', followingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/astro', astroRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/agora', agoraRoutes);
+app.use('/api/live', liveRoutes);
 app.use('/api/astrologer-applications', astrologerApplicationRoutes);
 
 app.use((req, res) => {

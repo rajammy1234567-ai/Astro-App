@@ -1,28 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Screen from '../../components/common/Screen';
+import { useFocusEffect } from 'expo-router';
 import ArticleModal from '../../components/common/ArticleModal';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import RemoteImage from '../../components/common/RemoteImage';
+import EmptyState from '../../components/common/EmptyState';
+import ServerBanner from '../../components/common/ServerBanner';
 import { newsApi } from '../../services/newsApi';
-import { NEWS } from '../../constants/mockData';
 import { COLORS } from '../../constants/colors';
 import { formatDate } from '../../utils/formatters';
 
 export default function NewsScreen() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
 
-  useEffect(() => {
+  const loadNews = useCallback(() => {
+    setLoading(true);
+    setError(null);
     newsApi.getAll()
       .then((data) => setNews(data.map((n) => ({ ...n, id: n._id }))))
-      .catch(() => setNews(NEWS))
+      .catch((err) => {
+        setNews([]);
+        setError(err.message || 'News load failed');
+      })
       .finally(() => setLoading(false));
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadNews();
+    }, [loadNews])
+  );
+
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Astro News" />
       {loading ? (
         <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
@@ -32,11 +47,23 @@ export default function NewsScreen() {
           keyExtractor={(item) => item.id || item._id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
-            <View style={styles.hero}>
-              <Ionicons name="newspaper" size={28} color="#FFF" />
-              <Text style={styles.heroTitle}>Latest Updates</Text>
-              <Text style={styles.heroSub}>Astrotalk in media & industry news</Text>
-            </View>
+            <>
+              <ServerBanner message={error} />
+              <View style={styles.hero}>
+                <Ionicons name="newspaper" size={28} color="#FFF" />
+                <Text style={styles.heroTitle}>Latest Updates</Text>
+                <Text style={styles.heroSub}>Astrotalk in media & industry news</Text>
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            !error ? (
+              <EmptyState
+                icon="megaphone-outline"
+                title="No news yet"
+                subtitle="Admin se news add karo — yahan dikhega."
+              />
+            ) : null
           }
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => setSelected(item)}>
@@ -53,12 +80,11 @@ export default function NewsScreen() {
         />
       )}
       <ArticleModal visible={!!selected} type="news" item={selected} onClose={() => setSelected(null)} />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 32 },
   hero: { backgroundColor: COLORS.error, borderRadius: 12, padding: 20, marginBottom: 16, alignItems: 'center' },
   heroTitle: { color: '#FFF', fontSize: 18, fontWeight: '800', marginTop: 8 },

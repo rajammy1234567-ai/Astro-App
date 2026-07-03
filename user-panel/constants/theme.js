@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { COLORS } from './colors';
+import { shadowStyle } from '../utils/shadow';
 
 export const RADIUS = {
   sm: 6,
@@ -13,21 +14,10 @@ export const SPACING = {
   section: 16,
 };
 
-export const SHADOW = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.06,
-  shadowRadius: 6,
-  elevation: 2,
-};
-
-export const SHADOW_SM = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.04,
-  shadowRadius: 3,
-  elevation: 1,
-};
+export const SHADOW = shadowStyle({ offsetY: 2, blur: 6, opacity: 0.06, elevation: 2 });
+export const SHADOW_SM = shadowStyle({ offsetY: 1, blur: 3, opacity: 0.04, elevation: 1 });
+export const SHADOW_MD = shadowStyle({ offsetY: 2, blur: 8, opacity: 0.06, elevation: 2 });
+export const SHADOW_LG = shadowStyle({ offsetY: 4, blur: 12, opacity: 0.06, elevation: 3 });
 
 export const commonStyles = StyleSheet.create({
   screen: {

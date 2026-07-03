@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
@@ -25,7 +26,7 @@ export default function FreeServicesScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Free Services" />
 
       {loading ? (
@@ -63,12 +64,11 @@ export default function FreeServicesScreen() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 32 },
   hero: {
     backgroundColor: COLORS.success, borderRadius: 12, padding: 18,

@@ -13,6 +13,8 @@ const GiftCard = require('../models/GiftCard');
 const Testimonial = require('../models/Testimonial');
 const SupportFaq = require('../models/SupportFaq');
 const FreeService = require('../models/FreeService');
+const Chat = require('../models/Chat');
+const LiveSession = require('../models/LiveSession');
 
 const signAdminToken = (id) =>
   jwt.sign({ id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -40,6 +42,14 @@ const getMe = async (req, res) => {
   res.json(req.admin);
 };
 
+const astroEarningsAgg = async (astroId) => {
+  const result = await Chat.aggregate([
+    { $match: { astrologer: astroId, totalCharged: { $gt: 0 } } },
+    { $group: { _id: null, total: { $sum: '$totalCharged' }, sessions: { $sum: 1 } } },
+  ]);
+  return { totalEarnings: result[0]?.total || 0, paidSessions: result[0]?.sessions || 0 };
+};
+
 const getDashboard = async (req, res) => {
   try {
     const [
@@ -51,6 +61,11 @@ const getDashboard = async (req, res) => {
       recentOrders,
       recentUsers,
       onlineAstrologers,
+      liveAstrologers,
+      blockedUsers,
+      blockedAstrologers,
+      astroEarningsTotal,
+      activeLives,
     ] = await Promise.all([
       User.countDocuments(),
       Astrologer.countDocuments(),
@@ -63,6 +78,17 @@ const getDashboard = async (req, res) => {
       Order.find().sort({ createdAt: -1 }).limit(8).populate('user', 'name phone email'),
       User.find().sort({ createdAt: -1 }).limit(5).select('name phone email createdAt'),
       Astrologer.countDocuments({ isOnline: true }),
+      Astrologer.countDocuments({ isLive: true }),
+      User.countDocuments({ isBlocked: true }),
+      Astrologer.countDocuments({ isBlocked: true }),
+      Chat.aggregate([
+        { $match: { totalCharged: { $gt: 0 } } },
+        { $group: { _id: null, total: { $sum: '$totalCharged' } } },
+      ]),
+      LiveSession.find({ status: 'live' })
+        .populate('astrologer', 'name phone specialty image')
+        .sort({ startedAt: -1 })
+        .limit(10),
     ]);
 
     const orderStats = await Order.aggregate([
@@ -74,6 +100,10 @@ const getDashboard = async (req, res) => {
         totalUsers,
         totalAstrologers,
         onlineAstrologers,
+        liveAstrologers,
+        blockedUsers,
+        blockedAstrologers,
+        totalAstrologerEarnings: astroEarningsTotal[0]?.total || 0,
         totalOrders,
         totalProducts,
         totalRevenue: totalRevenue[0]?.total || 0,
@@ -82,6 +112,7 @@ const getDashboard = async (req, res) => {
       },
       recentOrders,
       recentUsers,
+      activeLives,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -90,10 +121,80 @@ const getDashboard = async (req, res) => {
 
 const listUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-following').sort({ createdAt: -1 });
+    const users = await User.find().select('-following -password').sort({ createdAt: -1 });
     const wallets = await Wallet.find({ user: { $in: users.map((u) => u._id) } });
     const walletMap = Object.fromEntries(wallets.map((w) => [w.user.toString(), w.balance]));
-    res.json(users.map((u) => ({ ...u.toObject(), balance: walletMap[u._id.toString()] || 0 })));
+
+    const userIds = users.map((u) => u._id);
+    const [spentAgg, chatAgg] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { user: { $in: userIds }, type: 'debit', status: 'completed' } },
+        { $group: { _id: '$user', total: { $sum: '$amount' } } },
+      ]),
+      Chat.aggregate([
+        { $match: { user: { $in: userIds } } },
+        { $group: { _id: '$user', count: { $sum: 1 } } },
+      ]),
+    ]);
+    const spentMap = Object.fromEntries(spentAgg.map((s) => [s._id.toString(), s.total]));
+    const chatMap = Object.fromEntries(chatAgg.map((c) => [c._id.toString(), c.count]));
+
+    res.json(users.map((u) => ({
+      ...u.toObject(),
+      balance: walletMap[u._id.toString()] || 0,
+      totalSpent: spentMap[u._id.toString()] || 0,
+      totalSessions: chatMap[u._id.toString()] || 0,
+    })));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getUserDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-following -password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const [wallet, transactions, sessions] = await Promise.all([
+      Wallet.findOne({ user: user._id }),
+      Transaction.find({ user: user._id }).sort({ createdAt: -1 }).limit(50),
+      Chat.find({ user: user._id })
+        .populate('astrologer', 'name specialty image phone')
+        .sort({ createdAt: -1 })
+        .limit(30),
+    ]);
+
+    const totalSpent = transactions
+      .filter((t) => t.type === 'debit' && t.status === 'completed')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    res.json({
+      user: user.toObject(),
+      wallet: wallet || { balance: 0 },
+      totalSpent,
+      totalSessions: sessions.length,
+      transactions,
+      sessions,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const blockUser = async (req, res) => {
+  try {
+    const { isBlocked, blockReason } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        isBlocked: !!isBlocked,
+        blockReason: isBlocked ? (blockReason || 'Blocked by admin') : '',
+        blockedAt: isBlocked ? new Date() : null,
+      },
+      { new: true }
+    ).select('-following -password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -154,7 +255,90 @@ const crud = (Model, opts = {}) => ({
   },
 });
 
-const astrologers = crud(Astrologer);
+const listAstrologers = async (req, res) => {
+  try {
+    const astrologers = await Astrologer.find().select('-password').sort({ createdAt: -1 });
+    const liveSessions = await LiveSession.find({ status: 'live' });
+    const liveMap = Object.fromEntries(liveSessions.map((s) => [s.astrologer.toString(), s]));
+
+    const enriched = await Promise.all(astrologers.map(async (a) => {
+      const earn = await astroEarningsAgg(a._id);
+      const live = liveMap[a._id.toString()];
+      return {
+        ...a.toObject(),
+        totalEarnings: earn.totalEarnings,
+        paidSessions: earn.paidSessions,
+        isLiveNow: !!live,
+        liveTitle: live?.title || '',
+        liveViewers: live?.viewerCount || 0,
+        liveSessionId: live?._id || null,
+      };
+    }));
+
+    res.json(enriched);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getAstrologerDetails = async (req, res) => {
+  try {
+    const astrologer = await Astrologer.findById(req.params.id).select('-password');
+    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
+
+    const [earn, sessions, liveSession, liveHistory] = await Promise.all([
+      astroEarningsAgg(astrologer._id),
+      Chat.find({ astrologer: astrologer._id })
+        .populate('user', 'name phone email avatar')
+        .sort({ createdAt: -1 })
+        .limit(30),
+      LiveSession.findOne({ astrologer: astrologer._id, status: 'live' }),
+      LiveSession.find({ astrologer: astrologer._id }).sort({ startedAt: -1 }).limit(10),
+    ]);
+
+    res.json({
+      astrologer: astrologer.toObject(),
+      totalEarnings: earn.totalEarnings,
+      paidSessions: earn.paidSessions,
+      totalSessions: sessions.length,
+      isLiveNow: !!liveSession,
+      liveSession,
+      liveHistory,
+      sessions,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const blockAstrologer = async (req, res) => {
+  try {
+    const { isBlocked, blockReason } = req.body;
+    const astrologer = await Astrologer.findByIdAndUpdate(
+      req.params.id,
+      {
+        isBlocked: !!isBlocked,
+        blockReason: isBlocked ? (blockReason || 'Blocked by admin') : '',
+        blockedAt: isBlocked ? new Date() : null,
+        isLive: false,
+        isOnline: false,
+      },
+      { new: true }
+    ).select('-password');
+    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
+
+    await LiveSession.updateMany(
+      { astrologer: astrologer._id, status: 'live' },
+      { status: 'ended', endedAt: new Date() }
+    );
+
+    res.json(astrologer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const astrologers = { ...crud(Astrologer), list: listAstrologers };
 const products = crud(Product);
 const blogs = crud(Blog);
 const news = crud(News);
@@ -241,8 +425,12 @@ module.exports = {
   getMe,
   getDashboard,
   listUsers,
+  getUserDetails,
+  blockUser,
   updateUser,
   deleteUser,
+  getAstrologerDetails,
+  blockAstrologer,
   astrologers,
   products,
   blogs,

@@ -45,13 +45,15 @@ export default function Dashboard() {
     );
   }
 
-  const { stats, recentOrders, recentUsers } = data;
+  const { stats, recentOrders, recentUsers, activeLives } = data;
 
   const cards = [
-    { label: 'Total Users', value: stats.totalUsers, icon: '👥', color: '#3b82f6', path: '/users' },
-    { label: 'Astrologers', value: stats.totalAstrologers, sub: `${stats.onlineAstrologers} online`, icon: '🔮', color: '#8b5cf6', path: '/astrologers' },
-    { label: 'Total Orders', value: stats.totalOrders, icon: '📦', color: '#f59e0b', path: '/orders' },
-    { label: 'Revenue', value: fmt(stats.totalRevenue), icon: '💰', color: '#22c55e', path: '/transactions' },
+    { label: 'Total Users', value: stats.totalUsers, sub: stats.blockedUsers ? `${stats.blockedUsers} blocked` : null, icon: '👥', color: '#3b82f6', path: '/users' },
+    { label: 'Astrologers', value: stats.totalAstrologers, sub: `${stats.onlineAstrologers} online · ${stats.liveAstrologers || 0} live`, icon: '🔮', color: '#8b5cf6', path: '/astrologers' },
+    { label: 'Astro Earnings', value: fmt(stats.totalAstrologerEarnings), sub: 'From chat/call sessions', icon: '💸', color: '#f59e0b', path: '/astrologers' },
+    { label: 'Platform Revenue', value: fmt(stats.totalRevenue), icon: '💰', color: '#22c55e', path: '/transactions' },
+    { label: 'Total Orders', value: stats.totalOrders, icon: '📦', color: '#6366f1', path: '/orders' },
+    { label: 'Blocked', value: (stats.blockedUsers || 0) + (stats.blockedAstrologers || 0), sub: `${stats.blockedAstrologers || 0} astrologers`, icon: '🚫', color: '#ef4444', path: '/astrologers' },
   ];
 
   const quickLinks = [
@@ -85,6 +87,30 @@ export default function Dashboard() {
           </button>
         ))}
       </div>
+
+      {activeLives?.length > 0 && (
+        <div className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-head">
+            <h3>🔴 Live Astrologers Now</h3>
+            <button type="button" className="link-btn" onClick={() => navigate('/astrologers')}>Manage</button>
+          </div>
+          <table className="data-table compact">
+            <thead>
+              <tr><th>Astrologer</th><th>Title</th><th>Viewers</th><th>Started</th></tr>
+            </thead>
+            <tbody>
+              {activeLives.map((l) => (
+                <tr key={l._id} className="clickable" onClick={() => navigate('/astrologers')}>
+                  <td>{l.astrologer?.name || '-'}</td>
+                  <td>{l.title}</td>
+                  <td>{l.viewerCount || 0}</td>
+                  <td>{fmtDate(l.startedAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="dashboard-grid">
         <div className="panel">

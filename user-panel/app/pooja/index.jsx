@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Button from '../../components/common/Button';
@@ -33,7 +34,7 @@ export default function PoojaScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Book Online Pooja" />
       {loading ? (
         <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
@@ -88,12 +89,11 @@ export default function PoojaScreen() {
           }
         />
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 32 },
   hero: { backgroundColor: COLORS.warning, borderRadius: 12, padding: 20, marginBottom: 16, alignItems: 'center' },
   heroTitle: { color: '#FFF', fontSize: 18, fontWeight: '800', marginTop: 8 },

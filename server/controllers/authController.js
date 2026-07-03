@@ -18,6 +18,87 @@ const formatUser = (user) => ({
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+const register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
+      return res.status(400).json({ message: 'Valid email address required' });
+    }
+    if (!name?.trim() || name.trim().length < 2) {
+      return res.status(400).json({ message: 'Name is required (min 2 characters)' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const existing = await User.findOne({ email: normalizedEmail });
+    if (existing?.password) {
+      return res.status(400).json({ message: 'Email already registered. Please login.' });
+    }
+
+    let user;
+    let isNewUser = false;
+
+    if (existing) {
+      existing.name = name.trim();
+      existing.password = password;
+      existing.isVerified = true;
+      await existing.save();
+      user = existing;
+    } else {
+      isNewUser = true;
+      user = await User.create({
+        email: normalizedEmail,
+        name: name.trim(),
+        password,
+        isVerified: true,
+      });
+      await Wallet.create({ user: user._id, balance: 100 });
+    }
+
+    const token = generateToken(user._id);
+    res.status(201).json({
+      token,
+      user: formatUser(user),
+      isNewUser,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
+      return res.status(400).json({ message: 'Valid email address required' });
+    }
+    if (!password) {
+      return res.status(400).json({ message: 'Password required' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    if (user.isBlocked) {
+      return res.status(403).json({ message: user.blockReason || 'Your account has been blocked by admin.' });
+    }
+
+    const token = generateToken(user._id);
+    res.json({
+      token,
+      user: formatUser(user),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const sendOtp = async (req, res) => {
   try {
     const { phone, email, loginType } = req.body;
@@ -59,7 +140,7 @@ const sendOtp = async (req, res) => {
 
 const verifyOtp = async (req, res) => {
   try {
-    const { phone, email, otp, loginType } = req.body;
+    const { phone, email, otp, loginType, name } = req.body;
     if (!otp) {
       return res.status(400).json({ message: 'OTP required' });
     }
@@ -96,7 +177,7 @@ const verifyOtp = async (req, res) => {
         isNewUser = true;
         user = await User.create({
           email: identifier,
-          name: identifier.split('@')[0],
+          name: name?.trim() || identifier.split('@')[0],
           isVerified: true,
         });
         await Wallet.create({ user: user._id, balance: 100 });
@@ -107,7 +188,7 @@ const verifyOtp = async (req, res) => {
         isNewUser = true;
         user = await User.create({
           phone: identifier,
-          name: 'User',
+          name: name?.trim() || 'User',
           isVerified: true,
         });
         await Wallet.create({ user: user._id, balance: 100 });
@@ -163,4 +244,4 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { sendOtp, verifyOtp, logout, getMe, updateProfile };
+module.exports = { register, login, sendOtp, verifyOtp, logout, getMe, updateProfile };

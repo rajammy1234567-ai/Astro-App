@@ -133,6 +133,13 @@ const scheduleInterview = async (req, res) => {
       return res.status(400).json({ message: 'Date, day, time and Google Meet link are required' });
     }
 
+    const meetLink = String(googleMeetLink).trim();
+    if (!/^https?:\/\//i.test(meetLink)) {
+      return res.status(400).json({
+        message: 'Google Meet link must start with https:// (e.g. https://meet.google.com/abc-defg-hij)',
+      });
+    }
+
     const application = await AstrologerApplication.findById(req.params.id).populate('user', 'name phone email');
     if (!application) return res.status(404).json({ message: 'Application not found' });
 
@@ -141,10 +148,10 @@ const scheduleInterview = async (req, res) => {
     }
 
     application.status = 'interview_scheduled';
-    application.interview = { date, day, time, googleMeetLink, notes };
+    application.interview = { date, day, time, googleMeetLink: meetLink, notes };
     await application.save();
 
-    const meetMsg = `Interview scheduled!\n\nDate: ${date} (${day})\nTime: ${time}\nGoogle Meet: ${googleMeetLink}${notes ? `\n\nNote: ${notes}` : ''}`;
+    const meetMsg = `Interview scheduled!\n\nDate: ${date} (${day})\nTime: ${time}\nGoogle Meet: ${meetLink}${notes ? `\n\nNote: ${notes}` : ''}`;
 
     await pushNotification(application.user._id, {
       type: 'interview',
@@ -155,7 +162,7 @@ const scheduleInterview = async (req, res) => {
         date,
         day,
         time,
-        googleMeetLink,
+        googleMeetLink: meetLink,
       },
     });
 

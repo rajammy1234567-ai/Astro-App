@@ -2,6 +2,30 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authApi } from '../services/authApi';
 import { storage } from '../utils/storage';
 
+const persistAuth = async (response) => {
+  if (response.token) {
+    await storage.set('token', response.token);
+    await storage.set('user', response.user);
+  }
+  return response;
+};
+
+export const register = createAsyncThunk('auth/register', async (payload, { rejectWithValue }) => {
+  try {
+    return await persistAuth(await authApi.register(payload));
+  } catch (err) {
+    return rejectWithValue(err);
+  }
+});
+
+export const login = createAsyncThunk('auth/login', async (payload, { rejectWithValue }) => {
+  try {
+    return await persistAuth(await authApi.login(payload));
+  } catch (err) {
+    return rejectWithValue(err);
+  }
+});
+
 export const sendOtp = createAsyncThunk('auth/sendOtp', async (payload, { rejectWithValue }) => {
   try {
     return await authApi.sendOtp(payload);
@@ -12,12 +36,7 @@ export const sendOtp = createAsyncThunk('auth/sendOtp', async (payload, { reject
 
 export const verifyOtp = createAsyncThunk('auth/verifyOtp', async (payload, { rejectWithValue }) => {
   try {
-    const response = await authApi.verifyOtp(payload);
-    if (response.token) {
-      await storage.set('token', response.token);
-      await storage.set('user', response.user);
-    }
-    return response;
+    return await persistAuth(await authApi.verifyOtp(payload));
   } catch (err) {
     return rejectWithValue(err);
   }
@@ -62,6 +81,7 @@ const authSlice = createSlice({
     sessionLoading: false,
     otpSending: false,
     verifying: false,
+    authLoading: false,
     error: null,
     otpSent: false,
     initialized: false,
@@ -91,6 +111,34 @@ const authSlice = createSlice({
         state.initialized = true;
         state.user = null;
         state.token = null;
+      })
+      .addCase(register.pending, (state) => {
+        state.authLoading = true;
+        state.error = null;
+      })
+      .addCase(register.fulfilled, (state, action) => {
+        state.authLoading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isNewUser = !!action.payload.isNewUser;
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.authLoading = false;
+        state.error = action.payload?.message || 'Registration failed';
+      })
+      .addCase(login.pending, (state) => {
+        state.authLoading = true;
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.authLoading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isNewUser = false;
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.authLoading = false;
+        state.error = action.payload?.message || 'Login failed';
       })
       .addCase(sendOtp.pending, (state) => {
         state.otpSending = true;
@@ -126,6 +174,8 @@ const authSlice = createSlice({
       });
   },
 });
+
+export const selectIsAuthenticated = (state) => !!(state.auth.user && state.auth.token);
 
 export const { clearError, setUser } = authSlice.actions;
 export default authSlice.reducer;

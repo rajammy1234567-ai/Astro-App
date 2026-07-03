@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,24 +37,24 @@ export default function ProductDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <Screen edges={['left', 'right', 'bottom']}>
         <Header title="Product" />
         <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
-      </View>
+      </Screen>
     );
   }
 
   if (!product) {
     return (
-      <View style={styles.container}>
+      <Screen edges={['left', 'right', 'bottom']}>
         <Header title="Product" />
         <Text style={styles.notFound}>Product not found or no longer available.</Text>
-      </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title={product.name} />
       <ScrollView contentContainerStyle={styles.content}>
         <RemoteImage uri={product.image} type="product" style={styles.image} fallbackIcon="diamond-outline" />
@@ -79,12 +80,11 @@ export default function ProductDetailScreen() {
           style={{ flex: 1 }}
         />
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   content: { paddingBottom: 100 },
   image: { width: '100%', height: 280, backgroundColor: COLORS.surface },
   info: { padding: 16 },

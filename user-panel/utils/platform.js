@@ -19,17 +19,18 @@ function getExpoDevHost() {
 }
 
 export function getApiBaseUrl() {
+  const devHost = getExpoDevHost();
+
+  // Expo Go on phone: ALWAYS use PC IP from Expo (WiFi IP change par bhi sahi rahega)
+  if (isNative && devHost && devHost !== 'localhost' && devHost !== '127.0.0.1') {
+    return `http://${devHost}:5000/api`;
+  }
+
   const configUrl = Constants.expoConfig?.extra?.apiUrl;
   const envUrl = process.env.EXPO_PUBLIC_API_URL || configUrl;
-  const devHost = getExpoDevHost();
 
   if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
     return envUrl.replace(/\/$/, '');
-  }
-
-  // Physical device / Expo Go: localhost doesn't work — use PC's LAN IP
-  if (isNative && devHost) {
-    return `http://${devHost}:5000/api`;
   }
 
   if (isWeb) return 'http://localhost:5000/api';

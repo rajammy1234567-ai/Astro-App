@@ -1,4 +1,5 @@
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ScrollView as HScroll } from 'react-native';
@@ -10,16 +11,18 @@ import AstrologerHorizontalCard from '../../components/home/AstrologerHorizontal
 import StoreSection from '../../components/home/StoreSection';
 import ChatCallButtons from '../../components/home/ChatCallButtons';
 import BlogNewsSection from '../../components/home/BlogNewsSection';
+import LiveNowSection from '../../components/home/LiveNowSection';
 import TrustBadges from '../../components/home/TrustBadges';
 import DrawerMenu from '../../components/drawer/DrawerMenu';
 import { useHomeData } from '../../hooks/useHomeData';
+import ServerBanner from '../../components/common/ServerBanner';
 import { COLORS } from '../../constants/colors';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const { astrologers, blogs, products, news } = useHomeData();
+  const { astrologers, blogs, products, news, connectionError } = useHomeData();
 
   const filtered = search
     ? astrologers.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
@@ -27,12 +30,14 @@ export default function HomeScreen() {
   const featured = filtered.slice(0, 4);
 
   return (
-    <View style={styles.container}>
+    <Screen>
       <AppHeader showLang onMenuPress={() => setDrawerOpen(true)} />
       <SearchBar value={search} onChangeText={setSearch} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <ServerBanner message={connectionError} />
         <CategoryCircles />
+        <LiveNowSection />
         <CashbackBanner variant="dark" />
 
         <View style={styles.astroSection}>
@@ -61,12 +66,11 @@ export default function HomeScreen() {
       </ScrollView>
 
       <DrawerMenu visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   scroll: { paddingBottom: 20 },
   astroSection: {
     marginTop: 6,

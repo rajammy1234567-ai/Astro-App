@@ -1,108 +1,70 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Platform,
-  KeyboardAvoidingView,
   ScrollView,
   ActivityIndicator,
-  Keyboard,
-  Animated,
-  Dimensions,
+  Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import Screen from '../../components/common/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import AppLogo from '../../components/common/AppLogo';
 import { COLORS } from '../../constants/colors';
+import { SHADOW_LG } from '../../constants/theme';
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function LoginScreen() {
-  const [loginType, setLoginType] = useState('phone');
-  const [phone, setPhone] = useState('');
+  const { mode } = useLocalSearchParams();
+  const [authMode, setAuthMode] = useState(mode === 'signup' ? 'signup' : 'login');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-  const [segmentWidth, setSegmentWidth] = useState(0);
-  const [pagerWidth, setPagerWidth] = useState(SCREEN_WIDTH - 88);
-  const pagerRef = useRef(null);
-  const slideAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { sendOtp, otpSending, error, clearError } = useAuth();
+  const { register, login, authLoading, error, clearError } = useAuth();
 
   useEffect(() => {
     clearError();
-  }, [loginType, clearError]);
+  }, [authMode, clearError]);
 
-  const switchTab = (type, fromScroll = false) => {
-    if (type === loginType && !fromScroll) return;
-    Keyboard.dismiss();
-    clearError();
-    setFocusedField(null);
-    setLoginType(type);
+  const normalizedEmail = email.trim().toLowerCase();
+  const emailValid = isValidEmail(normalizedEmail);
+  const nameValid = authMode === 'login' || name.trim().length >= 2;
+  const passwordValid = password.length >= 6;
+  const canContinue = emailValid && nameValid && passwordValid;
 
-    const index = type === 'phone' ? 0 : 1;
-    Animated.spring(slideAnim, {
-      toValue: index,
-      useNativeDriver: true,
-      friction: 8,
-      tension: 80,
-    }).start();
-
-    if (!fromScroll && pagerRef.current && pagerWidth > 0) {
-      pagerRef.current.scrollTo({ x: index * pagerWidth, animated: true });
-    }
-  };
-
-  const onPagerScroll = (event) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    if (pagerWidth <= 0) return;
-    slideAnim.setValue(offsetX / pagerWidth);
-  };
-
-  const onPagerScrollEnd = (event) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    if (pagerWidth <= 0) return;
-    const index = Math.round(offsetX / pagerWidth);
-    const type = index === 0 ? 'phone' : 'email';
-    if (type !== loginType) {
-      switchTab(type, true);
-    }
-  };
-
-  const canContinue = loginType === 'phone'
-    ? phone.length === 10
-    : isValidEmail(email.trim());
-
-  const handleContinue = async () => {
-    if (!canContinue || otpSending) return;
+  const handleSubmit = async () => {
+    if (!canContinue || authLoading) return;
     clearError();
 
-    const payload = loginType === 'phone'
-      ? { loginType: 'phone', phone }
-      : { loginType: 'email', email: email.trim().toLowerCase() };
+    const payload = {
+      email: normalizedEmail,
+      password,
+      ...(authMode === 'signup' ? { name: name.trim() } : {}),
+    };
 
-    const result = await sendOtp(payload);
+    const result =
+      authMode === 'signup'
+        ? await register(payload)
+        : await login(payload);
 
     if (result.meta.requestStatus === 'fulfilled') {
-      const { viaEmail, devOtp } = result.payload || {};
-      router.push({
-        pathname: '/(auth)/otp',
-        params: loginType === 'phone'
-          ? { loginType: 'phone', phone, devOtp: devOtp || '123456' }
-          : {
-              loginType: 'email',
-              email: email.trim().toLowerCase(),
-              viaEmail: viaEmail ? '1' : '0',
-              devOtp: devOtp || '',
-            },
-      });
+      if (authMode === 'signup' && result.payload?.isNewUser) {
+        Alert.alert(
+          'Welcome to Astrotalk!',
+          'Account created successfully. ₹100 welcome bonus added to your wallet.',
+          [{ text: 'Get Started', onPress: () => router.replace('/(tabs)/home') }]
+        );
+      } else {
+        router.replace('/(tabs)/home');
+      }
     }
   };
 
@@ -111,17 +73,8 @@ export default function LoginScreen() {
     borderWidth: focusedField === field ? 1.5 : 1,
   });
 
-  const indicatorWidth = segmentWidth > 0 ? (segmentWidth - 8) / 2 : 0;
-  const indicatorTranslate = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, indicatorWidth],
-  });
-
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <Screen edges={['top', 'left', 'right', 'bottom']} keyboard>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="always"
@@ -138,122 +91,91 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Login or Sign Up</Text>
-
-          <View
-            style={styles.segment}
-            onLayout={(e) => setSegmentWidth(e.nativeEvent.layout.width)}
-          >
-            {indicatorWidth > 0 ? (
-              <Animated.View
-                style={[
-                  styles.segmentIndicator,
-                  {
-                    width: indicatorWidth,
-                    transform: [{ translateX: indicatorTranslate }],
-                  },
-                ]}
-              />
-            ) : null}
-
+          <View style={styles.authModeRow}>
             <TouchableOpacity
-              style={styles.segmentBtn}
-              onPress={() => switchTab('phone')}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8 }}
+              style={[styles.authModeBtn, authMode === 'login' && styles.authModeActive]}
+              onPress={() => setAuthMode('login')}
             >
-              <Ionicons
-                name="call-outline"
-                size={16}
-                color={loginType === 'phone' ? COLORS.text : COLORS.textSecondary}
-              />
-              <Text style={[styles.segmentText, loginType === 'phone' && styles.segmentTextActive]}>
-                Mobile
+              <Text style={[styles.authModeText, authMode === 'login' && styles.authModeTextActive]}>
+                Login
               </Text>
             </TouchableOpacity>
-
             <TouchableOpacity
-              style={styles.segmentBtn}
-              onPress={() => switchTab('email')}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8 }}
+              style={[styles.authModeBtn, authMode === 'signup' && styles.authModeActive]}
+              onPress={() => setAuthMode('signup')}
             >
-              <Ionicons
-                name="mail-outline"
-                size={16}
-                color={loginType === 'email' ? COLORS.text : COLORS.textSecondary}
-              />
-              <Text style={[styles.segmentText, loginType === 'email' && styles.segmentTextActive]}>
-                Email
+              <Text style={[styles.authModeText, authMode === 'signup' && styles.authModeTextActive]}>
+                Create Account
               </Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.swipeHint}>Swipe left/right or tap tab to switch</Text>
+          <Text style={styles.cardTitle}>
+            {authMode === 'signup' ? 'Create your account' : 'Welcome back'}
+          </Text>
 
-          <ScrollView
-            ref={pagerRef}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={onPagerScroll}
-            onMomentumScrollEnd={onPagerScrollEnd}
-            scrollEventThrottle={16}
-            nestedScrollEnabled
-            keyboardShouldPersistTaps="always"
-            style={styles.pager}
-            onLayout={(e) => setPagerWidth(e.nativeEvent.layout.width)}
-          >
-            <View style={[styles.page, { width: pagerWidth }]}>
-              <Text style={styles.label}>Mobile Number</Text>
-              <View style={styles.phoneRow}>
-                <View style={[styles.countryBox, inputBorder('country')]}>
-                  <Text style={styles.flag}>🇮🇳</Text>
-                  <Text style={styles.code}>+91</Text>
-                </View>
-                <TextInput
-                  style={[styles.phoneInput, inputBorder('phone')]}
-                  value={phone}
-                  onChangeText={(t) => setPhone(t.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="10-digit number"
-                  placeholderTextColor={COLORS.textLight}
-                  keyboardType="phone-pad"
-                  maxLength={10}
-                  onFocus={() => setFocusedField('phone')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </View>
-              <Text style={styles.hint}>
-                {phone.length > 0 && phone.length < 10
-                  ? `${10 - phone.length} more digit${10 - phone.length === 1 ? '' : 's'} needed`
-                  : 'OTP will be sent via SMS (dev: 123456)'}
-              </Text>
-            </View>
+          {authMode === 'signup' && (
+            <>
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                style={[styles.input, inputBorder('name')]}
+                value={name}
+                onChangeText={setName}
+                placeholder="Your name"
+                placeholderTextColor={COLORS.textLight}
+                onFocus={() => setFocusedField('name')}
+                onBlur={() => setFocusedField(null)}
+              />
+            </>
+          )}
 
-            <View style={[styles.page, { width: pagerWidth }]}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={[styles.emailRow, inputBorder('email')]}>
-                <Ionicons name="mail-outline" size={18} color={COLORS.textSecondary} />
-                <TextInput
-                  style={styles.emailInput}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor={COLORS.textLight}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </View>
-              <Text style={styles.hint}>
-                {email.length > 0 && !isValidEmail(email.trim())
-                  ? 'Enter a valid email address'
-                  : 'OTP will be sent to your Gmail inbox'}
-              </Text>
-            </View>
-          </ScrollView>
+          <Text style={styles.label}>Email Address</Text>
+          <View style={[styles.fieldRow, inputBorder('email')]}>
+            <Ionicons name="mail-outline" size={18} color={COLORS.textSecondary} />
+            <TextInput
+              style={styles.fieldInput}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              placeholderTextColor={COLORS.textLight}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
+            />
+          </View>
+
+          <Text style={styles.label}>Password</Text>
+          <View style={[styles.fieldRow, inputBorder('password')]}>
+            <Ionicons name="lock-closed-outline" size={18} color={COLORS.textSecondary} />
+            <TextInput
+              style={styles.fieldInput}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Min 6 characters"
+              placeholderTextColor={COLORS.textLight}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              onFocus={() => setFocusedField('password')}
+              onBlur={() => setFocusedField(null)}
+            />
+            <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={18}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.hint}>
+            {password.length > 0 && password.length < 6
+              ? `${6 - password.length} more character${6 - password.length === 1 ? '' : 's'} needed`
+              : authMode === 'signup'
+                ? 'Email + password se direct account ban jayega'
+                : 'Apni email aur password se login karo'}
+          </Text>
 
           {error ? (
             <View style={styles.errorBox}>
@@ -263,23 +185,36 @@ export default function LoginScreen() {
           ) : null}
 
           <TouchableOpacity
-            style={[styles.continueBtn, canContinue && !otpSending && styles.continueActive]}
-            onPress={handleContinue}
-            disabled={!canContinue || otpSending}
+            style={[styles.continueBtn, canContinue && !authLoading && styles.continueActive]}
+            onPress={handleSubmit}
+            disabled={!canContinue || authLoading}
             activeOpacity={0.85}
           >
-            {otpSending ? (
+            {authLoading ? (
               <View style={styles.btnRow}>
                 <ActivityIndicator size="small" color={COLORS.text} />
-                <Text style={[styles.continueText, styles.continueTextActive]}>Sending OTP...</Text>
+                <Text style={[styles.continueText, styles.continueTextActive]}>
+                  {authMode === 'signup' ? 'Creating Account...' : 'Logging in...'}
+                </Text>
               </View>
             ) : (
               <Text style={[styles.continueText, canContinue && styles.continueTextActive]}>
-                GET OTP
+                {authMode === 'signup' ? 'CREATE ACCOUNT' : 'LOGIN'}
               </Text>
             )}
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          onPress={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+          style={styles.switchMode}
+        >
+          <Text style={styles.switchModeText}>
+            {authMode === 'login'
+              ? 'New user? Create Account'
+              : 'Already have account? Login'}
+          </Text>
+        </TouchableOpacity>
 
         <Text style={styles.terms}>
           By continuing, you agree to our{' '}
@@ -287,15 +222,11 @@ export default function LoginScreen() {
           <Text style={styles.termsLink}>Privacy Policy</Text>
         </Text>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.cream,
-  },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -333,12 +264,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 3,
-    overflow: 'hidden',
+    ...SHADOW_LG,
   },
   cardTitle: {
     fontSize: 17,
@@ -347,86 +273,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 18,
   },
-  segment: {
+  authModeRow: {
     flexDirection: 'row',
     backgroundColor: COLORS.borderLight,
     borderRadius: 10,
     padding: 4,
-    marginBottom: 8,
-    position: 'relative',
+    marginBottom: 16,
   },
-  segmentIndicator: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    bottom: 4,
-    backgroundColor: COLORS.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  segmentBtn: {
+  authModeBtn: {
     flex: 1,
-    flexDirection: 'row',
+    paddingVertical: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
     borderRadius: 8,
-    zIndex: 1,
   },
-  segmentText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  segmentTextActive: {
-    color: COLORS.text,
-    fontWeight: '700',
-  },
-  swipeHint: {
-    fontSize: 11,
-    color: COLORS.textLight,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  pager: {
-    marginBottom: 4,
-  },
-  page: {
-    paddingRight: 4,
-  },
+  authModeActive: { backgroundColor: COLORS.surface },
+  authModeText: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
+  authModeTextActive: { color: COLORS.text, fontWeight: '700' },
   label: {
     fontSize: 13,
     fontWeight: '600',
     color: COLORS.text,
     marginBottom: 8,
   },
-  phoneRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  countryBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    gap: 6,
-    backgroundColor: COLORS.surface,
-  },
-  flag: { fontSize: 16 },
-  code: { fontSize: 15, fontWeight: '700', color: COLORS.text },
-  phoneInput: {
-    flex: 1,
-    borderRadius: 10,
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: 14,
-    fontSize: 16,
+    paddingVertical: 12,
+    fontSize: 15,
     color: COLORS.text,
-    backgroundColor: COLORS.surface,
+    marginBottom: 14,
   },
-  emailRow: {
+  fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 10,
@@ -434,8 +313,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     backgroundColor: COLORS.surface,
+    marginBottom: 14,
   },
-  emailInput: {
+  fieldInput: {
     flex: 1,
     fontSize: 16,
     color: COLORS.text,
@@ -445,9 +325,12 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     color: COLORS.textLight,
-    marginTop: 8,
+    marginTop: -6,
+    marginBottom: 4,
     minHeight: 16,
   },
+  switchMode: { alignItems: 'center', marginTop: 16, marginBottom: 8 },
+  switchModeText: { fontSize: 14, color: COLORS.link, fontWeight: '600' },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',

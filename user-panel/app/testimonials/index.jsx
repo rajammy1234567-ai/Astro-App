@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { FlatList, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import { FlatList, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { safeOpenUrl } from '../../utils/openUrl';
+import Screen from '../../components/common/Screen';
 import RemoteImage from '../../components/common/RemoteImage';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
@@ -19,7 +21,7 @@ export default function TestimonialsScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Video Testimonials" />
 
       {loading ? (
@@ -40,7 +42,7 @@ export default function TestimonialsScreen() {
             <TouchableOpacity
               style={styles.card}
               activeOpacity={0.85}
-              onPress={() => item.videoUrl && Linking.openURL(item.videoUrl)}
+              onPress={() => item.videoUrl && safeOpenUrl(item.videoUrl, 'video')}
             >
               <View style={styles.thumbWrap}>
                 <RemoteImage uri={item.thumbnail} type="avatar" style={styles.thumb} fallbackIcon="videocam-outline" />
@@ -63,12 +65,11 @@ export default function TestimonialsScreen() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 16, paddingBottom: 32 },
   hero: {
     backgroundColor: COLORS.primary, borderRadius: 12, padding: 18,

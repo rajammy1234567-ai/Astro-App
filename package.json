@@ -16,7 +16,7 @@
     "admin:android": "cd admin-app && npm run android",
     "admin:apk": "cd admin-app && npm run build:apk",
     "admin:playstore": "cd admin-app && npm run build:playstore",
-    "astro:dev": "cd astro-app && npm run dev",
+    "astro:dev": "cd astro-app && npm run dev:lan",
     "astro:android": "cd astro-app && npm run android",
     "astro:apk": "cd astro-app && npm run build:apk",
     "astro:playstore": "cd astro-app && npm run build:playstore",

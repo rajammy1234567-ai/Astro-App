@@ -1,4 +1,5 @@
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,7 +32,7 @@ export default function KundliScreen() {
   const horoscope = selectedRashi ? HOROSCOPE[selectedRashi] : null;
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Free Kundli" />
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -101,12 +102,11 @@ export default function KundliScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   scroll: { padding: 16, paddingBottom: 32 },
   hero: { backgroundColor: COLORS.primary, borderRadius: 12, padding: 20, marginBottom: 20, alignItems: 'center' },
   heroTitle: { color: '#FFF', fontSize: 18, fontWeight: '800', marginTop: 8 },

@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import ArticleModal from '../common/ArticleModal';
 import { Ionicons } from '@expo/vector-icons';
 import RemoteImage from '../common/RemoteImage';
-import { BLOGS, NEWS } from '../../constants/mockData';
 import { COLORS } from '../../constants/colors';
 
 const formatDate = (dateStr) => {
@@ -40,7 +39,7 @@ function NewsCard({ item, onPress }) {
   );
 }
 
-export default function BlogNewsSection({ blogs = BLOGS, news = NEWS }) {
+export default function BlogNewsSection({ blogs = [], news = [] }) {
   const router = useRouter();
   const [modal, setModal] = useState(null);
 

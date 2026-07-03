@@ -1,4 +1,5 @@
-import { View, FlatList, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import Header from '../../components/common/Header';
@@ -21,7 +22,7 @@ export default function ChatListScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background}>
       <Header title="Chat with Astrologer" />
       <SearchBar value={search} onChangeText={setSearch} />
       <FilterChips filters={FILTERS} active={filter} onSelect={setFilter} />
@@ -31,11 +32,10 @@ export default function ChatListScreen() {
         renderItem={({ item }) => <AstrologerCard astrologer={item} mode="chat" />}
         contentContainerStyle={styles.list}
       />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
   list: { paddingTop: 8, paddingBottom: 24 },
 });

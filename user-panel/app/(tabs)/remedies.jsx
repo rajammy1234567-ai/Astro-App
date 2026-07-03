@@ -1,211 +1,665 @@
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, ImageBackground, ActivityIndicator } from 'react-native';
-import RemoteImage from '../../components/common/RemoteImage';
-import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import {
+  ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Dimensions,
+} from 'react-native';
+import Screen from '../../components/common/Screen';
+import { Image } from 'expo-image';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import RemedyHeader from '../../components/remedies/RemedyHeader';
-import StoreSection from '../../components/home/StoreSection';
 import DrawerMenu from '../../components/drawer/DrawerMenu';
-import { storeApi } from '../../services/storeApi';
-import { IMAGES as IMG } from '../../constants/assets';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
+import {
+  REMEDY_CATEGORIES,
+  REMEDY_PROBLEMS,
+  REMEDY_SERVICES,
+  REMEDY_PRODUCTS,
+  REMEDY_POOJAS,
+  REMEDY_STATS,
+  REMEDY_OFFERS,
+  REMEDY_TRUST,
+} from '../../constants/remedyData';
 import { COLORS } from '../../constants/colors';
+import { SHADOW, SHADOW_MD } from '../../constants/theme';
 
-function FeaturedCard({ title, image, badge, style }) {
+const { width: SCREEN_W } = Dimensions.get('window');
+const CARD_W = (SCREEN_W - 44) / 2;
+
+function SectionHeader({ title, subtitle, action, onAction }) {
   return (
-    <ImageBackground source={{ uri: image }} style={[styles.featuredCard, style]} imageStyle={styles.featuredImg}>
-      {badge && (
-        <View style={styles.priceBadge}>
-          <Text style={styles.priceBadgeText}>{badge}</Text>
-        </View>
-      )}
-      <View style={styles.featuredOverlay}>
-        <Text style={styles.featuredTitle}>{title}</Text>
+    <View style={styles.sectionHead}>
+      <View style={styles.sectionHeadLeft}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.sectionSub}>{subtitle}</Text> : null}
       </View>
-    </ImageBackground>
+      {action ? (
+        <TouchableOpacity onPress={onAction} activeOpacity={0.7}>
+          <Text style={styles.viewAll}>{action}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
   );
 }
 
-function CircleProduct({ item, onPress }) {
+function CategoryChip({ item, onPress }) {
   return (
-    <TouchableOpacity style={styles.circleItem} onPress={onPress}>
-      <RemoteImage uri={item.image} type="product" style={styles.circleImg} fallbackIcon="sparkles-outline" />
-      <Text style={styles.circleLabel} numberOfLines={2}>{item.name}</Text>
+    <TouchableOpacity style={styles.catItem} onPress={onPress} activeOpacity={0.8}>
+      <View style={[styles.catCircle, { backgroundColor: item.bg }]}>
+        <Ionicons name={item.icon} size={22} color={item.color} />
+      </View>
+      <Text style={styles.catLabel}>{item.label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function ProblemPill({ item, active, onPress }) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.problemPill,
+        { backgroundColor: item.bg },
+        active && { borderColor: item.color, borderWidth: 1.5 },
+      ]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <Ionicons name={item.icon} size={16} color={item.color} />
+      <Text style={[styles.problemText, { color: item.color }]}>{item.label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function ServiceCard({ item, onPress, wide }) {
+  return (
+    <TouchableOpacity
+      style={[styles.serviceCard, wide && styles.serviceCardWide]}
+      onPress={onPress}
+      activeOpacity={0.9}
+    >
+      <Image source={{ uri: item.image }} style={styles.serviceImg} contentFit="cover" />
+      <View style={styles.serviceOverlay} />
+      <View style={[styles.serviceTag, { backgroundColor: item.tagColor }]}>
+        <Text style={styles.serviceTagText}>{item.tag}</Text>
+      </View>
+      <View style={styles.serviceContent}>
+        <Text style={styles.serviceTitle}>{item.title}</Text>
+        <Text style={styles.serviceSub}>{item.subtitle}</Text>
+        <View style={styles.serviceFooter}>
+          <Text style={styles.servicePrice}>{item.price}</Text>
+          <View style={styles.serviceArrow}>
+            <Ionicons name="arrow-forward" size={14} color={COLORS.text} />
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function ProductCard({ item, onPress }) {
+  const discount = Math.round(((item.mrp - item.price) / item.mrp) * 100);
+  return (
+    <TouchableOpacity style={styles.productCard} onPress={onPress} activeOpacity={0.88}>
+      <View style={styles.productImgWrap}>
+        <Image source={{ uri: item.image }} style={styles.productImg} contentFit="cover" />
+        <View style={styles.productTag}>
+          <Text style={styles.productTagText}>{item.tag}</Text>
+        </View>
+        {discount > 0 ? (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>{discount}% OFF</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+      <View style={styles.ratingRow}>
+        <Ionicons name="star" size={12} color={COLORS.star} />
+        <Text style={styles.ratingText}>{item.rating}</Text>
+        <Text style={styles.reviewText}>({item.reviews})</Text>
+      </View>
+      <View style={styles.priceRow}>
+        <Text style={styles.price}>₹{item.price}</Text>
+        <Text style={styles.mrp}>₹{item.mrp}</Text>
+      </View>
+      <TouchableOpacity style={styles.addBtn} onPress={onPress} activeOpacity={0.85}>
+        <Text style={styles.addBtnText}>View</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+}
+
+function PoojaCard({ item, onPress }) {
+  return (
+    <TouchableOpacity style={styles.poojaCard} onPress={onPress} activeOpacity={0.9}>
+      <ImageBackground source={{ uri: item.image }} style={styles.poojaImg} imageStyle={styles.poojaImgRadius}>
+        <View style={styles.poojaBadge}>
+          <Text style={styles.poojaBadgeText}>{item.badge}</Text>
+        </View>
+      </ImageBackground>
+      <Text style={styles.poojaTitle} numberOfLines={2}>{item.title}</Text>
+      <Text style={styles.poojaLoc}>{item.location}</Text>
+      <Text style={styles.poojaPrice}>{item.price}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function OfferBanner({ item, onPress }) {
+  return (
+    <TouchableOpacity style={styles.offerCard} onPress={onPress} activeOpacity={0.9}>
+      <Image source={{ uri: item.image }} style={styles.offerImg} contentFit="cover" />
+      <View style={styles.offerContent}>
+        <Text style={styles.offerTitle}>{item.title}</Text>
+        <Text style={styles.offerSub}>{item.subtitle}</Text>
+        <View style={styles.offerRow}>
+          <Text style={[styles.offerPrice, { color: item.accent }]}>{item.price}</Text>
+          <View style={[styles.offerCta, { backgroundColor: item.accent }]}>
+            <Text style={styles.offerCtaText}>{item.cta}</Text>
+          </View>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
 
 export default function RemediesScreen() {
   const router = useRouter();
+  const safe = useScreenInsets();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [topSelling, setTopSelling] = useState([]);
-  const [newlyLaunched, setNewlyLaunched] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [activeProblem, setActiveProblem] = useState('love');
 
-  const loadStore = useCallback(() => {
-    setLoading(true);
-    Promise.all([
-      storeApi.getAll(),
-      storeApi.getAll({ featured: 'true' }),
-      storeApi.getAll({ isNew: 'true' }),
-    ])
-      .then(([all, featured, newest]) => {
-        setProducts(all);
-        setTopSelling(featured);
-        setNewlyLaunched(newest);
-      })
-      .catch(() => {
-        setProducts([]);
-        setTopSelling([]);
-        setNewlyLaunched([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadStore();
-    }, [loadStore])
-  );
+  const goStore = () => router.push('/store');
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.screen}>
       <RemedyHeader onMenuPress={() => setDrawerOpen(true)} />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.featuredRow}>
-          <FeaturedCard title="Birth Time Rectification" image={IMG.remedyRectification} style={styles.cardLeft} />
-          <FeaturedCard title="Past Life Regression" image={IMG.remedyRegression} style={styles.cardRight} />
-        </View>
-        <FeaturedCard
-          title="Name Correction"
-          image={IMG.remedyName}
-          badge="STARTS AT INR 499"
-          style={styles.cardFull}
-        />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: safe.tabBar + 20 }}
+      >
+        {/* Search strip */}
+        <TouchableOpacity style={styles.searchBar} onPress={goStore} activeOpacity={0.85}>
+          <Ionicons name="search" size={18} color={COLORS.textLight} />
+          <Text style={styles.searchPlaceholder}>Search Rudraksha, Gemstones, Yantra...</Text>
+          <View style={styles.filterChip}>
+            <Ionicons name="options-outline" size={14} color={COLORS.text} />
+          </View>
+        </TouchableOpacity>
 
-        <View style={styles.statsBox}>
-          {[
-            { num: '4,37,966', label: 'ORDERS' },
-            { num: '4.72 ★', label: 'RATING' },
-            { num: '7,663', label: 'EXPERTS' },
-            { num: '7,603', label: 'IN SESSION' },
-          ].map((s) => (
-            <View key={s.label} style={styles.stat}>
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.heroContent}>
+            <View style={styles.heroBadge}>
+              <Ionicons name="sparkles" size={12} color={COLORS.primary} />
+              <Text style={styles.heroBadgeText}>TRUSTED BY 40 LAKH+ USERS</Text>
+            </View>
+            <Text style={styles.heroTitle}>Authentic Spiritual{'\n'}Remedies Delivered</Text>
+            <Text style={styles.heroSub}>Energized products · Expert consultations · Online Pooja</Text>
+            <TouchableOpacity style={styles.heroBtn} onPress={goStore} activeOpacity={0.85}>
+              <Text style={styles.heroBtnText}>Explore Store</Text>
+              <Ionicons name="arrow-forward" size={16} color={COLORS.text} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.heroDecor}>
+            <Ionicons name="planet" size={56} color="rgba(253,185,19,0.35)" />
+          </View>
+        </View>
+
+        {/* Categories */}
+        <SectionHeader title="Shop by Category" action="See All" onAction={goStore} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.catScroll}
+        >
+          {REMEDY_CATEGORIES.map((cat) => (
+            <CategoryChip key={cat.id} item={cat} onPress={goStore} />
+          ))}
+        </ScrollView>
+
+        {/* Problems */}
+        <SectionHeader title="Remedies for Your Problem" subtitle="Tap to explore solutions" />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.problemScroll}
+        >
+          {REMEDY_PROBLEMS.map((p) => (
+            <ProblemPill
+              key={p.id}
+              item={p}
+              active={activeProblem === p.id}
+              onPress={() => setActiveProblem(p.id)}
+            />
+          ))}
+        </ScrollView>
+
+        <View style={styles.problemHint}>
+          <Ionicons name="bulb" size={16} color={COLORS.primary} />
+          <Text style={styles.problemHintText}>
+            Showing curated remedies for{' '}
+            <Text style={styles.problemHintBold}>
+              {REMEDY_PROBLEMS.find((p) => p.id === activeProblem)?.label}
+            </Text>
+          </Text>
+        </View>
+
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          {REMEDY_STATS.map((s, i) => (
+            <View key={s.label} style={[styles.statItem, i < REMEDY_STATS.length - 1 && styles.statBorder]}>
               <Text style={styles.statNum}>{s.num}</Text>
               <Text style={styles.statLabel}>{s.label}</Text>
             </View>
           ))}
         </View>
 
-        <ImageBackground source={{ uri: IMG.remedyRudraksha }} style={styles.rudrakshaBanner} imageStyle={{ borderRadius: 12 }}>
-          <View style={styles.rudrakshaOverlay}>
-            <Text style={styles.rudrakshaTitle}>Find your Perfect Rudraksha in a 1-on-1 session</Text>
-            <Text style={styles.rudrakshaSub}>with our certified Rudraksha Expert at just ₹199/-</Text>
-            <TouchableOpacity style={styles.rudrakshaBtn} onPress={() => router.push('/store')}>
-              <Text style={styles.rudrakshaBtnText}>Book your Rudraksha Consultation now</Text>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
-
-        {loading ? (
-          <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />
-        ) : (
-          <StoreSection products={products.slice(0, 8)} />
-        )}
-
-        <View style={styles.trendRow}>
-          <ImageBackground source={{ uri: IMG.remedyPooja }} style={styles.trendCard}>
-            <View style={styles.trendRibbon}><Text style={styles.ribbonText}>TRENDING</Text></View>
-            <Text style={styles.trendTitle}>Pooja</Text>
-          </ImageBackground>
-          <ImageBackground source={{ uri: IMG.remedyCombo }} style={styles.trendCard}>
-            <View style={styles.offerRibbon}><Text style={styles.ribbonText}>GET 2 @ INR 1100</Text></View>
-            <Text style={styles.trendTitle}>Problem Solving Remedy Combos</Text>
-          </ImageBackground>
+        {/* Services */}
+        <SectionHeader title="Expert Services" action="View All" onAction={goStore} />
+        <View style={styles.serviceGrid}>
+          {REMEDY_SERVICES.slice(0, 2).map((s) => (
+            <ServiceCard key={s.id} item={s} onPress={goStore} />
+          ))}
+        </View>
+        <View style={styles.serviceGridBottom}>
+          {REMEDY_SERVICES.slice(2).map((s) => (
+            <ServiceCard key={s.id} item={s} onPress={goStore} wide />
+          ))}
         </View>
 
-        {topSelling.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHead}>
-              <Text style={styles.sectionTitle}>Top Selling</Text>
-              <TouchableOpacity onPress={() => router.push('/store')}>
-                <Text style={styles.viewAll}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.circleScroll}>
-              {topSelling.map((item) => (
-                <CircleProduct key={item._id} item={item} onPress={() => router.push(`/store/${item._id}`)} />
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        {/* Offers */}
+        <SectionHeader title="Special Offers" />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.offerScroll}
+        >
+          {REMEDY_OFFERS.map((o) => (
+            <OfferBanner key={o.id} item={o} onPress={goStore} />
+          ))}
+        </ScrollView>
 
-        {newlyLaunched.length > 0 && (
-          <View style={[styles.section, { backgroundColor: COLORS.yellowLight, paddingBottom: 24 }]}>
-            <View style={styles.sectionHead}>
-              <Text style={styles.sectionTitle}>Newly Launched</Text>
-              <TouchableOpacity onPress={() => router.push('/store')}>
-                <Text style={styles.viewAll}>View All</Text>
-              </TouchableOpacity>
+        {/* Products */}
+        <SectionHeader title="Popular Products" subtitle="Handpicked for you" action="Store" onAction={goStore} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.productScroll}
+        >
+          {REMEDY_PRODUCTS.map((p) => (
+            <ProductCard key={p.id} item={p} onPress={goStore} />
+          ))}
+        </ScrollView>
+
+        {/* Pooja */}
+        <SectionHeader title="Book a Pooja" action="All Poojas" onAction={() => router.push('/pooja')} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.poojaScroll}
+        >
+          {REMEDY_POOJAS.map((p) => (
+            <PoojaCard key={p.id} item={p} onPress={() => router.push('/pooja')} />
+          ))}
+        </ScrollView>
+
+        {/* Trust */}
+        <View style={styles.trustRow}>
+          {REMEDY_TRUST.map((t) => (
+            <View key={t.label} style={styles.trustItem}>
+              <View style={styles.trustIcon}>
+                <Ionicons name={t.icon} size={18} color={COLORS.success} />
+              </View>
+              <Text style={styles.trustLabel}>{t.label}</Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.circleScroll}>
-              {newlyLaunched.map((item) => (
-                <CircleProduct key={item._id} item={item} onPress={() => router.push(`/store/${item._id}`)} />
-              ))}
-            </ScrollView>
+          ))}
+        </View>
+
+        {/* CTA */}
+        <TouchableOpacity style={styles.bottomCta} onPress={goStore} activeOpacity={0.9}>
+          <View>
+            <Text style={styles.bottomCtaTitle}>Need personal guidance?</Text>
+            <Text style={styles.bottomCtaSub}>Talk to our remedy expert — first 5 min free</Text>
           </View>
-        )}
+          <View style={styles.bottomCtaBtn}>
+            <Ionicons name="call" size={18} color="#FFF" />
+          </View>
+        </TouchableOpacity>
       </ScrollView>
 
       <DrawerMenu visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
-  featuredRow: { flexDirection: 'row', paddingHorizontal: 14, gap: 10, marginTop: 12 },
-  cardLeft: { flex: 1, height: 160 },
-  cardRight: { flex: 1, height: 160 },
-  cardFull: { height: 160, marginHorizontal: 14, marginTop: 10 },
-  featuredCard: { borderRadius: 10, overflow: 'hidden', justifyContent: 'flex-end' },
-  featuredImg: { borderRadius: 10 },
-  featuredOverlay: { backgroundColor: 'rgba(0,0,0,0.45)', padding: 12 },
-  featuredTitle: { color: '#FFF', fontSize: 15, fontWeight: '800' },
-  priceBadge: {
-    position: 'absolute', top: 10, left: 10, zIndex: 2,
-    backgroundColor: COLORS.error, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4,
+  screen: { backgroundColor: COLORS.cream },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 14,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOW,
   },
-  priceBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '700' },
-  statsBox: {
-    flexDirection: 'row', marginHorizontal: 14, marginTop: 14,
-    backgroundColor: COLORS.yellowLight, borderRadius: 10, borderWidth: 1, borderColor: COLORS.primary,
+  searchPlaceholder: { flex: 1, fontSize: 13, color: COLORS.textLight },
+  filterChip: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: COLORS.yellowLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hero: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    backgroundColor: COLORS.bannerDark,
+    borderRadius: 16,
+    padding: 18,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    minHeight: 150,
+  },
+  heroContent: { flex: 1, zIndex: 1 },
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(253,185,19,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 10,
+  },
+  heroBadgeText: { fontSize: 9, fontWeight: '800', color: COLORS.primary, letterSpacing: 0.5 },
+  heroTitle: { fontSize: 20, fontWeight: '800', color: '#FFF', lineHeight: 28 },
+  heroSub: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 6, lineHeight: 16 },
+  heroBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 14,
+  },
+  heroBtnText: { fontSize: 12, fontWeight: '800', color: COLORS.text },
+  heroDecor: {
+    position: 'absolute',
+    right: -8,
+    bottom: -8,
+    opacity: 0.9,
+  },
+  sectionHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    marginTop: 22,
+    marginBottom: 12,
+  },
+  sectionHeadLeft: { flex: 1 },
+  sectionTitle: { fontSize: 17, fontWeight: '800', color: COLORS.text },
+  sectionSub: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2 },
+  viewAll: { fontSize: 13, color: COLORS.link, fontWeight: '700' },
+  catScroll: { paddingHorizontal: 16, gap: 14 },
+  catItem: { alignItems: 'center', width: 72 },
+  catCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  catLabel: { fontSize: 10, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
+  problemScroll: { paddingHorizontal: 16, gap: 8 },
+  problemPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  problemText: { fontSize: 12, fontWeight: '700' },
+  problemHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 10,
+    backgroundColor: COLORS.yellowLight,
+    padding: 10,
+    borderRadius: 10,
+  },
+  problemHintText: { flex: 1, fontSize: 12, color: COLORS.textSecondary },
+  problemHintBold: { fontWeight: '800', color: COLORS.text },
+  statsRow: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOW_MD,
+  },
+  statItem: { flex: 1, alignItems: 'center' },
+  statBorder: { borderRightWidth: 1, borderRightColor: COLORS.borderLight },
+  statNum: { fontSize: 15, fontWeight: '800', color: COLORS.text },
+  statLabel: { fontSize: 10, color: COLORS.textSecondary, marginTop: 3, fontWeight: '600' },
+  serviceGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  serviceGridBottom: {
+    paddingHorizontal: 16,
+    gap: 12,
+    marginTop: 12,
+  },
+  serviceCard: {
+    width: CARD_W,
+    height: 180,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: COLORS.border,
+  },
+  serviceCardWide: { width: '100%', height: 160 },
+  serviceImg: { ...StyleSheet.absoluteFillObject },
+  serviceOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  serviceTag: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    zIndex: 2,
+  },
+  serviceTagText: { color: '#FFF', fontSize: 9, fontWeight: '800' },
+  serviceContent: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 12,
+    zIndex: 2,
+  },
+  serviceTitle: { color: '#FFF', fontSize: 14, fontWeight: '800' },
+  serviceSub: { color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 2 },
+  serviceFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  servicePrice: { color: COLORS.primary, fontSize: 13, fontWeight: '800' },
+  serviceArrow: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  offerScroll: { paddingHorizontal: 16, gap: 12 },
+  offerCard: {
+    width: SCREEN_W * 0.78,
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOW,
+  },
+  offerImg: { width: 110, height: '100%', minHeight: 110 },
+  offerContent: { flex: 1, padding: 12, justifyContent: 'center' },
+  offerTitle: { fontSize: 14, fontWeight: '800', color: COLORS.text },
+  offerSub: { fontSize: 11, color: COLORS.textSecondary, marginTop: 4, lineHeight: 15 },
+  offerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  offerPrice: { fontSize: 15, fontWeight: '800' },
+  offerCta: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  offerCtaText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
+  productScroll: { paddingHorizontal: 16, gap: 12 },
+  productCard: {
+    width: 150,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOW,
+  },
+  productImgWrap: { position: 'relative', marginBottom: 8 },
+  productImg: { width: '100%', height: 120, borderRadius: 10, backgroundColor: COLORS.yellowLight },
+  productTag: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  productTagText: { fontSize: 8, fontWeight: '800', color: COLORS.text },
+  discountBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: COLORS.error,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  discountText: { fontSize: 8, fontWeight: '800', color: '#FFF' },
+  productName: { fontSize: 12, fontWeight: '700', color: COLORS.text, lineHeight: 16, minHeight: 32 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4 },
+  ratingText: { fontSize: 11, fontWeight: '700', color: COLORS.text },
+  reviewText: { fontSize: 10, color: COLORS.textLight },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  price: { fontSize: 14, fontWeight: '800', color: COLORS.text },
+  mrp: { fontSize: 11, color: COLORS.textLight, textDecorationLine: 'line-through' },
+  addBtn: {
+    marginTop: 8,
+    backgroundColor: COLORS.yellowLight,
+    borderRadius: 8,
+    paddingVertical: 7,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  addBtnText: { fontSize: 11, fontWeight: '800', color: COLORS.text },
+  poojaScroll: { paddingHorizontal: 16, gap: 12 },
+  poojaCard: {
+    width: 140,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  poojaImg: { width: '100%', height: 100, justifyContent: 'flex-start' },
+  poojaImgRadius: { borderTopLeftRadius: 14, borderTopRightRadius: 14 },
+  poojaBadge: {
+    alignSelf: 'flex-start',
+    margin: 8,
+    backgroundColor: '#E91E63',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  poojaBadgeText: { color: '#FFF', fontSize: 8, fontWeight: '800' },
+  poojaTitle: { fontSize: 12, fontWeight: '800', color: COLORS.text, paddingHorizontal: 10, marginTop: 8 },
+  poojaLoc: { fontSize: 10, color: COLORS.textSecondary, paddingHorizontal: 10, marginTop: 2 },
+  poojaPrice: { fontSize: 13, fontWeight: '800', color: COLORS.success, padding: 10 },
+  trustRow: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 22,
+    backgroundColor: COLORS.successLight,
+    borderRadius: 12,
     paddingVertical: 14,
+    paddingHorizontal: 8,
   },
-  stat: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: 14, fontWeight: '800', color: COLORS.text },
-  statLabel: { fontSize: 9, color: COLORS.textSecondary, marginTop: 2, fontWeight: '600' },
-  rudrakshaBanner: { marginHorizontal: 14, marginTop: 14, borderRadius: 12, overflow: 'hidden', minHeight: 140 },
-  rudrakshaOverlay: { backgroundColor: 'rgba(255,250,240,0.92)', padding: 16 },
-  rudrakshaTitle: { fontSize: 15, fontWeight: '800', color: COLORS.text, lineHeight: 22 },
-  rudrakshaSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 4 },
-  rudrakshaBtn: {
-    backgroundColor: '#5D4037', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 14, marginTop: 10, alignSelf: 'flex-start',
+  trustItem: { flex: 1, alignItems: 'center', gap: 4 },
+  trustIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  rudrakshaBtnText: { color: '#FFF', fontSize: 11, fontWeight: '700' },
-  trendRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, marginTop: 14 },
-  trendCard: { flex: 1, height: 140, borderRadius: 10, overflow: 'hidden', justifyContent: 'flex-end', padding: 10 },
-  trendRibbon: { position: 'absolute', top: 8, left: 8, backgroundColor: '#E91E63', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 3 },
-  offerRibbon: { position: 'absolute', top: 8, left: 8, right: 8, backgroundColor: COLORS.error, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 3 },
-  ribbonText: { color: '#FFF', fontSize: 9, fontWeight: '800' },
-  trendTitle: { color: '#FFF', fontSize: 14, fontWeight: '800', textShadowColor: '#000', textShadowRadius: 4 },
-  section: { marginTop: 14, paddingTop: 14 },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, marginBottom: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text },
-  viewAll: { fontSize: 13, color: COLORS.link, fontWeight: '600' },
-  circleScroll: { paddingHorizontal: 14, gap: 14 },
-  circleItem: { alignItems: 'center', width: 90 },
-  circleImg: { width: 80, height: 80, borderRadius: 40, backgroundColor: COLORS.border },
-  circleLabel: { fontSize: 10, fontWeight: '600', color: COLORS.text, textAlign: 'center', marginTop: 6, lineHeight: 13 },
+  trustLabel: { fontSize: 9, fontWeight: '700', color: COLORS.text, textAlign: 'center' },
+  bottomCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: COLORS.bannerDark,
+    borderRadius: 14,
+    padding: 16,
+  },
+  bottomCtaTitle: { fontSize: 14, fontWeight: '800', color: '#FFF' },
+  bottomCtaSub: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 3 },
+  bottomCtaBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

@@ -1,0 +1,19 @@
+---
+pid: 7536
+cwd: "C:\Users\hi\OneDrive\Desktop\all app\Astro-App"
+command: "cd \"C:\\Users\\hi\\OneDrive\\Desktop\\all app\\Astro-App\\astro-app\"; npm install expo-camera socket.io-client --legacy-peer-deps"
+started_at: 2026-07-03T18:17:48.840Z
+running_for_ms: 1140002  
+---
+
+added 13 packages, and audited 735 packages in 23s
+
+63 packages are looking for funding
+  run `npm fund` for details
+
+13 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.

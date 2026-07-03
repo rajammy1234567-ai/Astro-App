@@ -29,6 +29,7 @@ const startServer = async () => {
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Astro App API running on http://localhost:${PORT}`);
     console.log(`   Health: http://localhost:${PORT}/api/health`);
+    console.log('   💾 Admin data permanently saved — edit/delete only from admin panel');
     if (isEmailConfigured()) {
       console.log(`   Gmail OTP: ✅ enabled (${process.env.SMTP_USER})`);
     } else {

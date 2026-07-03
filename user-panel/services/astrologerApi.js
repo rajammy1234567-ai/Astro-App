@@ -7,4 +7,6 @@ export const astrologerApi = {
   getChatList: () => api.get(`${ENDPOINTS.ASTROLOGERS}/chat-list`),
   getCallList: () => api.get(`${ENDPOINTS.ASTROLOGERS}/call-list`),
   book: (data) => api.post(`${ENDPOINTS.ASTROLOGERS}/book`, data),
+  // alias — same as session book
+  startSession: (data) => api.post(`${ENDPOINTS.SESSIONS}/book`, data),
 };

@@ -1,35 +1,33 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Screen from '../../components/common/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { COLORS } from '../../constants/colors';
 
 export default function OtpScreen() {
-  const { phone, email, loginType, viaEmail, devOtp } = useLocalSearchParams();
+  const { email, viaEmail, devOtp, authMode, name } = useLocalSearchParams();
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
   const [sentViaEmail, setSentViaEmail] = useState(viaEmail === '1');
-  const [devOtpHint, setDevOtpHint] = useState(
-    viaEmail === '1' ? '' : (devOtp || '123456')
-  );
+  const [devOtpHint, setDevOtpHint] = useState(viaEmail === '1' ? '' : (devOtp || '123456'));
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { verifyOtp, sendOtp, verifying, otpSending, error, clearError } = useAuth();
   const canVerify = otp.length === 6;
-  const isEmail = loginType === 'email' || !!email;
   const showDevHint = !sentViaEmail;
 
   const handleVerify = async () => {
     if (!canVerify) return;
     clearError();
 
-    const payload = isEmail
-      ? { loginType: 'email', email, otp }
-      : { loginType: 'phone', phone, otp };
-
-    const result = await verifyOtp(payload);
+    const signupName = authMode === 'signup' && name ? String(name) : undefined;
+    const result = await verifyOtp({
+      loginType: 'email',
+      email,
+      otp,
+      name: signupName,
+    });
 
     if (result.meta.requestStatus === 'fulfilled') {
       const isNew = result.payload?.isNewUser;
@@ -49,11 +47,8 @@ export default function OtpScreen() {
     if (otpSending) return;
     setResending(true);
     clearError();
-    const payload = isEmail
-      ? { loginType: 'email', email }
-      : { loginType: 'phone', phone };
 
-    const result = await sendOtp(payload);
+    const result = await sendOtp({ loginType: 'email', email });
     setResending(false);
 
     if (result.meta.requestStatus === 'fulfilled') {
@@ -61,7 +56,7 @@ export default function OtpScreen() {
       if (emailSent) {
         setSentViaEmail(true);
         setDevOtpHint('');
-        Alert.alert('OTP Sent', 'Check your Gmail inbox and spam folder.');
+        Alert.alert('OTP Sent', 'Check your email inbox and spam folder.');
       } else {
         setSentViaEmail(false);
         if (newDevOtp) setDevOtpHint(newDevOtp);
@@ -71,7 +66,7 @@ export default function OtpScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+    <Screen edges={['top', 'left', 'right', 'bottom']} keyboard backgroundColor={COLORS.surface} style={styles.container}>
       <TouchableOpacity style={styles.back} onPress={() => router.back()} activeOpacity={0.7}>
         <Ionicons name="chevron-back" size={22} color={COLORS.text} />
         <Text style={styles.backText}>Back</Text>
@@ -81,11 +76,11 @@ export default function OtpScreen() {
         <Ionicons name="shield-checkmark-outline" size={40} color={COLORS.text} />
       </View>
 
-      <Text style={styles.title}>Enter OTP</Text>
+      <Text style={styles.title}>{authMode === 'signup' ? 'Verify & Create Account' : 'Enter OTP'}</Text>
       <Text style={styles.subtitle}>
         {sentViaEmail
           ? `OTP sent to ${email}. Check inbox & spam folder.`
-          : `Sent to ${isEmail ? email : `+91 ${phone}`}`}
+          : `OTP for ${email}`}
       </Text>
 
       <TextInput
@@ -122,15 +117,14 @@ export default function OtpScreen() {
         <Text style={styles.resendText}>Didn't receive OTP? </Text>
         <Text style={styles.resendLink}>{resending || otpSending ? 'Sending...' : 'Resend'}</Text>
       </TouchableOpacity>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
     paddingHorizontal: 28,
+    paddingTop: 12,
   },
   back: {
     flexDirection: 'row',

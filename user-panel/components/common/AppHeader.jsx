@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,13 +13,13 @@ export default function AppHeader({
   onMenuPress,
   onSearchPress,
 }) {
-  const insets = useSafeAreaInsets();
+  const safe = useScreenInsets();
   const router = useRouter();
   const user = useSelector((s) => s.auth.user);
   const displayName = user?.name?.split(' ')[0] || 'Guest';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 6 }]}>
+    <View style={[styles.container, { paddingTop: safe.top(6) }]}>
       <View style={styles.row}>
         <TouchableOpacity
           style={styles.left}

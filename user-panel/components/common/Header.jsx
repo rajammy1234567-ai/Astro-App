@@ -1,15 +1,15 @@
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 
 export default function Header({ title, showBack = true, rightComponent, light = true }) {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const safe = useScreenInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 4 }, light && styles.light]}>
+    <View style={[styles.container, { paddingTop: safe.top(4) }, light && styles.light]}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.row}>
         {showBack ? (

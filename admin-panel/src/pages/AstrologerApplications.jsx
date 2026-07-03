@@ -61,6 +61,12 @@ export default function AstrologerApplications() {
 
   const handleSchedule = async (e) => {
     e.preventDefault();
+    const link = interviewForm.googleMeetLink?.trim();
+    if (!link?.startsWith('http://') && !link?.startsWith('https://')) {
+      setFormError('Google Meet link https:// se start hona chahiye');
+      toast.error('Valid Google Meet URL required (https://meet.google.com/...)');
+      return;
+    }
     setSaving(true);
     setFormError('');
     try {
@@ -160,7 +166,17 @@ export default function AstrologerApplications() {
             <div className="form-group"><label>Interview Date *</label><input type="date" required value={interviewForm.date} onChange={(e) => setInterviewForm({ ...interviewForm, date: e.target.value })} /></div>
             <div className="form-group"><label>Day *</label><input required placeholder="Monday" value={interviewForm.day} onChange={(e) => setInterviewForm({ ...interviewForm, day: e.target.value })} /></div>
             <div className="form-group"><label>Time *</label><input required placeholder="10:00 AM" value={interviewForm.time} onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })} /></div>
-            <div className="form-group full"><label>Google Meet Link *</label><input required value={interviewForm.googleMeetLink} onChange={(e) => setInterviewForm({ ...interviewForm, googleMeetLink: e.target.value })} /></div>
+            <div className="form-group full">
+              <label>Google Meet Link *</label>
+              <input
+                required
+                type="url"
+                placeholder="https://meet.google.com/abc-defg-hij"
+                value={interviewForm.googleMeetLink}
+                onChange={(e) => setInterviewForm({ ...interviewForm, googleMeetLink: e.target.value })}
+              />
+              <small style={{ color: '#64748b' }}>Full https:// link paste karo — random text se app crash hogi</small>
+            </div>
             <div className="form-group full"><label>Notes</label><textarea rows={2} value={interviewForm.notes} onChange={(e) => setInterviewForm({ ...interviewForm, notes: e.target.value })} /></div>
             {formError && <p className="form-error full">{formError}</p>}
             <div className="form-actions full">

@@ -7,7 +7,7 @@ export default function Blogs() {
       subtitle="Manage astrology blog articles"
       endpoint="/blogs"
       wide
-      defaultItem={{ title: '', excerpt: '', content: '', author: 'Astrologer Anshika', category: 'Astrology', image: '', views: '0', isPublished: true }}
+      defaultItem={{ title: '', excerpt: '', content: 'Write your blog content here...', author: 'Astrologer Anshika', category: 'Astrology', image: '', views: '0', isPublished: true }}
       columns={[
         { key: 'title', label: 'Title', render: (r) => (
           <div className="cell-with-img">
@@ -22,7 +22,7 @@ export default function Blogs() {
       fields={[
         { key: 'title', label: 'Title', required: true, full: true },
         { key: 'excerpt', label: 'Excerpt', type: 'textarea', full: true },
-        { key: 'content', label: 'Content', type: 'textarea', rows: 5, full: true },
+        { key: 'content', label: 'Content', type: 'textarea', rows: 5, full: true, required: true },
         { key: 'author', label: 'Author' },
         { key: 'category', label: 'Category' },
         { key: 'views', label: 'Views' },

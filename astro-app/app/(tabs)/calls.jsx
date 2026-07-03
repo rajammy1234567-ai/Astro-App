@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { astroApi } from '../../services/astroApi';
-import { colors } from '../../constants/theme';
+import { colors, COLORS } from '../../constants/theme';
 
 export default function CallsScreen() {
   const { astrologer, updateProfile, setOnline } = useAuth();
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   cardSub: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
   onlineBtn: { marginTop: 14, backgroundColor: colors.primary, borderRadius: 10, padding: 12, alignItems: 'center' },
-  onlineBtnText: { color: '#fff', fontWeight: '700' },
+  onlineBtnText: { color: COLORS.text, fontWeight: '700' },
   rateCard: {
     backgroundColor: colors.primaryLight, borderRadius: 14, padding: 16, marginBottom: 20,
     alignItems: 'center', borderWidth: 1, borderColor: colors.primary,

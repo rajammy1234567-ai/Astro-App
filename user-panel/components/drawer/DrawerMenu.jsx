@@ -1,7 +1,8 @@
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import { safeOpenUrl } from '../../utils/openUrl';
 import RemoteImage from '../common/RemoteImage';
 import { useRouter, usePathname } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 import { DRAWER_MENU } from '../../constants/mockData';
@@ -19,7 +20,7 @@ const isRouteActive = (pathname, route) => {
 export default function DrawerMenu({ visible, onClose }) {
   const router = useRouter();
   const pathname = usePathname();
-  const insets = useSafeAreaInsets();
+  const { top, bottom } = useScreenInsets();
   const user = useSelector((s) => s.auth.user);
 
   const displayName = user?.name || 'Guest User';
@@ -38,7 +39,7 @@ export default function DrawerMenu({ visible, onClose }) {
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
         <TouchableOpacity
           activeOpacity={1}
-          style={[styles.drawer, { paddingTop: insets.top + 12 }]}
+          style={[styles.drawer, { paddingTop: top(12) }]}
           onPress={(e) => e.stopPropagation()}
         >
           <TouchableOpacity
@@ -85,7 +86,7 @@ export default function DrawerMenu({ visible, onClose }) {
             })}
           </ScrollView>
 
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: bottom(16) }]}>
             <Text style={styles.alsoText}>Also available on</Text>
             <View style={styles.socialRow}>
               {[
@@ -94,7 +95,7 @@ export default function DrawerMenu({ visible, onClose }) {
                 { icon: 'logo-instagram', url: 'https://instagram.com' },
                 { icon: 'logo-linkedin', url: 'https://linkedin.com' },
               ].map(({ icon, url }) => (
-                <TouchableOpacity key={icon} onPress={() => Linking.openURL(url)}>
+                <TouchableOpacity key={icon} onPress={() => safeOpenUrl(url, 'social link')}>
                   <Ionicons name={icon} size={22} color={COLORS.textSecondary} />
                 </TouchableOpacity>
               ))}

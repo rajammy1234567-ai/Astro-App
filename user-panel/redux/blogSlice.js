@@ -1,8 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { blogApi } from '../services/blogApi';
 
-export const fetchBlogs = createAsyncThunk('blog/fetchAll', async (params) => {
-  return blogApi.getAll(params);
+export const fetchBlogs = createAsyncThunk('blog/fetchAll', async (params, { rejectWithValue }) => {
+  try {
+    return await blogApi.getAll(params);
+  } catch (err) {
+    return rejectWithValue(err);
+  }
 });
 
 const blogSlice = createSlice({
@@ -25,7 +29,8 @@ const blogSlice = createSlice({
       })
       .addCase(fetchBlogs.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload?.message || action.error?.message;
+        state.list = [];
       });
   },
 });

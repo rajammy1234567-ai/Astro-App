@@ -1,4 +1,5 @@
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -36,7 +37,7 @@ export default function StoreScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header
         title="Astro Store"
         showBack={false}
@@ -124,12 +125,11 @@ export default function StoreScreen() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   list: { padding: 12, paddingBottom: 32 },
   emptyList: { flexGrow: 1 },
   cartIcon: { padding: 4, position: 'relative' },

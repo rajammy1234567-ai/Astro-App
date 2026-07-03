@@ -45,7 +45,15 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.info} onPress={openDetails} activeOpacity={0.85}>
-          <Text style={styles.name}>{astrologer.name}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{astrologer.name}</Text>
+            {astrologer.isOnline && (
+              <View style={styles.onlineBadge}>
+                <View style={styles.onlineDot} />
+                <Text style={styles.onlineText}>Online</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.line}>{astrologer.specialty}</Text>
           <Text style={styles.line}>{astrologer.languages?.join(', ')}</Text>
           <Text style={styles.exp}>Exp- {astrologer.experience} Years</Text>
@@ -57,12 +65,12 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
               <Text style={styles.orders}>{formatOrders(astrologer.orders)}</Text>
             )}
           </View>
-          <Text style={styles.price}>
-            {astrologer.originalPrice && (
-              <Text style={styles.strike}>₹ {astrologer.originalPrice} </Text>
-            )}
-            ₹ {astrologer.pricePerMin}/min
-          </Text>
+          <Text style={styles.price}>₹ {astrologer.pricePerMin}/min</Text>
+          {astrologer.pricingPackages?.length > 1 && (
+            <Text style={styles.packages}>
+              {astrologer.pricingPackages.slice(1, 3).map((p) => `${p.minutes}m ₹${p.price}`).join(' · ')}
+            </Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.right}>
@@ -115,7 +123,12 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   info: { flex: 1 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   name: { fontSize: 16, fontWeight: '700', color: COLORS.text },
+  onlineBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  onlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.success },
+  onlineText: { fontSize: 10, fontWeight: '700', color: COLORS.success },
+  packages: { fontSize: 10, color: COLORS.textSecondary, marginTop: 2 },
   line: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
   exp: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 6 },

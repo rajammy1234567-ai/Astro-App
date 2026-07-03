@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +38,7 @@ export default function ProfileScreen() {
   const displayName = user?.name || 'User';
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="My Profile" />
 
       {loading ? (
@@ -80,12 +81,11 @@ export default function ProfileScreen() {
           ))}
         </ScrollView>
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   scroll: { padding: 16, paddingBottom: 32 },
   profileCard: {
     backgroundColor: COLORS.surface, borderRadius: 12, padding: 24,

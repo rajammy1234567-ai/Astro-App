@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, ActivityIndicator,
-  TouchableOpacity, Alert, Linking,
+  TouchableOpacity, Alert,
 } from 'react-native';
+import Screen from '../../components/common/Screen';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
@@ -11,6 +12,7 @@ import Button from '../../components/common/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { astrologerApplicationApi } from '../../services/astrologerApplicationApi';
 import { COLORS } from '../../constants/colors';
+import { safeOpenUrl } from '../../utils/openUrl';
 
 const STATUS_CONFIG = {
   pending: { label: 'Under Review', color: '#F59E0B', icon: 'time-outline' },
@@ -21,7 +23,7 @@ const STATUS_CONFIG = {
 
 export default function BecomeAstrologerScreen() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, initialized, sessionLoading } = useAuth();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -30,15 +32,17 @@ export default function BecomeAstrologerScreen() {
   });
 
   useEffect(() => {
+    if (!initialized || sessionLoading) return;
     if (!isAuthenticated) {
       setLoading(false);
       return;
     }
+    setLoading(true);
     astrologerApplicationApi.getMy()
       .then(setApplication)
       .catch(() => setApplication(null))
       .finally(() => setLoading(false));
-  }, [isAuthenticated]);
+  }, [isAuthenticated, initialized, sessionLoading]);
 
   useEffect(() => {
     if (user) {
@@ -74,33 +78,39 @@ export default function BecomeAstrologerScreen() {
     }
   };
 
+  if (!initialized || sessionLoading || loading) {
+    return (
+      <Screen edges={['left', 'right', 'bottom']}>
+        <Header title="Become an Astrologer" />
+        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
+      </Screen>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
-      <View style={styles.container}>
+      <Screen edges={['left', 'right', 'bottom']}>
         <Header title="Become an Astrologer" />
         <View style={styles.center}>
           <Ionicons name="person-circle-outline" size={64} color={COLORS.textLight} />
           <Text style={styles.loginTitle}>Login Required</Text>
-          <Text style={styles.loginSub}>Please login to apply as an astrologer</Text>
-          <Button title="Login Now" onPress={() => router.push('/(auth)/login')} style={{ marginTop: 20 }} />
+          <Text style={styles.loginSub}>Please login or create account to apply as an astrologer</Text>
+          <Button title="Login" onPress={() => router.push('/(auth)/login')} style={{ marginTop: 20, width: '80%' }} />
+          <Button
+            title="Create Account"
+            variant="outline"
+            onPress={() => router.push('/(auth)/login?mode=signup')}
+            style={{ marginTop: 12, width: '80%' }}
+          />
         </View>
-      </View>
-    );
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Header title="Become an Astrologer" />
-        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
-      </View>
+      </Screen>
     );
   }
 
   const status = application ? STATUS_CONFIG[application.status] : null;
 
   return (
-    <View style={styles.container}>
+    <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Become an Astrologer" />
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -129,7 +139,7 @@ export default function BecomeAstrologerScreen() {
                 )}
                 <TouchableOpacity
                   style={styles.meetBtn}
-                  onPress={() => Linking.openURL(application.interview.googleMeetLink)}
+                  onPress={() => safeOpenUrl(application.interview.googleMeetLink, 'Google Meet link')}
                 >
                   <Ionicons name="videocam" size={20} color="#FFF" />
                   <Text style={styles.meetBtnText}>Join Google Meet</Text>
@@ -151,7 +161,7 @@ export default function BecomeAstrologerScreen() {
                 </View>
                 <TouchableOpacity
                   style={styles.panelLinkBtn}
-                  onPress={() => Linking.openURL('astro-app://login')}
+                  onPress={() => safeOpenUrl('astro-app://login', 'astrologer panel')}
                 >
                   <Ionicons name="open-outline" size={18} color="#FFF" />
                   <Text style={styles.panelLinkText}>Open Astrologer Panel</Text>
@@ -194,7 +204,7 @@ export default function BecomeAstrologerScreen() {
           <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
@@ -209,7 +219,6 @@ function DetailRow({ icon, label, value }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
   scroll: { padding: 16, paddingBottom: 32 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   loginTitle: { fontSize: 20, fontWeight: '700', color: COLORS.text, marginTop: 16 },

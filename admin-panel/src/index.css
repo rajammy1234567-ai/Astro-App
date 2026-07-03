@@ -354,3 +354,29 @@ button, .nav-link, .btn-primary, .btn-outline, .btn-danger {
 }
 button:disabled { cursor: not-allowed; }
 .modal-overlay { pointer-events: auto; }
+
+.detail-grid h4 { margin: 20px 0 10px; font-size: 15px; }
+.detail-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.detail-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detail-card span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+.detail-card strong { font-size: 15px; }
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 4px 0;
+}
