@@ -1,4 +1,4 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 const path = require('path');
 const User = require('../models/User');
 const Wallet = require('../models/Wallet');
@@ -109,7 +109,7 @@ const BLOGS = [
 
 const NEWS = [
   {
-    title: "Astrotalk's E-commerce Venture Crosses ₹140 Crore in First Full Year",
+    title: "Astrotalk's E-commerce Venture Crosses Γé╣140 Crore in First Full Year",
     source: 'Opportunity India',
     image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
   },
@@ -317,14 +317,14 @@ const seedDatabase = async () => {
   await seedAdmin();
 
   if (fs.existsSync(SEED_MARKER) || await hasSavedContent()) {
-    console.log('✅ Saved data found — admin uploads safe (no demo overwrite)');
+    console.log('Γ£à Saved data found ΓÇö admin uploads safe (no demo overwrite)');
     return;
   }
 
   if (process.env.SEED_DEMO_DATA === 'false') {
     fs.mkdirSync(path.dirname(SEED_MARKER), { recursive: true });
     fs.writeFileSync(SEED_MARKER, new Date().toISOString());
-    console.log('✅ Fresh database — demo seed skipped (SEED_DEMO_DATA=false)');
+    console.log('Γ£à Fresh database ΓÇö demo seed skipped (SEED_DEMO_DATA=false)');
     return;
   }
 

@@ -1,4 +1,4 @@
-const { RtcTokenBuilder, RtcRole } = require('agora-token');
+﻿const { RtcTokenBuilder, RtcRole } = require('agora-token');
 
 const getAgoraConfig = () => {
   const appId = process.env.AGORA_APP_ID?.trim();

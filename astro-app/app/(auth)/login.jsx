@@ -35,14 +35,18 @@ export default function Login() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.hero}>
-            <AppLogo size={80} />
+            <AppLogo size={90} />
             <Text style={styles.brand}>AstroTalk</Text>
             <Text style={styles.tagline}>Partner Panel</Text>
-            <Text style={styles.subtitle}>Manage chats, calls & your profile</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>Astrologer Login</Text>
+            </View>
+            <Text style={styles.subtitle}>Manage your availability, chats, calls and earnings.</Text>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Astrologer Sign In</Text>
+            <Text style={styles.cardTitle}>Welcome Back</Text>
+            <Text style={styles.cardSub}>Sign in with credentials sent after selection or interview.</Text>
 
             <Text style={styles.label}>Phone Number</Text>
             <TextInput
@@ -68,11 +72,11 @@ export default function Login() {
               {loading ? (
                 <ActivityIndicator color={COLORS.text} />
               ) : (
-                <Text style={styles.btnText}>SIGN IN</Text>
+                <Text style={styles.btnText}>Sign In</Text>
               )}
             </TouchableOpacity>
 
-            <Text style={styles.hint}>Demo: 9876543210 / astro123</Text>
+            <Text style={styles.hint}>Use the phone and password sent by admin after selection. Example: 9876543210 / astro123</Text>
           </View>
 
           <Text style={styles.steps}>
@@ -95,46 +99,63 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 14, fontWeight: '700', color: COLORS.primaryDark, marginTop: 2 },
   subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
   card: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: 20,
+    padding: 22,
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    ...shadowStyle({ offsetY: 4, blur: 12, opacity: 0.06, elevation: 3 }),
+    borderColor: 'rgba(253, 185, 19, 0.18)',
+    ...shadowStyle({ offsetY: 6, blur: 18, opacity: 0.12, elevation: 4 }),
   },
   cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     color: COLORS.text,
     textAlign: 'center',
-    marginBottom: 18,
-  },
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 4 },
-  input: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    padding: 14,
-    color: colors.text,
-    fontSize: 15,
     marginBottom: 8,
   },
-  btn: {
-    backgroundColor: COLORS.yellow,
-    borderRadius: 10,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  btnText: { color: COLORS.text, fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },
-  hint: { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 14 },
-  steps: {
-    fontSize: 11,
+  cardSub: {
+    fontSize: 13,
     color: colors.textMuted,
     textAlign: 'center',
-    marginTop: 20,
-    lineHeight: 16,
+    marginBottom: 18,
+    lineHeight: 18,
   },
-  apiHint: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 8 },
+  label: { fontSize: 13, fontWeight: '700', color: COLORS.text, marginBottom: 8, marginTop: 12 },
+  input: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 16,
+    color: colors.text,
+    fontSize: 15,
+    marginBottom: 6,
+  },
+  btn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 18,
+    ...shadowStyle({ offsetY: 4, blur: 12, opacity: 0.15, elevation: 3 }),
+  },
+  btnText: { color: COLORS.text, fontWeight: '800', fontSize: 15, letterSpacing: 0.4 },
+  hint: { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 14, lineHeight: 18 },
+  badge: {
+    alignSelf: 'center',
+    backgroundColor: COLORS.yellow,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginTop: 10,
+  },
+  badgeText: { fontSize: 11, fontWeight: '700', color: COLORS.text },
+  steps: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 24,
+    lineHeight: 18,
+  },
+  apiHint: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 6 },
 });

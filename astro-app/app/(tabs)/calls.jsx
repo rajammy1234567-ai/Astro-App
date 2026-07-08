@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, Switch, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity,
+  View, Text, StyleSheet, Switch, ScrollView, ActivityIndicator,
+  RefreshControl, TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { astroApi } from '../../services/astroApi';
 import { colors, COLORS } from '../../constants/theme';
 
 export default function CallsScreen() {
   const { astrologer, updateProfile, setOnline } = useAuth();
-  const [chats, setChats] = useState([]);
+  const router = useRouter();
+  const [activeSessions, setActiveSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [toggling, setToggling] = useState(false);
@@ -17,9 +21,9 @@ export default function CallsScreen() {
   const load = useCallback(async () => {
     try {
       const data = await astroApi.getChats();
-      setChats(Array.isArray(data) ? data.filter((c) => c.isActive) : []);
+      setActiveSessions(Array.isArray(data) ? data.filter((c) => c.isActive) : []);
     } catch {
-      setChats([]);
+      setActiveSessions([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -42,64 +46,122 @@ export default function CallsScreen() {
     await updateProfile({ callEnabled: true });
   };
 
+  const callEnabled = !!astrologer?.callEnabled;
+  const isOnline = !!astrologer?.isOnline;
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(); }}
+            tintColor={COLORS.primary}
+          />
+        }
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>Calls</Text>
-        <Text style={styles.sub}>Voice call consultations</Text>
-
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>Accept Call Requests</Text>
-              <Text style={styles.cardSub}>Users can call when you are online</Text>
-            </View>
-            <Switch
-              value={!!astrologer?.callEnabled}
-              onValueChange={toggleCall}
-              disabled={toggling}
-              trackColor={{ true: colors.success }}
-            />
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.heading}>Calls</Text>
+            <Text style={styles.sub}>Voice call consultations manage karo</Text>
           </View>
-          {!astrologer?.isOnline && (
-            <TouchableOpacity style={styles.onlineBtn} onPress={goOnline}>
-              <Text style={styles.onlineBtnText}>Go Online to Receive Calls</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.onlineChip}>
+            <View style={[styles.onlineDot, { backgroundColor: isOnline ? COLORS.success : colors.textMuted }]} />
+            <Text style={[styles.onlineText, { color: isOnline ? COLORS.success : colors.textMuted }]}>
+              {isOnline ? 'Online' : 'Offline'}
+            </Text>
+          </View>
         </View>
 
+        {/* Rate Card */}
         <View style={styles.rateCard}>
-          <Text style={styles.rateLabel}>Your Call Rate</Text>
-          <Text style={styles.rateVal}>₹{astrologer?.pricePerMin || 0}/min</Text>
-          <Text style={styles.rateHint}>Update from Profile → Edit Profile</Text>
+          <View style={styles.rateLeft}>
+            <View style={styles.rateIconWrap}>
+              <Ionicons name="cash-outline" size={22} color={COLORS.success} />
+            </View>
+            <View>
+              <Text style={styles.rateLabel}>Your Call Rate</Text>
+              <Text style={styles.rateHint}>Per minute billing</Text>
+            </View>
+          </View>
+          <Text style={styles.rateVal}>₹{astrologer?.pricePerMin || 0}<Text style={styles.rateUnit}>/min</Text></Text>
         </View>
 
+        {/* Call Toggle */}
+        <View style={[styles.toggleCard, callEnabled && styles.toggleCardActive]}>
+          <View style={styles.toggleLeft}>
+            <View style={[styles.toggleIconWrap, callEnabled ? styles.toggleIconActive : {}]}>
+              <Ionicons name={callEnabled ? 'call' : 'call-outline'} size={22} color={callEnabled ? '#fff' : colors.textMuted} />
+            </View>
+            <View>
+              <Text style={styles.toggleTitle}>Accept Call Requests</Text>
+              <Text style={styles.toggleSub}>
+                {callEnabled ? 'Users aapko call kar sakte hain' : 'Calls abhi disabled hain'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={callEnabled}
+            onValueChange={toggleCall}
+            disabled={toggling}
+            trackColor={{ true: COLORS.success, false: colors.border }}
+            thumbColor={callEnabled ? '#fff' : '#f0f0f0'}
+          />
+        </View>
+
+        {/* Go Online prompt */}
+        {!isOnline && (
+          <TouchableOpacity style={styles.goOnlineBtn} onPress={goOnline}>
+            <Ionicons name="radio-outline" size={20} color="#fff" />
+            <Text style={styles.goOnlineText}>Go Online to Receive Calls</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Edit Rate Hint */}
+        <TouchableOpacity style={styles.editRateHint} onPress={() => router.push('/profile/edit')}>
+          <Ionicons name="create-outline" size={15} color={COLORS.primary} />
+          <Text style={styles.editRateText}>Update your rate from Profile → Edit Profile</Text>
+          <Ionicons name="chevron-forward" size={15} color={COLORS.primary} />
+        </TouchableOpacity>
+
+        {/* Active Sessions */}
         <Text style={styles.sectionTitle}>Active Sessions</Text>
         {loading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
-        ) : chats.length === 0 ? (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyIcon}>📞</Text>
-            <Text style={styles.emptyText}>No active call/chat sessions</Text>
-            <Text style={styles.emptySub}>Go online & enable calls to receive users</Text>
+          <ActivityIndicator color={COLORS.primary} style={{ marginTop: 20 }} />
+        ) : activeSessions.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <View style={styles.emptyIconWrap}>
+              <Ionicons name="call-outline" size={32} color={COLORS.primary} />
+            </View>
+            <Text style={styles.emptyTitle}>No active sessions</Text>
+            <Text style={styles.emptySub}>Online raho aur calls enable karo to receive users</Text>
           </View>
         ) : (
-          chats.map((c) => (
-            <View key={c._id} style={styles.sessionRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{c.user?.name?.charAt(0) || 'U'}</Text>
+          activeSessions.map((c) => (
+            <TouchableOpacity
+              key={c._id}
+              style={styles.sessionCard}
+              onPress={() => router.push(`/chat/${c._id}`)}
+            >
+              <View style={styles.sessionAvatar}>
+                <Text style={styles.sessionAvatarText}>{c.user?.name?.charAt(0) || 'U'}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.sessionName}>{c.user?.name || 'User'}</Text>
-                <Text style={styles.sessionPhone}>{c.user?.phone || ''}</Text>
+                <Text style={styles.sessionPhone}>{c.user?.phone || 'Consultation'}</Text>
               </View>
-              <View style={styles.liveBadge}><Text style={styles.liveText}>LIVE</Text></View>
-            </View>
+              <View style={styles.liveChip}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveText}>LIVE</Text>
+              </View>
+            </TouchableOpacity>
           ))
         )}
+
+        <View style={{ height: 24 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -108,40 +170,93 @@ export default function CallsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 20, paddingBottom: 40 },
-  heading: { fontSize: 28, fontWeight: '700', color: colors.text },
-  sub: { fontSize: 14, color: colors.textMuted, marginBottom: 20 },
-  card: {
-    backgroundColor: colors.card, borderRadius: 14, padding: 16, marginBottom: 16,
-    borderWidth: 1, borderColor: colors.border,
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  heading: { fontSize: 26, fontWeight: '800', color: colors.text },
+  sub: { fontSize: 13, color: colors.textMuted, marginTop: 3 },
+  onlineChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
   },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  cardSub: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
-  onlineBtn: { marginTop: 14, backgroundColor: colors.primary, borderRadius: 10, padding: 12, alignItems: 'center' },
-  onlineBtnText: { color: COLORS.text, fontWeight: '700' },
+  onlineDot: { width: 8, height: 8, borderRadius: 4 },
+  onlineText: { fontSize: 11, fontWeight: '700' },
+
   rateCard: {
-    backgroundColor: colors.primaryLight, borderRadius: 14, padding: 16, marginBottom: 20,
-    alignItems: 'center', borderWidth: 1, borderColor: colors.primary,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.successLight, borderRadius: 16, padding: 16, marginBottom: 14,
+    borderWidth: 1.5, borderColor: COLORS.success,
   },
-  rateLabel: { fontSize: 13, color: colors.textMuted },
-  rateVal: { fontSize: 28, fontWeight: '800', color: colors.primary, marginTop: 4 },
-  rateHint: { fontSize: 11, color: colors.textMuted, marginTop: 6 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  sessionRow: {
+  rateLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rateIconWrap: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(46,175,93,0.15)', justifyContent: 'center', alignItems: 'center',
+  },
+  rateLabel: { fontSize: 14, fontWeight: '700', color: colors.text },
+  rateHint: { fontSize: 11, color: COLORS.success, marginTop: 2 },
+  rateVal: { fontSize: 28, fontWeight: '900', color: COLORS.success },
+  rateUnit: { fontSize: 14, fontWeight: '600' },
+
+  toggleCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 12,
+    borderWidth: 1.5, borderColor: colors.border,
+  },
+  toggleCardActive: { borderColor: COLORS.success, backgroundColor: 'rgba(46,175,93,0.04)' },
+  toggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  toggleIconWrap: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: colors.border, justifyContent: 'center', alignItems: 'center',
+  },
+  toggleIconActive: { backgroundColor: COLORS.success },
+  toggleTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
+  toggleSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+
+  goOnlineBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: COLORS.primary, borderRadius: 12,
+    paddingVertical: 14, marginBottom: 12,
+  },
+  goOnlineText: { color: '#1A1A1A', fontWeight: '800', fontSize: 14 },
+
+  editRateHint: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: COLORS.yellowLight, borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 10, marginBottom: 24,
+    borderWidth: 1, borderColor: 'rgba(253,185,19,0.35)',
+  },
+  editRateText: { flex: 1, fontSize: 12, color: COLORS.primaryDark, fontWeight: '600' },
+
+  sectionTitle: {
+    fontSize: 13, fontWeight: '700', color: colors.textMuted,
+    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12,
+  },
+
+  emptyCard: {
+    backgroundColor: colors.card, borderRadius: 16, padding: 32,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+  },
+  emptyIconWrap: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: COLORS.yellowLight, justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+  },
+  emptyTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
+  emptySub: { fontSize: 12, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 18 },
+
+  sessionCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card,
-    borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border,
   },
-  avatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight,
+  sessionAvatar: {
+    width: 46, height: 46, borderRadius: 23, backgroundColor: COLORS.yellowLight,
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  avatarText: { fontSize: 18, fontWeight: '700', color: colors.primary },
-  sessionName: { fontSize: 15, fontWeight: '600', color: colors.text },
-  sessionPhone: { fontSize: 12, color: colors.textMuted },
-  liveBadge: { backgroundColor: colors.success, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  liveText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-  emptyBox: { alignItems: 'center', padding: 32, backgroundColor: colors.card, borderRadius: 12 },
-  emptyIcon: { fontSize: 40 },
-  emptyText: { fontSize: 15, fontWeight: '600', color: colors.text, marginTop: 8 },
-  emptySub: { fontSize: 12, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
+  sessionAvatarText: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
+  sessionName: { fontSize: 15, fontWeight: '700', color: colors.text },
+  sessionPhone: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  liveChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: COLORS.success, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10,
+  },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
+  liveText: { color: '#fff', fontSize: 11, fontWeight: '800' },
 });

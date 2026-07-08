@@ -5,18 +5,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { astroApi } from '../../services/astroApi';
 import { colors, COLORS } from '../../constants/theme';
 
-const FILTERS = ['requests', 'all', 'active'];
+const FILTERS = ['requests', 'active', 'all'];
 
 function statusLabel(session) {
   const s = session.status || (session.isActive ? 'active' : 'ended');
-  if (s === 'pending') return 'PENDING';
+  if (s === 'pending') return 'NEW';
   if (s === 'paused') return 'PAUSED';
   if (s === 'active') return 'ACTIVE';
   if (s === 'ended') return 'ENDED';
   return s.toUpperCase();
+}
+
+function statusColor(session) {
+  const s = session.status || (session.isActive ? 'active' : 'ended');
+  if (s === 'pending') return COLORS.primary;
+  if (s === 'active') return COLORS.success;
+  if (s === 'paused') return COLORS.warning;
+  return COLORS.textSecondary;
 }
 
 export default function Chats() {
@@ -59,18 +68,17 @@ export default function Chats() {
       await load();
       router.push(`/chat/${id}`);
     } catch (err) {
-      Alert.alert('Failed', err.message || 'Could not accept');
+      Alert.alert('Failed', err.message || 'Accept nahi ho saka');
     } finally {
       setActing(null);
     }
   };
 
   const handleReject = (id) => {
-    Alert.alert('Decline Request', 'Reject this user request?', [
+    Alert.alert('Request Decline', 'Is request ko reject karein?', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Reject',
-        style: 'destructive',
+        text: 'Reject', style: 'destructive',
         onPress: async () => {
           setActing(id);
           try {
@@ -92,65 +100,108 @@ export default function Chats() {
       ? chats.filter((c) => c.status === 'active' || c.status === 'paused')
       : chats;
 
+  const activeCount = chats.filter((c) => c.status === 'active').length;
+
   return (
     <SafeAreaView style={styles.safe}>
-      <Text style={styles.heading}>Consultations</Text>
-      <Text style={styles.sub}>
-        {pending.length} pending · {chats.filter((c) => c.status === 'active').length} active
-      </Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.heading}>Consultations</Text>
+          <Text style={styles.sub}>
+            <Text style={styles.badge}> {pending.length} </Text>
+            {' '}new · {' '}
+            <Text style={[styles.badge, activeCount > 0 && styles.badgeActive]}> {activeCount} </Text>
+            {' '}active
+          </Text>
+        </View>
+      </View>
 
+      {/* Filter Tabs */}
       <View style={styles.filters}>
         {FILTERS.map((f) => (
           <TouchableOpacity
             key={f}
-            style={[styles.chip, filter === f && styles.chipActive]}
+            style={[styles.tab, filter === f && styles.tabActive]}
             onPress={() => setFilter(f)}
           >
-            <Text style={[styles.chipText, filter === f && styles.chipTextActive]}>
-              {f === 'requests' ? `Requests (${pending.length})` : f === 'all' ? 'All' : 'Active'}
+            <Text style={[styles.tabText, filter === f && styles.tabTextActive]}>
+              {f === 'requests'
+                ? `New${pending.length > 0 ? ` (${pending.length})` : ''}`
+                : f === 'active' ? 'Active' : 'All'}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={colors.primary} />
+        <ActivityIndicator style={{ marginTop: 48 }} size="large" color={COLORS.primary} />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => { setRefreshing(true); load(); }}
+              tintColor={COLORS.primary}
+            />
           }
           ListEmptyComponent={
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyIcon}>{filter === 'requests' ? '🔔' : '💬'}</Text>
-              <Text style={styles.empty}>
-                {filter === 'requests' ? 'No pending requests' : 'No chats yet'}
+              <View style={styles.emptyIconWrap}>
+                <Ionicons
+                  name={filter === 'requests' ? 'notifications-outline' : 'chatbubbles-outline'}
+                  size={36}
+                  color={COLORS.primary}
+                />
+              </View>
+              <Text style={styles.emptyTitle}>
+                {filter === 'requests' ? 'Koi new request nahi' : 'Koi consultation nahi'}
               </Text>
-              <Text style={styles.emptySub}>Go online on Home tab to receive users</Text>
+              <Text style={styles.emptySub}>Online raho aur users se requests aayengi</Text>
             </View>
           }
           renderItem={({ item }) => {
             const isPending = item.status === 'pending';
             const userName = item.user?.name || 'User';
-            const typeLabel = item.type === 'call' ? '📞 Call' : '💬 Chat';
+            const isCall = item.type === 'call';
+            const lastMsg = item.messages?.[item.messages.length - 1]?.content;
 
             if (isPending && filter === 'requests') {
               return (
-                <View style={[styles.row, styles.pendingRow]}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
+                <View style={styles.requestCard}>
+                  {/* Type badge */}
+                  <View style={[styles.typePill, isCall ? styles.typePillCall : styles.typePillChat]}>
+                    <Ionicons name={isCall ? 'call' : 'chatbubble'} size={11} color="#fff" />
+                    <Text style={styles.typePillText}>{isCall ? 'Call' : 'Chat'}</Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{userName}</Text>
-                    <Text style={styles.typeTag}>{typeLabel} request</Text>
-                    <Text style={styles.preview} numberOfLines={1}>
-                      {item.messages?.[item.messages.length - 1]?.content || 'New request'}
-                    </Text>
+
+                  <View style={styles.requestTop}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.userName}>{userName}</Text>
+                      {lastMsg && (
+                        <Text style={styles.preview} numberOfLines={1}>"{lastMsg}"</Text>
+                      )}
+                      <Text style={styles.requestHint}>
+                        {isCall ? 'Voice call consultation' : 'Chat consultation · 1 min FREE'}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.actions}>
+
+                  <View style={styles.requestActions}>
+                    <TouchableOpacity
+                      style={styles.rejectSmallBtn}
+                      onPress={() => handleReject(item._id)}
+                      disabled={acting === item._id}
+                    >
+                      <Ionicons name="close" size={18} color={COLORS.error} />
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.acceptBtn}
                       onPress={() => handleAccept(item._id)}
@@ -159,32 +210,42 @@ export default function Chats() {
                       {acting === item._id ? (
                         <ActivityIndicator color="#fff" size="small" />
                       ) : (
-                        <Text style={styles.acceptText}>Accept</Text>
+                        <>
+                          <Ionicons name="checkmark" size={16} color="#fff" />
+                          <Text style={styles.acceptText}>Accept & Start</Text>
+                        </>
                       )}
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.rejectBtn} onPress={() => handleReject(item._id)}>
-                      <Text style={styles.rejectText}>✕</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               );
             }
 
+            const sc = statusColor(item);
             return (
-              <TouchableOpacity style={styles.row} onPress={() => router.push(`/chat/${item._id}`)}>
+              <TouchableOpacity
+                style={styles.chatRow}
+                onPress={() => router.push(`/chat/${item._id}`)}
+                activeOpacity={0.75}
+              >
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>{userName}</Text>
-                  <Text style={styles.typeTag}>{typeLabel}</Text>
-                  <Text style={styles.preview} numberOfLines={1}>
-                    {item.messages?.[item.messages.length - 1]?.content || 'Start conversation'}
+                  <View style={styles.chatTopRow}>
+                    <Text style={styles.userName}>{userName}</Text>
+                    <View style={[styles.statusPill, { backgroundColor: `${sc}18`, borderColor: sc }]}>
+                      <Text style={[styles.statusPillText, { color: sc }]}>{statusLabel(item)}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.typeRow}>
+                    {isCall ? '📞' : '💬'} {isCall ? 'Call' : 'Chat'}
                   </Text>
+                  {lastMsg && (
+                    <Text style={styles.preview} numberOfLines={1}>{lastMsg}</Text>
+                  )}
                 </View>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>{statusLabel(item)}</Text>
-                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.border} style={{ marginLeft: 8 }} />
               </TouchableOpacity>
             );
           }}
@@ -195,45 +256,81 @@ export default function Chats() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20 },
-  heading: { fontSize: 28, fontWeight: '700', color: colors.text, marginTop: 8 },
-  sub: { fontSize: 14, color: colors.textMuted, marginBottom: 12 },
-  filters: { flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.border },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
-  chipTextActive: { color: COLORS.text, fontWeight: '700' },
-  list: { paddingBottom: 40 },
-  row: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card,
-    borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border,
+  safe: { flex: 1, backgroundColor: colors.bg },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+  heading: { fontSize: 26, fontWeight: '800', color: colors.text },
+  sub: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  badge: {
+    fontWeight: '800', color: COLORS.primary,
+    backgroundColor: COLORS.yellowLight,
+    borderRadius: 4, overflow: 'hidden', paddingHorizontal: 4,
   },
-  pendingRow: { borderColor: colors.primary, borderWidth: 1.5 },
+  badgeActive: { color: COLORS.success, backgroundColor: COLORS.successLight },
+  filters: {
+    flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 12, gap: 8,
+  },
+  tab: {
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+    borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.card,
+  },
+  tabActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  tabText: { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
+  tabTextActive: { color: '#1A1A1A', fontWeight: '800' },
+  list: { paddingHorizontal: 16, paddingBottom: 48 },
+
+  // Request Card
+  requestCard: {
+    backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 12,
+    borderWidth: 1.5, borderColor: COLORS.primary,
+  },
+  typePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 12, marginBottom: 12,
+  },
+  typePillCall: { backgroundColor: COLORS.success },
+  typePillChat: { backgroundColor: COLORS.link },
+  typePillText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  requestTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  requestHint: { fontSize: 11, color: colors.textMuted, marginTop: 3 },
+  requestActions: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  rejectSmallBtn: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: COLORS.errorLight, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.error,
+  },
+  acceptBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.success, borderRadius: 12, paddingVertical: 12, gap: 6,
+  },
+  acceptText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+
+  // Chat Row
+  chatRow: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card,
+    borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border,
+  },
   avatar: {
-    width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primaryLight,
+    width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.yellowLight,
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  avatarText: { fontSize: 20, fontWeight: '700', color: colors.primary },
-  name: { fontSize: 16, fontWeight: '600', color: colors.text },
-  typeTag: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
-  preview: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
-  actions: { alignItems: 'flex-end', gap: 6 },
-  acceptBtn: {
-    backgroundColor: colors.success, paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 8, minWidth: 72, alignItems: 'center',
+  avatarText: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
+  chatTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
+  userName: { fontSize: 15, fontWeight: '700', color: colors.text },
+  statusPill: {
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10,
+    borderWidth: 1,
   },
-  acceptText: { color: '#fff', fontWeight: '700', fontSize: 12 },
-  rejectBtn: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: colors.danger,
-    alignItems: 'center', justifyContent: 'center',
+  statusPillText: { fontSize: 9, fontWeight: '800' },
+  typeRow: { fontSize: 11, color: colors.textMuted, marginBottom: 3 },
+  preview: { fontSize: 12, color: colors.textMuted },
+
+  emptyBox: { alignItems: 'center', padding: 48 },
+  emptyIconWrap: {
+    width: 72, height: 72, borderRadius: 36,
+    backgroundColor: COLORS.yellowLight, justifyContent: 'center', alignItems: 'center',
+    marginBottom: 16,
   },
-  rejectText: { color: '#fff', fontWeight: '700', fontSize: 12 },
-  statusBadge: {
-    backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
-  },
-  statusText: { fontSize: 9, fontWeight: '800', color: colors.primary },
-  emptyBox: { alignItems: 'center', padding: 40 },
-  emptyIcon: { fontSize: 40 },
-  empty: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: 8 },
-  emptySub: { fontSize: 12, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  emptySub: { fontSize: 13, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 19 },
 });

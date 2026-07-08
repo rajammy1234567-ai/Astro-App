@@ -26,6 +26,8 @@ const toPublicProfile = (astro) => ({
   gallery: astro.gallery || [],
   isOnline: astro.isOnline,
   isVerified: astro.isVerified,
+  isPublished: astro.isPublished,
+  approvedViaApplication: astro.approvedViaApplication,
   experience: astro.experience,
   orders: astro.orders,
   languages: astro.languages,
@@ -80,6 +82,32 @@ const updateProfile = async (req, res) => {
     if (updates.gallery) {
       updates.gallery = (updates.gallery || []).slice(0, 12);
     }
+
+    const currentAstrologer = req.astrologer.toObject ? req.astrologer.toObject() : req.astrologer;
+    const mergedProfile = { ...currentAstrologer, ...updates };
+    const normalizedLanguages = Array.isArray(mergedProfile.languages)
+      ? mergedProfile.languages
+      : String(mergedProfile.languages || '')
+          .split(',')
+          .map((lang) => lang.trim())
+          .filter(Boolean);
+    const hasCoreProfile = Boolean(
+      mergedProfile.name?.trim() &&
+      mergedProfile.specialty?.trim() &&
+      mergedProfile.bio?.trim() &&
+      mergedProfile.image &&
+      Number(mergedProfile.experience) > 0 &&
+      normalizedLanguages.length > 0 &&
+      Array.isArray(mergedProfile.pricingPackages) && mergedProfile.pricingPackages.some((pkg) => Number(pkg.price) > 0) &&
+      (mergedProfile.chatEnabled !== false || mergedProfile.callEnabled !== false)
+    );
+
+    if (req.body.isPublished !== undefined) {
+      updates.isPublished = req.body.isPublished;
+    } else if (req.astrologer.approvedViaApplication && !req.astrologer.isPublished && hasCoreProfile) {
+      updates.isPublished = true;
+    }
+
     const astrologer = await Astrologer.findByIdAndUpdate(
       req.astrologer._id,
       updates,

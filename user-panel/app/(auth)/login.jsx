@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -59,7 +59,7 @@ export default function LoginScreen() {
       if (authMode === 'signup' && result.payload?.isNewUser) {
         Alert.alert(
           'Welcome to Astrotalk!',
-          'Account created successfully. ₹100 welcome bonus added to your wallet.',
+          'Account created successfully. Γé╣100 welcome bonus added to your wallet.',
           [{ text: 'Get Started', onPress: () => router.replace('/(tabs)/home') }]
         );
       } else {

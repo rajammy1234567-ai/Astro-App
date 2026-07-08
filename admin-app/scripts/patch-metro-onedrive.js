@@ -1,0 +1,1 @@
+require('../../shared/patch-metro-onedrive').applyMetroOneDrivePatches();

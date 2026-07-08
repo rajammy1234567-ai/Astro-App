@@ -4,16 +4,24 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 
-export default function Header({ title, showBack = true, rightComponent, light = true }) {
+export default function Header({ title, showBack = true, rightComponent, light = true, onBack }) {
   const router = useRouter();
   const safe = useScreenInsets();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    router.back();
+  };
 
   return (
     <View style={[styles.container, { paddingTop: safe.top(4) }, light && styles.light]}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.row}>
         {showBack ? (
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
         ) : (

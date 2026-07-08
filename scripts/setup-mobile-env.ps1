@@ -20,12 +20,24 @@ foreach ($app in $apps) {
   Write-Host "  Updated $app/.env" -ForegroundColor Cyan
 }
 
-# Windows Firewall — allow phone to reach port 5000
-$ruleName = "Astro App API Port 5000"
-$existing = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
-if (-not $existing) {
-  New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow | Out-Null
-  Write-Host "  Firewall rule added for port 5000" -ForegroundColor Cyan
+# Windows Firewall — allow phone to reach API + Expo Metro ports
+$ports = @(
+  @{ Name = "Astro App API Port 5000"; Port = 5000 },
+  @{ Name = "Astro User Expo Port 8081"; Port = 8081 },
+  @{ Name = "Astro Admin Expo Port 8082"; Port = 8082 },
+  @{ Name = "Astro Panel Expo Port 8083"; Port = 8083 }
+)
+
+foreach ($entry in $ports) {
+  $existing = Get-NetFirewallRule -DisplayName $entry.Name -ErrorAction SilentlyContinue
+  if (-not $existing) {
+    try {
+      New-NetFirewallRule -DisplayName $entry.Name -Direction Inbound -Protocol TCP -LocalPort $entry.Port -Action Allow | Out-Null
+      Write-Host "  Firewall rule added for port $($entry.Port)" -ForegroundColor Cyan
+    } catch {
+      Write-Host "  Firewall rule skipped for port $($entry.Port) (run as Admin)" -ForegroundColor Yellow
+    }
+  }
 }
 
 Write-Host "`nDone! Ab ye chalao:" -ForegroundColor Yellow

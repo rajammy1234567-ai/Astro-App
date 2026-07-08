@@ -12,3 +12,4 @@ expo-env.d.ts
 *.p12
 *.key
 .DS_Store
+Expo-Go-*.apk
