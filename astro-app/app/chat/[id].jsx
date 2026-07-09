@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { astroApi } from '../../services/astroApi';
+import { safeGoBack } from '../../utils/navigation';
 import { colors, COLORS } from '../../constants/theme';
 
 function formatTime(seconds) {
@@ -104,7 +105,7 @@ export default function ChatScreen() {
         onPress: async () => {
           try {
             await astroApi.closeChat(id);
-            router.back();
+            safeGoBack(router, '/(tabs)/chats');
           } catch (err) {
             Alert.alert('Error', err.message);
           }
@@ -136,7 +137,21 @@ export default function ChatScreen() {
   }
 
   const messages = chat.messages || [];
-  const userName = chat.user?.name || 'User';
+  const birth = chat.userBirthDetails || {};
+  const userName = birth.name || chat.user?.name || 'User';
+  const genderMap = { male: 'Male', female: 'Female', other: 'Other' };
+  const birthAge = (() => {
+    const dob = birth.dateOfBirth;
+    if (!dob || !/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dob)) return null;
+    const [d, m, y] = dob.split('/').map(Number);
+    const b = new Date(y, m - 1, d);
+    if (Number.isNaN(b.getTime())) return null;
+    const t = new Date();
+    let a = t.getFullYear() - b.getFullYear();
+    const md = t.getMonth() - b.getMonth();
+    if (md < 0 || (md === 0 && t.getDate() < b.getDate())) a -= 1;
+    return a >= 0 && a <= 120 ? a : null;
+  })();
 
   const timerText = isPending
     ? 'Accept karo to start karein'
@@ -152,7 +167,7 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)/chats')} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerAvatar}>
@@ -203,6 +218,27 @@ export default function ChatScreen() {
         <Text style={styles.rateHint}>₹{chat.pricePerMin || 0}/min</Text>
       </View>
 
+      {/* Always-visible client kundli card for astrologer */}
+      {(birth.dateOfBirth || birth.placeOfBirth || birth.timeOfBirth) ? (
+        <View style={styles.kundliCard}>
+          <View style={styles.kundliTitleRow}>
+            <Ionicons name="planet" size={16} color={COLORS.primary} />
+            <Text style={styles.kundliTitle}>Client Kundli Details</Text>
+          </View>
+          <Text style={styles.kundliLine}>👤 {userName}</Text>
+          {!!birth.dateOfBirth && (
+            <Text style={styles.kundliLine}>
+              🎂 DOB: {birth.dateOfBirth}{birthAge != null ? ` (Age ${birthAge})` : ''}
+            </Text>
+          )}
+          {!!birth.timeOfBirth && <Text style={styles.kundliLine}>⏰ TOB: {birth.timeOfBirth}</Text>}
+          {!!birth.placeOfBirth && <Text style={styles.kundliLine}>📍 POB: {birth.placeOfBirth}</Text>}
+          {!!birth.gender && (
+            <Text style={styles.kundliLine}>⚧ Sex: {genderMap[birth.gender] || birth.gender}</Text>
+          )}
+        </View>
+      ) : null}
+
       {/* Pending Accept Card */}
       {isPending && (
         <Animated.View style={[styles.pendingCard, { transform: [{ scale: pulseAnim }] }]}>
@@ -214,6 +250,13 @@ export default function ChatScreen() {
           <Text style={styles.pendingSub}>
             {isCall ? 'Voice call consultation' : 'Text chat · Pehla 1 minute FREE hai!'}
           </Text>
+          {(birth.dateOfBirth || birth.placeOfBirth) ? (
+            <Text style={styles.pendingBirth}>
+              {birth.dateOfBirth ? `DOB ${birth.dateOfBirth}` : ''}
+              {birth.timeOfBirth ? ` · ${birth.timeOfBirth}` : ''}
+              {birth.placeOfBirth ? ` · ${birth.placeOfBirth}` : ''}
+            </Text>
+          ) : null}
           <TouchableOpacity style={styles.acceptBtn} onPress={accept} disabled={accepting}>
             {accepting ? (
               <ActivityIndicator color="#fff" />
@@ -373,6 +416,18 @@ const styles = StyleSheet.create({
   pendingTypeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   pendingTitle: { fontSize: 22, fontWeight: '800', color: colors.text },
   pendingSub: { fontSize: 13, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 19 },
+  pendingBirth: {
+    fontSize: 12, color: colors.text, marginTop: 10, textAlign: 'center',
+    lineHeight: 18, fontWeight: '600',
+  },
+  kundliCard: {
+    marginHorizontal: 12, marginTop: 10, marginBottom: 4,
+    backgroundColor: COLORS.yellowLight, borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: 'rgba(253,185,19,0.45)',
+  },
+  kundliTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  kundliTitle: { fontSize: 13, fontWeight: '800', color: colors.text },
+  kundliLine: { fontSize: 12, color: colors.text, lineHeight: 18, marginTop: 1 },
   acceptBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: COLORS.success, paddingHorizontal: 28, paddingVertical: 14,

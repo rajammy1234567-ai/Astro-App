@@ -20,17 +20,22 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (!error.response) {
+      const base = error.config?.baseURL || getApiBaseUrl();
       return Promise.reject({
-        message: 'Server se connect nahi ho pa raha. Backend chalao: cd server && npm run dev',
+        message: `Server se connect nahi ho pa raha (${base}). PC pe server chalao (port 5000) aur phone same WiFi pe rakho.`,
         networkError: true,
+        baseURL: base,
       });
     }
     const data = error.response.data;
-    return Promise.reject(
-      typeof data === 'object' && data?.message
-        ? data
-        : { message: data?.message || error.message || 'Something went wrong' }
-    );
+    const status = error.response.status;
+    if (typeof data === 'object' && data?.message) {
+      return Promise.reject({ ...data, status });
+    }
+    return Promise.reject({
+      message: data?.message || error.message || `Request failed (${status})`,
+      status,
+    });
   }
 );
 

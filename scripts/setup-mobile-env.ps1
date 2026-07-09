@@ -1,7 +1,17 @@
-# Auto-set EXPO_PUBLIC_API_URL for all mobile apps using PC LAN IP
+# Auto-set EXPO_PUBLIC_API_URL + packager host for all mobile apps (current PC LAN IP)
 $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
-  $_.InterfaceAlias -notmatch 'Loopback|vEthernet|WSL' -and $_.IPAddress -notmatch '^169\.'
+  $_.InterfaceAlias -match 'Wi-Fi|Ethernet|WLAN' -and
+  $_.IPAddress -notmatch '^127\.' -and
+  $_.IPAddress -notmatch '^169\.'
 } | Select-Object -First 1).IPAddress
+
+if (-not $ip) {
+  $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+    $_.InterfaceAlias -notmatch 'Loopback|vEthernet|WSL|Virtual' -and
+    $_.IPAddress -notmatch '^127\.' -and
+    $_.IPAddress -notmatch '^169\.'
+  } | Select-Object -First 1).IPAddress
+}
 
 if (-not $ip) {
   Write-Host "Could not detect LAN IP. Run: ipconfig" -ForegroundColor Red
@@ -11,13 +21,16 @@ if (-not $ip) {
 $apiUrl = "http://${ip}:5000/api"
 Write-Host "Detected PC IP: $ip" -ForegroundColor Green
 Write-Host "API URL: $apiUrl" -ForegroundColor Green
+Write-Host "Packager host: $ip" -ForegroundColor Green
 
 $apps = @("user-panel", "admin-app", "astro-app")
 foreach ($app in $apps) {
-  $envFile = Join-Path $PSScriptRoot "..\$app\.env"
-  $content = "EXPO_PUBLIC_API_URL=$apiUrl`n"
-  Set-Content -Path $envFile -Value $content -Encoding UTF8
-  Write-Host "  Updated $app/.env" -ForegroundColor Cyan
+  $appDir = Join-Path $PSScriptRoot "..\$app"
+  # Expo 57: only EXPO_PUBLIC_* may live in .env
+  Set-Content -Path (Join-Path $appDir ".env") -Value "EXPO_PUBLIC_API_URL=$apiUrl" -Encoding ascii
+  # Personal vars (packager host) must be in .env.local
+  Set-Content -Path (Join-Path $appDir ".env.local") -Value "REACT_NATIVE_PACKAGER_HOSTNAME=$ip" -Encoding ascii
+  Write-Host "  Updated $app/.env + .env.local" -ForegroundColor Cyan
 }
 
 # Windows Firewall — allow phone to reach API + Expo Metro ports

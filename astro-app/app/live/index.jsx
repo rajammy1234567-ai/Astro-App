@@ -9,6 +9,7 @@ import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo
 import { Ionicons } from '@expo/vector-icons';
 import liveApi from '../../services/liveApi';
 import { getSocket, joinLiveRoom, leaveLiveRoom } from '../../utils/socket';
+import { safeGoBack } from '../../utils/navigation';
 import { colors, COLORS } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 
@@ -63,7 +64,7 @@ export default function GoLiveScreen() {
     };
     const onEnded = () => {
       Alert.alert('Live Ended', 'Session has ended.');
-      router.back();
+      safeGoBack(router, '/(tabs)/dashboard');
     };
 
     socket.on('live-comment', onComment);
@@ -122,7 +123,7 @@ export default function GoLiveScreen() {
           setEnding(true);
           try {
             await liveApi.endLive(session._id);
-            router.back();
+            safeGoBack(router, '/(tabs)/dashboard');
           } catch (e) {
             Alert.alert('Error', e.message);
           } finally {
@@ -177,7 +178,7 @@ export default function GoLiveScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.preHeader}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)/dashboard')}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.preTitle}>Go Live</Text>
@@ -225,7 +226,7 @@ export default function GoLiveScreen() {
         )}
 
         <View style={styles.liveTopBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.topBtn}>
+          <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)/dashboard')} style={styles.topBtn}>
             <Ionicons name="chevron-down" size={22} color="#fff" />
           </TouchableOpacity>
           <View style={styles.liveBadge}>

@@ -29,11 +29,13 @@ const astrologerSlice = createSlice({
       })
       .addCase(fetchAstrologers.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload;
+        state.list = Array.isArray(action.payload) ? action.payload : [];
+        state.error = null;
       })
       .addCase(fetchAstrologers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+        state.list = [];
       })
       .addCase(fetchAstrologerById.fulfilled, (state, action) => {
         state.selected = action.payload;

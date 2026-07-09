@@ -18,6 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { astroApi } from '../../services/astroApi';
 import agoraService from '../../services/agoraService';
+import { safeGoBack } from '../../utils/navigation';
 import { colors, COLORS } from '../../constants/theme';
 
 function formatDuration(s) {
@@ -59,7 +60,7 @@ export default function AstroCallScreen() {
       setSession(data);
     } catch {
       Alert.alert('Error', 'Session load failed');
-      router.back();
+      safeGoBack(router, '/(tabs)/calls');
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ export default function AstroCallScreen() {
       onUserOffline: () => {
         setCallState('ended');
         clearInterval(timerRef.current);
-        setTimeout(() => router.back(), 2000);
+        setTimeout(() => safeGoBack(router, '/(tabs)/calls'), 2000);
       },
       onError: (err) => {
         console.warn('[Agora] error:', err);
@@ -131,7 +132,7 @@ export default function AstroCallScreen() {
           await agoraService.leaveChannel();
           clearInterval(timerRef.current);
           try { await astroApi.closeChat(id); } catch {}
-          router.back();
+          safeGoBack(router, '/(tabs)/calls');
         },
       },
     ]);
@@ -157,7 +158,7 @@ export default function AstroCallScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => safeGoBack(router, '/(tabs)/calls')}>
           <Ionicons name="chevron-down" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.callTypeLabel}>

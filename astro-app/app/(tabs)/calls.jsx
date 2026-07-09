@@ -3,11 +3,11 @@ import {
   View, Text, StyleSheet, Switch, ScrollView, ActivityIndicator,
   RefreshControl, TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { astroApi } from '../../services/astroApi';
+import PanelHeader from '../../components/common/PanelHeader';
 import { colors, COLORS } from '../../constants/theme';
 
 export default function CallsScreen() {
@@ -50,7 +50,19 @@ export default function CallsScreen() {
   const isOnline = !!astrologer?.isOnline;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
+      <PanelHeader
+        title="Calls"
+        subtitle="Voice consultations"
+        right={
+          <View style={styles.onlineChip}>
+            <View style={[styles.onlineDot, { backgroundColor: isOnline ? COLORS.success : 'rgba(255,255,255,0.4)' }]} />
+            <Text style={[styles.onlineText, { color: isOnline ? COLORS.success : 'rgba(255,255,255,0.7)' }]}>
+              {isOnline ? 'Online' : 'Offline'}
+            </Text>
+          </View>
+        }
+      />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -62,20 +74,6 @@ export default function CallsScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.heading}>Calls</Text>
-            <Text style={styles.sub}>Voice call consultations manage karo</Text>
-          </View>
-          <View style={styles.onlineChip}>
-            <View style={[styles.onlineDot, { backgroundColor: isOnline ? COLORS.success : colors.textMuted }]} />
-            <Text style={[styles.onlineText, { color: isOnline ? COLORS.success : colors.textMuted }]}>
-              {isOnline ? 'Online' : 'Offline'}
-            </Text>
-          </View>
-        </View>
-
         {/* Rate Card */}
         <View style={styles.rateCard}>
           <View style={styles.rateLeft}>
@@ -161,22 +159,19 @@ export default function CallsScreen() {
           ))
         )}
 
-        <View style={{ height: 24 }} />
+        <View style={{ height: 90 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 20, paddingBottom: 40 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  heading: { fontSize: 26, fontWeight: '800', color: colors.text },
-  sub: { fontSize: 13, color: colors.textMuted, marginTop: 3 },
+  content: { padding: 16, paddingBottom: 40 },
   onlineChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
-    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   onlineDot: { width: 8, height: 8, borderRadius: 4 },
   onlineText: { fontSize: 11, fontWeight: '700' },

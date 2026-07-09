@@ -5,7 +5,6 @@ import { fetchAstrologers } from '../redux/astrologerSlice';
 import { fetchBlogs } from '../redux/blogSlice';
 import { fetchProducts } from '../redux/storeSlice';
 import { newsApi } from '../services/newsApi';
-import { ASTROLOGERS } from '../constants/mockData';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';

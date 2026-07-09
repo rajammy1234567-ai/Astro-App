@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
 import { astroApi } from '../../services/astroApi';
+import { safeGoBack } from '../../utils/navigation';
 import { colors } from '../../constants/theme';
 
 const PACKAGE_MINS = [1, 10, 20, 30];
@@ -49,7 +50,7 @@ export default function EditProfile() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       base64: true,
       quality: 0.75,
     });
@@ -117,7 +118,7 @@ export default function EditProfile() {
         callEnabled: form.callEnabled,
       });
       Alert.alert('Saved', 'Profile updated — user panel par dikhega jab online ho');
-      router.back();
+      safeGoBack(router, '/(tabs)/profile');
     } catch (err) {
       Alert.alert('Error', err.message || 'Could not save');
     } finally {
@@ -129,7 +130,7 @@ export default function EditProfile() {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)/profile')}>
             <Text style={styles.back}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Edit Profile</Text>

@@ -41,7 +41,7 @@ export const SECTION_FIELDS = {
     { key: 'image', label: 'Image', type: 'image' },
     { key: 'badge', label: 'Badge (Celebrity, Top Choice)' },
     { key: 'bio', label: 'Bio', type: 'textarea' },
-    { key: 'isPublished', label: 'Publish', type: 'checkbox', checkboxLabel: 'Show on User App' },
+    { key: 'isPublished', label: 'Publish', type: 'checkbox', checkboxLabel: 'Show on User App (auto-approves)' },
     { key: 'isOnline', label: 'Online', type: 'checkbox', checkboxLabel: 'Show as online' },
     { key: 'isVerified', label: 'Verified', type: 'checkbox', checkboxLabel: 'Verified astrologer' },
     { key: 'chatEnabled', label: 'Chat', type: 'checkbox', checkboxLabel: 'Chat enabled' },

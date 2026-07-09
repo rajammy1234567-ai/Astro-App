@@ -25,7 +25,7 @@ export default function HomeScreen() {
   const { astrologers, blogs, products, news, connectionError } = useHomeData();
 
   const filtered = search
-    ? astrologers.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+    ? astrologers.filter((a) => a.name?.toLowerCase().includes(search.toLowerCase()))
     : astrologers;
   const featured = filtered.slice(0, 4);
 

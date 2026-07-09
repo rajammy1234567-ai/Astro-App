@@ -13,7 +13,12 @@ export default function Header({ title, showBack = true, rightComponent, light =
       onBack();
       return;
     }
-    router.back();
+    // Avoid "GO_BACK was not handled" when no history stack
+    if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/home');
+    }
   };
 
   return (

@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth';
 import AppLogo from '../../components/common/AppLogo';
 import { COLORS } from '../../constants/colors';
 import { SHADOW_LG } from '../../constants/theme';
+import { hasCompleteProfile } from '../../utils/birthDetails';
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -44,27 +45,64 @@ export default function LoginScreen() {
     if (!canContinue || authLoading) return;
     clearError();
 
+    if (authMode === 'signup' && name.trim().length < 2) {
+      Alert.alert('Name required', 'Apna full name daalo (min 2 characters)');
+      return;
+    }
+    if (!emailValid) {
+      Alert.alert('Invalid email', 'Sahi email address daalo (e.g. you@gmail.com)');
+      return;
+    }
+    if (!passwordValid) {
+      Alert.alert('Weak password', 'Password kam se kam 6 characters ka hona chahiye');
+      return;
+    }
+
     const payload = {
       email: normalizedEmail,
       password,
       ...(authMode === 'signup' ? { name: name.trim() } : {}),
     };
 
-    const result =
-      authMode === 'signup'
-        ? await register(payload)
-        : await login(payload);
+    try {
+      const result =
+        authMode === 'signup'
+          ? await register(payload)
+          : await login(payload);
 
-    if (result.meta.requestStatus === 'fulfilled') {
-      if (authMode === 'signup' && result.payload?.isNewUser) {
-        Alert.alert(
-          'Welcome to Astrotalk!',
-          'Account created successfully. Γé╣100 welcome bonus added to your wallet.',
-          [{ text: 'Get Started', onPress: () => router.replace('/(tabs)/home') }]
-        );
-      } else {
-        router.replace('/(tabs)/home');
+      if (result.meta.requestStatus === 'fulfilled') {
+        const u = result.payload?.user;
+        const goNext = () => {
+          // Pehle zaroori details (name, sex, DOB, TOB, place) — age DOB se auto
+          if (!hasCompleteProfile(u)) {
+            router.replace('/onboarding/profile');
+          } else {
+            router.replace('/(tabs)/home');
+          }
+        };
+
+        if (authMode === 'signup') {
+          Alert.alert(
+            'Welcome to Astrotalk!',
+            result.payload?.isNewUser
+              ? 'Account ban gaya! ₹100 welcome bonus wallet me add ho gaya. Ab apni birth details bhariye.'
+              : 'Account ready. Ab apni details complete kariye.',
+            [{ text: 'Continue', onPress: goNext }]
+          );
+        } else {
+          goNext();
+        }
+        return;
       }
+
+      // rejected — show exact server/network message
+      const msg =
+        result.payload?.message ||
+        result.error?.message ||
+        (authMode === 'signup' ? 'Account create nahi ho saka' : 'Login failed');
+      Alert.alert(authMode === 'signup' ? 'Signup Failed' : 'Login Failed', msg);
+    } catch (err) {
+      Alert.alert('Error', err?.message || 'Kuch galat ho gaya. Dobara try karo.');
     }
   };
 

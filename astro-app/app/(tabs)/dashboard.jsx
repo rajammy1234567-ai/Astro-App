@@ -3,13 +3,13 @@ import {
   View, Text, StyleSheet, ScrollView, ActivityIndicator,
   RefreshControl, Switch, TouchableOpacity, Alert, Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { astroApi } from '../../services/astroApi';
 import liveApi from '../../services/liveApi';
-import { colors, COLORS } from '../../constants/theme';
+import PanelHeader from '../../components/common/PanelHeader';
+import { colors, COLORS, SHADOW_MD, SHADOW_SM, RADIUS } from '../../constants/theme';
 
 export default function Dashboard() {
   const { astrologer, setOnline, logout } = useAuth();
@@ -19,26 +19,26 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [activeLive, setActiveLive] = useState(null);
-  const onlinePulse = useRef(new Animated.Value(1)).current;
+  const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (astrologer?.isOnline) {
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(onlinePulse, { toValue: 1.3, duration: 800, useNativeDriver: true }),
-          Animated.timing(onlinePulse, { toValue: 1, duration: 800, useNativeDriver: true }),
-        ])
-      );
-      loop.start();
-      return () => loop.stop();
-    }
-  }, [astrologer?.isOnline, onlinePulse]);
+    if (!astrologer?.isOnline) return undefined;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.2, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [astrologer?.isOnline, pulse]);
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Logout karna chahte ho?', [
+    Alert.alert('Logout', 'Partner panel se logout?', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Logout', style: 'destructive',
+        text: 'Logout',
+        style: 'destructive',
         onPress: async () => {
           await logout();
           router.replace('/(auth)/login');
@@ -77,292 +77,412 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading dashboard...</Text>
+      <View style={styles.boot}>
+        <View style={styles.bootCard}>
+          <Ionicons name="planet" size={36} color={COLORS.primary} />
+          <ActivityIndicator color={COLORS.primary} style={{ marginTop: 14 }} />
+          <Text style={styles.bootText}>Opening partner workspace…</Text>
+        </View>
       </View>
     );
   }
 
   const stats = data?.stats;
   const isOnline = !!astrologer?.isOnline;
+  const earnings = (stats?.earnings ?? 0).toLocaleString('en-IN');
 
   return (
-    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
-      {/* Gradient Header */}
-      <View style={styles.heroHeader}>
-        <View style={styles.heroLeft}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{astrologer?.name?.charAt(0) || 'A'}</Text>
+    <View style={styles.screen}>
+      <PanelHeader
+        title={`Namaste, ${astrologer?.name?.split(' ')[0] || 'Partner'}`}
+        subtitle={astrologer?.specialty || 'Professional astrology panel'}
+        large
+        right={
+          <TouchableOpacity style={styles.headerBtn} onPress={handleLogout} activeOpacity={0.85}>
+            <Ionicons name="log-out-outline" size={18} color="#fff" />
+          </TouchableOpacity>
+        }
+      >
+        {/* Identity row inside header */}
+        <View style={styles.identity}>
+          <View style={styles.avatarWrap}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarLetter}>{astrologer?.name?.charAt(0) || 'A'}</Text>
+            </View>
             {isOnline && (
-              <Animated.View style={[styles.onlineDot, { transform: [{ scale: onlinePulse }] }]} />
+              <Animated.View style={[styles.liveDot, { transform: [{ scale: pulse }] }]} />
             )}
           </View>
-          <View>
-            <Text style={styles.heroGreeting}>Namaste 🙏</Text>
-            <Text style={styles.heroName}>{astrologer?.name}</Text>
-            <Text style={styles.heroSpec}>{astrologer?.specialty}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.idName}>{astrologer?.name || 'Astrologer'}</Text>
+            <Text style={styles.idMeta}>
+              ⭐ {stats?.rating ?? astrologer?.rating ?? '—'}
+              {'  ·  '}
+              {astrologer?.experience || 0} yrs exp
+            </Text>
+          </View>
+          <View style={styles.rateChip}>
+            <Text style={styles.rateChipTop}>RATE</Text>
+            <Text style={styles.rateChipVal}>₹{astrologer?.pricePerMin || 0}</Text>
+            <Text style={styles.rateChipBot}>/ min</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      </PanelHeader>
 
       <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.primary} />}
+        contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(); }}
+            tintColor={COLORS.primary}
+          />
+        }
       >
-        {/* Online Toggle Card */}
-        <View style={[styles.onlineCard, isOnline && styles.onlineCardActive]}>
+        {/* Online control */}
+        <View style={[styles.onlineCard, isOnline && styles.onlineCardOn]}>
           <View style={styles.onlineLeft}>
-            <View style={[styles.statusBadge, isOnline && styles.statusBadgeActive]}>
-              <View style={[styles.statusDot, isOnline ? styles.statusDotOnline : styles.statusDotOffline]} />
-              <Text style={[styles.statusLabel, isOnline && styles.statusLabelActive]}>
-                {isOnline ? 'Online' : 'Offline'}
+            <View style={[styles.statusPill, isOnline ? styles.statusOn : styles.statusOff]}>
+              <View style={[styles.dot, { backgroundColor: isOnline ? COLORS.success : colors.textLight }]} />
+              <Text style={[styles.statusTxt, isOnline && { color: COLORS.success }]}>
+                {isOnline ? 'Online now' : 'Offline'}
               </Text>
             </View>
-            <Text style={styles.onlineSub}>
-              {isOnline ? 'Users aapko consult kar sakte hain' : 'Toggle karein to receive requests'}
+            <Text style={styles.onlineHint}>
+              {isOnline
+                ? 'Users aapko chat & call request bhej sakte hain'
+                : 'Toggle on karke consultations receive karein'}
             </Text>
           </View>
           <Switch
             value={isOnline}
             onValueChange={handleToggle}
             disabled={toggling}
-            trackColor={{ true: COLORS.success, false: colors.border }}
-            thumbColor={isOnline ? '#fff' : '#f0f0f0'}
+            trackColor={{ true: COLORS.success, false: '#D5D0E0' }}
+            thumbColor="#fff"
           />
         </View>
 
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <StatCard icon="star" iconColor={COLORS.star} label="Rating" value={`${stats?.rating ?? astrologer?.rating ?? '—'}`} />
-          <StatCard icon="cash-outline" iconColor={COLORS.success} label="Earnings" value={`₹${(stats?.earnings ?? 0).toLocaleString('en-IN')}`} highlight />
-          <StatCard icon="chatbubbles-outline" iconColor={COLORS.link} label="Total Chats" value={`${stats?.totalChats ?? 0}`} />
-          <StatCard icon="call-outline" iconColor={COLORS.primary} label="Per Minute" value={`₹${stats?.pricePerMin ?? astrologer?.pricePerMin ?? 0}`} />
-          <StatCard icon="flash-outline" iconColor={COLORS.warning} label="Active" value={`${stats?.activeChats ?? 0}`} />
-          <StatCard icon="bag-outline" iconColor={COLORS.textSecondary} label="Orders" value={`${stats?.totalOrders ?? 0}`} />
+        {/* Earnings highlight */}
+        <View style={styles.earnCard}>
+          <View>
+            <Text style={styles.earnLabel}>Total Earnings</Text>
+            <Text style={styles.earnVal}>₹{earnings}</Text>
+            <Text style={styles.earnSub}>
+              {stats?.activeChats || 0} active · {stats?.totalChats || 0} total chats
+            </Text>
+          </View>
+          <View style={styles.earnIcon}>
+            <Ionicons name="wallet" size={26} color={COLORS.bannerDark} />
+          </View>
         </View>
 
-        {/* Live Session Banner */}
+        {/* Stats */}
+        <Text style={styles.section}>Overview</Text>
+        <View style={styles.statsRow}>
+          <MiniStat icon="star" color={COLORS.star} label="Rating" value={`${stats?.rating ?? astrologer?.rating ?? '—'}`} />
+          <MiniStat icon="flash" color={COLORS.warning} label="Active" value={`${stats?.activeChats ?? 0}`} />
+          <MiniStat icon="chatbubbles" color={COLORS.link} label="Chats" value={`${stats?.totalChats ?? 0}`} />
+          <MiniStat icon="briefcase" color={COLORS.violet} label="Orders" value={`${stats?.totalOrders ?? 0}`} />
+        </View>
+
+        {/* Live */}
+        <Text style={styles.section}>Broadcast</Text>
         {activeLive ? (
-          <TouchableOpacity style={styles.liveBanner} onPress={() => router.push('/live')}>
-            <View style={styles.livePill}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveTag}>LIVE</Text>
+          <TouchableOpacity style={styles.liveOn} onPress={() => router.push('/live')} activeOpacity={0.92}>
+            <View style={styles.liveBadge}>
+              <View style={styles.livePulse} />
+              <Text style={styles.liveBadgeText}>LIVE</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.liveBannerTitle}>{activeLive.title}</Text>
-              <Text style={styles.liveBannerSub}>👁 {activeLive.viewerCount || 0} viewers</Text>
+              <Text style={styles.liveTitle} numberOfLines={1}>{activeLive.title}</Text>
+              <Text style={styles.liveSub}>👁 {activeLive.viewerCount || 0} viewers watching</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#fff" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.goLiveCard} onPress={() => router.push('/live')}>
-            <View style={styles.goLiveLeft}>
-              <View style={styles.goLiveIconWrap}>
-                <Ionicons name="radio" size={24} color={COLORS.error} />
-              </View>
-              <View>
-                <Text style={styles.goLiveTitle}>Go Live</Text>
-                <Text style={styles.goLiveSub}>Users ko live dikhao, real-time interact karo</Text>
-              </View>
+          <TouchableOpacity style={styles.liveOff} onPress={() => router.push('/live')} activeOpacity={0.9}>
+            <View style={styles.liveOffIcon}>
+              <Ionicons name="radio" size={22} color={COLORS.error} />
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.liveOffTitle}>Go Live</Text>
+              <Text style={styles.liveOffSub}>Audience se real-time connect karein</Text>
+            </View>
+            <View style={styles.startPill}>
+              <Text style={styles.startPillText}>Start</Text>
+            </View>
           </TouchableOpacity>
         )}
 
-        {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.quickGrid}>
-          <QuickAction icon="chatbubbles" color={COLORS.link} label="Chats" badge={stats?.activeChats} onPress={() => router.push('/(tabs)/chats')} />
-          <QuickAction icon="call" color={COLORS.success} label="Calls" onPress={() => router.push('/(tabs)/calls')} />
-          <QuickAction icon="person-circle" color={COLORS.primary} label="Profile" onPress={() => router.push('/(tabs)/profile')} />
-          <QuickAction icon="create-outline" color={COLORS.warning} label="Edit" onPress={() => router.push('/profile/edit')} />
+        {/* Workspace */}
+        <Text style={styles.section}>Workspace</Text>
+        <View style={styles.grid}>
+          <ActionTile
+            icon="chatbubbles"
+            color={COLORS.link}
+            title="Chats"
+            sub="Requests & replies"
+            badge={stats?.activeChats}
+            onPress={() => router.push('/(tabs)/chats')}
+          />
+          <ActionTile
+            icon="call"
+            color={COLORS.success}
+            title="Calls"
+            sub="Voice sessions"
+            onPress={() => router.push('/(tabs)/calls')}
+          />
+          <ActionTile
+            icon="person"
+            color={COLORS.violet}
+            title="Profile"
+            sub="Public listing"
+            onPress={() => router.push('/(tabs)/profile')}
+          />
+          <ActionTile
+            icon="create"
+            color={COLORS.warning}
+            title="Edit"
+            sub="Rates & bio"
+            onPress={() => router.push('/profile/edit')}
+          />
         </View>
 
-        {/* Recent Chats */}
+        {/* Recent */}
         {(data?.recentChats || []).length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Recent Consultations</Text>
-            {(data.recentChats || []).slice(0, 5).map((chat) => (
-              <TouchableOpacity
-                key={chat._id}
-                style={styles.chatRow}
-                onPress={() => router.push(`/chat/${chat._id}`)}
-              >
-                <View style={styles.chatAvatar}>
-                  <Text style={styles.chatAvatarText}>{chat.user?.name?.charAt(0) || 'U'}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.chatName}>{chat.user?.name || 'User'}</Text>
-                  <Text style={styles.chatMsg} numberOfLines={1}>
-                    {chat.messages?.[chat.messages.length - 1]?.content || 'No messages'}
-                  </Text>
-                </View>
-                <View style={styles.chatMeta}>
-                  {chat.isActive && <View style={styles.activeDot} />}
-                  <Ionicons name="chevron-forward" size={16} color={colors.border} />
-                </View>
-              </TouchableOpacity>
-            ))}
+            <Text style={styles.section}>Recent consultations</Text>
+            {(data.recentChats || []).slice(0, 5).map((chat) => {
+              const birth = chat.userBirthDetails || {};
+              const name = birth.name || chat.user?.name || 'User';
+              return (
+                <TouchableOpacity
+                  key={chat._id}
+                  style={styles.recentRow}
+                  onPress={() => router.push(`/chat/${chat._id}`)}
+                  activeOpacity={0.88}
+                >
+                  <View style={styles.recentAvatar}>
+                    <Text style={styles.recentAvatarText}>{name.charAt(0)}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.recentName}>{name}</Text>
+                    <Text style={styles.recentMsg} numberOfLines={1}>
+                      {chat.messages?.[chat.messages.length - 1]?.content || 'No messages yet'}
+                    </Text>
+                  </View>
+                  {chat.isActive ? (
+                    <View style={styles.activeChip}>
+                      <Text style={styles.activeChipText}>LIVE</Text>
+                    </View>
+                  ) : (
+                    <Ionicons name="chevron-forward" size={16} color={colors.border} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </>
         )}
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+        <View style={styles.tip}>
+          <Ionicons name="sparkles" size={16} color={COLORS.primary} />
+          <Text style={styles.tipText}>
+            Online + Chat/Call ON rakho. User ki DOB / TOB / place request me auto milti hai.
+          </Text>
+        </View>
 
-function StatCard({ icon, iconColor, label, value, highlight }) {
-  return (
-    <View style={[styles.statCard, highlight && styles.statCardHighlight]}>
-      <View style={[styles.statIcon, { backgroundColor: `${iconColor}18` }]}>
-        <Ionicons name={icon} size={18} color={iconColor} />
-      </View>
-      <Text style={[styles.statVal, highlight && { color: COLORS.success }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </View>
   );
 }
 
-function QuickAction({ icon, color, label, badge, onPress }) {
+function MiniStat({ icon, color, label, value }) {
   return (
-    <TouchableOpacity style={styles.quickCard} onPress={onPress}>
-      <View style={[styles.quickIcon, { backgroundColor: `${color}18` }]}>
-        <Ionicons name={icon} size={24} color={color} />
+    <View style={styles.miniStat}>
+      <View style={[styles.miniIcon, { backgroundColor: `${color}22` }]}>
+        <Ionicons name={icon} size={14} color={color} />
+      </View>
+      <Text style={styles.miniVal}>{value}</Text>
+      <Text style={styles.miniLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function ActionTile({ icon, color, title, sub, badge, onPress }) {
+  return (
+    <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.9}>
+      <View style={[styles.tileIcon, { backgroundColor: `${color}18` }]}>
+        <Ionicons name={icon} size={22} color={color} />
         {badge > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badge}</Text>
+          <View style={styles.tileBadge}>
+            <Text style={styles.tileBadgeText}>{badge}</Text>
           </View>
         )}
       </View>
-      <Text style={styles.quickLabel}>{label}</Text>
+      <Text style={styles.tileTitle}>{title}</Text>
+      <Text style={styles.tileSub}>{sub}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg, gap: 12 },
-  loadingText: { color: colors.textMuted, fontSize: 13 },
+  screen: { flex: 1, backgroundColor: COLORS.background },
+  boot: {
+    flex: 1, backgroundColor: COLORS.bannerDark, alignItems: 'center', justifyContent: 'center',
+  },
+  bootCard: {
+    alignItems: 'center', padding: 32, borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(245,197,24,0.2)',
+  },
+  bootText: { color: 'rgba(255,255,255,0.7)', marginTop: 12, fontWeight: '600' },
 
-  heroHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16,
-    backgroundColor: COLORS.bannerDark,
+  headerBtn: {
+    width: 40, height: 40, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  heroLeft: { flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 },
-  avatarCircle: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center', alignItems: 'center', position: 'relative',
+  identity: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16,
+    backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 18, padding: 12,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
-  avatarText: { fontSize: 22, fontWeight: '900', color: '#1A1A1A' },
-  onlineDot: {
-    position: 'absolute', bottom: 1, right: 1,
-    width: 14, height: 14, borderRadius: 7,
+  avatarWrap: { position: 'relative' },
+  avatar: {
+    width: 52, height: 52, borderRadius: 18, backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarLetter: { fontSize: 22, fontWeight: '900', color: COLORS.bannerDark },
+  liveDot: {
+    position: 'absolute', bottom: -1, right: -1, width: 14, height: 14, borderRadius: 7,
     backgroundColor: COLORS.success, borderWidth: 2, borderColor: COLORS.bannerDark,
   },
-  heroGreeting: { fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: '500' },
-  heroName: { fontSize: 17, fontWeight: '800', color: '#fff', marginTop: 1 },
-  heroSpec: { fontSize: 11, color: COLORS.primary, fontWeight: '600', marginTop: 1 },
-  logoutBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center', alignItems: 'center',
+  idName: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  idMeta: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 3, fontWeight: '500' },
+  rateChip: {
+    backgroundColor: COLORS.primary, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 8, alignItems: 'center',
   },
+  rateChipTop: { fontSize: 8, fontWeight: '800', color: COLORS.bannerDark, letterSpacing: 0.8 },
+  rateChipVal: { fontSize: 15, fontWeight: '900', color: COLORS.bannerDark },
+  rateChipBot: { fontSize: 9, fontWeight: '700', color: 'rgba(18,8,31,0.65)' },
 
-  content: { padding: 16, paddingBottom: 24 },
+  body: { padding: 16 },
 
   onlineCard: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: RADIUS.lg, padding: 16, marginBottom: 14,
+    borderWidth: 1, borderColor: COLORS.border, ...SHADOW_SM,
+  },
+  onlineCardOn: {
+    borderColor: 'rgba(22,163,74,0.35)', backgroundColor: '#F3FCF6',
+  },
+  onlineLeft: { flex: 1, paddingRight: 10 },
+  statusPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, marginBottom: 6,
+    backgroundColor: COLORS.soft,
+  },
+  statusOn: { backgroundColor: 'rgba(22,163,74,0.12)' },
+  statusOff: { backgroundColor: COLORS.soft },
+  statusTxt: { fontSize: 12, fontWeight: '800', color: colors.textMuted },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  onlineHint: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+
+  earnCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 16,
-    borderWidth: 1.5, borderColor: colors.border,
+    backgroundColor: COLORS.bannerDark, borderRadius: RADIUS.xl, padding: 18, marginBottom: 18,
+    ...SHADOW_MD,
   },
-  onlineCardActive: { borderColor: COLORS.success, backgroundColor: COLORS.successLight },
-  onlineLeft: { flex: 1, paddingRight: 12 },
-  statusBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 20, backgroundColor: colors.border, marginBottom: 6,
+  earnLabel: { color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: '700', letterSpacing: 0.4 },
+  earnVal: { color: COLORS.primary, fontSize: 30, fontWeight: '900', marginTop: 4, letterSpacing: -0.5 },
+  earnSub: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 4, fontWeight: '500' },
+  earnIcon: {
+    width: 54, height: 54, borderRadius: 18, backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
   },
-  statusBadgeActive: { backgroundColor: 'rgba(46,175,93,0.15)' },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusDotOnline: { backgroundColor: COLORS.success },
-  statusDotOffline: { backgroundColor: colors.textMuted },
-  statusLabel: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
-  statusLabelActive: { color: COLORS.success },
-  onlineSub: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
 
-  statsGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16,
+  section: {
+    fontSize: 11, fontWeight: '800', color: COLORS.textLight,
+    letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10,
   },
-  statCard: {
-    width: '31%', backgroundColor: colors.card, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: colors.border, alignItems: 'center',
+  statsRow: { flexDirection: 'row', gap: 8, marginBottom: 18 },
+  miniStat: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 6,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, ...SHADOW_SM,
   },
-  statCardHighlight: { borderColor: COLORS.success, backgroundColor: COLORS.successLight },
-  statIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  statVal: { fontSize: 17, fontWeight: '800', color: colors.text },
-  statLabel: { fontSize: 10, color: colors.textMuted, marginTop: 4, textAlign: 'center', fontWeight: '600' },
+  miniIcon: { width: 28, height: 28, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  miniVal: { fontSize: 15, fontWeight: '900', color: COLORS.text },
+  miniLabel: { fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' },
 
-  liveBanner: {
+  liveOn: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#DC2626', borderRadius: 16, padding: 16, marginBottom: 16,
+    backgroundColor: '#B91C1C', borderRadius: RADIUS.lg, padding: 16, marginBottom: 18,
   },
-  livePill: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20,
+  liveBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12,
   },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' },
-  liveTag: { color: '#fff', fontWeight: '900', fontSize: 11 },
-  liveBannerTitle: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  liveBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  livePulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' },
+  liveBadgeText: { color: '#fff', fontWeight: '900', fontSize: 11, letterSpacing: 1 },
+  liveTitle: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  liveSub: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 2 },
 
-  goLiveCard: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 16,
-    borderWidth: 1.5, borderColor: colors.errorLight,
+  liveOff: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#fff', borderRadius: RADIUS.lg, padding: 14, marginBottom: 18,
+    borderWidth: 1, borderColor: COLORS.errorLight, ...SHADOW_SM,
   },
-  goLiveLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  goLiveIconWrap: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: COLORS.errorLight, justifyContent: 'center', alignItems: 'center',
+  liveOffIcon: {
+    width: 48, height: 48, borderRadius: 16, backgroundColor: COLORS.errorLight,
+    alignItems: 'center', justifyContent: 'center',
   },
-  goLiveTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
-  goLiveSub: { fontSize: 12, color: colors.textMuted, marginTop: 2, lineHeight: 17 },
+  liveOffTitle: { fontSize: 15, fontWeight: '800', color: COLORS.text },
+  liveOffSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  startPill: {
+    backgroundColor: COLORS.error, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12,
+  },
+  startPillText: { color: '#fff', fontWeight: '800', fontSize: 12 },
 
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textMuted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 18 },
+  tile: {
+    width: '48%', backgroundColor: '#fff', borderRadius: RADIUS.lg, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border, ...SHADOW_SM,
+  },
+  tileIcon: {
+    width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 10, position: 'relative',
+  },
+  tileBadge: {
+    position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9,
+    backgroundColor: COLORS.error, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
+  },
+  tileBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
+  tileTitle: { fontSize: 15, fontWeight: '800', color: COLORS.text },
+  tileSub: { fontSize: 11, color: colors.textMuted, marginTop: 2, fontWeight: '500' },
 
-  quickGrid: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  quickCard: {
-    flex: 1, backgroundColor: colors.card, borderRadius: 14, padding: 14,
-    alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 8,
+  recentRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#fff', borderRadius: 16, padding: 12, marginBottom: 8,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  quickIcon: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', position: 'relative' },
-  quickLabel: { fontSize: 11, fontWeight: '700', color: colors.text },
-  badge: {
-    position: 'absolute', top: -2, right: -2,
-    width: 18, height: 18, borderRadius: 9,
-    backgroundColor: COLORS.error, justifyContent: 'center', alignItems: 'center',
+  recentAvatar: {
+    width: 42, height: 42, borderRadius: 14, backgroundColor: COLORS.violetSoft,
+    alignItems: 'center', justifyContent: 'center',
   },
-  badgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
+  recentAvatarText: { fontSize: 16, fontWeight: '800', color: COLORS.violet },
+  recentName: { fontSize: 14, fontWeight: '800', color: COLORS.text },
+  recentMsg: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  activeChip: {
+    backgroundColor: COLORS.successLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
+  },
+  activeChipText: { color: COLORS.success, fontSize: 10, fontWeight: '900' },
 
-  chatRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card,
-    borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border,
+  tip: {
+    flexDirection: 'row', gap: 10, alignItems: 'flex-start',
+    backgroundColor: COLORS.primaryLight, borderRadius: 16, padding: 14, marginTop: 8,
+    borderWidth: 1, borderColor: COLORS.borderGold,
   },
-  chatAvatar: {
-    width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.yellowLight,
-    justifyContent: 'center', alignItems: 'center', marginRight: 12,
-  },
-  chatAvatarText: { fontSize: 17, fontWeight: '700', color: COLORS.primary },
-  chatName: { fontSize: 14, fontWeight: '700', color: colors.text },
-  chatMsg: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  chatMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  activeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.success },
+  tipText: { flex: 1, fontSize: 12, color: COLORS.text, lineHeight: 18, fontWeight: '500' },
 });

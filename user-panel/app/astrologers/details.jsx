@@ -37,10 +37,19 @@ export default function AstrologerDetailsScreen() {
 
   const handleFollow = async () => {
     if (!astro?._id) return;
+    if (!isAuthenticated) {
+      Alert.alert('Login Required', 'Follow karne ke liye pehle login karo.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Login', onPress: () => router.push('/(auth)/login') },
+      ]);
+      return;
+    }
     try {
       const res = await followingApi.toggle(astro._id);
-      setFollowing(res.following);
-    } catch (_) {}
+      setFollowing(!!res.following);
+    } catch (err) {
+      Alert.alert('Failed', err.message || 'Follow nahi ho saka');
+    }
   };
 
   const handleReview = async () => {
@@ -70,6 +79,10 @@ export default function AstrologerDetailsScreen() {
   };
 
   const openBooking = (bookingType) => {
+    if (!astro.isOnline) {
+      Alert.alert('Offline', 'Astrologer abhi offline hain. Baad mein try karo.');
+      return;
+    }
     router.push({
       pathname: '/astrologers/booking',
       params: { id: astro._id, type: bookingType },
@@ -110,8 +123,10 @@ export default function AstrologerDetailsScreen() {
         <View style={styles.card}>
           <RemoteImage uri={astro.image} type="astrologer" style={styles.avatar} fallbackIcon="person" iconSize={40} />
           <View style={styles.onlineRow}>
-            <View style={styles.onlineDot} />
-            <Text style={styles.onlineText}>Online Now</Text>
+            <View style={[styles.onlineDot, !astro.isOnline && { backgroundColor: COLORS.textLight }]} />
+            <Text style={[styles.onlineText, !astro.isOnline && { color: COLORS.textLight }]}>
+              {astro.isOnline ? 'Online Now' : 'Offline'}
+            </Text>
           </View>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{astro.name}</Text>

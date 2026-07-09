@@ -1,55 +1,124 @@
-import { View, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import {
+  View, Text, StyleSheet, Alert, ActivityIndicator, ScrollView, TouchableOpacity, TextInput,
+} from 'react-native';
 import Screen from '../../components/common/Screen';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchWallet } from '../../redux/walletSlice';
+import { setUser } from '../../redux/authSlice';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Button from '../../components/common/Button';
 import RemoteImage from '../../components/common/RemoteImage';
 import { sessionApi } from '../../services/sessionApi';
 import { astrologerApi } from '../../services/astrologerApi';
-import { ASTROLOGERS } from '../../constants/mockData';
+import { authApi } from '../../services/authApi';
 import { COLORS } from '../../constants/colors';
 import { SHADOW } from '../../constants/theme';
+import { ageFromDob, validateProfile, GENDER_OPTIONS } from '../../utils/birthDetails';
 
 export default function BookingScreen() {
   const { id, type = 'chat', returnTo } = useLocalSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const balance = useSelector((s) => s.wallet.balance);
   const [astro, setAstro] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [booking, setBooking] = useState(false);
+
+  const [fullName, setFullName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [timeOfBirth, setTimeOfBirth] = useState('');
+  const [placeOfBirth, setPlaceOfBirth] = useState('');
+  const [gender, setGender] = useState('');
+
   const isCall = type === 'call';
   const callMinCost = (astro?.pricePerMin || 20) * 1;
+  const age = ageFromDob(dateOfBirth);
 
   useEffect(() => {
     if (isAuthenticated) dispatch(fetchWallet());
   }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
+    if (user) {
+      setFullName(user.name || '');
+      setDateOfBirth(user.dateOfBirth || '');
+      setTimeOfBirth(user.timeOfBirth || '');
+      setPlaceOfBirth(user.placeOfBirth || '');
+      setGender(user.gender || '');
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (!id) {
-      setAstro(ASTROLOGERS[0]);
+      setLoadError('Astrologer id missing');
+      setAstro(null);
       setLoading(false);
       return;
     }
+    setLoadError('');
     astrologerApi.getById(id)
       .then(setAstro)
-      .catch(() => setAstro(ASTROLOGERS.find((a) => a._id === id) || ASTROLOGERS[0]))
+      .catch((err) => {
+        setAstro(null);
+        setLoadError(err.message || 'Astrologer load nahi hua.');
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Prefill from /auth/me for latest saved kundli
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    authApi.getMe()
+      .then((me) => {
+        if (me?.name) setFullName(me.name);
+        if (me?.dateOfBirth) setDateOfBirth(me.dateOfBirth);
+        if (me?.timeOfBirth) setTimeOfBirth(me.timeOfBirth);
+        if (me?.placeOfBirth) setPlaceOfBirth(me.placeOfBirth);
+        if (me?.gender) setGender(me.gender);
+        dispatch(setUser(me));
+      })
+      .catch(() => {});
+  }, [isAuthenticated, dispatch]);
+
+  const validateBirth = () => {
+    const check = validateProfile({
+      name: fullName,
+      dateOfBirth,
+      timeOfBirth,
+      placeOfBirth,
+      gender,
+    });
+    return check.ok ? null : check.message;
+  };
+
   const handleStart = async () => {
+    if (!astro?._id) {
+      Alert.alert('Unavailable', loadError || 'Astrologer available nahi hai.');
+      return;
+    }
     if (!isAuthenticated) {
       Alert.alert('Login Required', 'Consultation ke liye pehle login ya account banao.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Create Account', onPress: () => router.push('/(auth)/login?mode=signup') },
         { text: 'Login', onPress: () => router.push('/(auth)/login') },
       ]);
+      return;
+    }
+
+    if (!astro.isOnline) {
+      Alert.alert('Offline', 'Astrologer abhi offline hain. Baad mein try karo.');
+      return;
+    }
+
+    const birthError = validateBirth();
+    if (birthError) {
+      Alert.alert('Birth Details Required', birthError);
       return;
     }
 
@@ -65,19 +134,47 @@ export default function BookingScreen() {
       return;
     }
 
+    const birthDetails = {
+      name: fullName.trim(),
+      dateOfBirth: dateOfBirth.trim(),
+      timeOfBirth: timeOfBirth.trim(),
+      placeOfBirth: placeOfBirth.trim(),
+      gender: gender || '',
+    };
+
     setBooking(true);
     try {
+      // Save to profile for next time
+      try {
+        const updated = await authApi.updateProfile(birthDetails);
+        dispatch(setUser(updated));
+      } catch {
+        // continue booking even if profile save fails
+      }
+
       const res = await sessionApi.book({
         astrologerId: astro._id,
         type: isCall ? 'call' : 'chat',
         minutes: 1,
+        birthDetails,
       });
       const sessionId = res.session?._id;
       if (sessionId) {
-        const chatRoute = typeof returnTo === 'string' && returnTo
-          ? { pathname: `/chat/${sessionId}`, params: { returnTo } }
-          : `/chat/${sessionId}`;
-        router.push(chatRoute);
+        if (isCall) {
+          router.push({
+            pathname: `/call/${sessionId}`,
+            params: {
+              type: 'voice',
+              astroName: astro.name || 'Astrologer',
+              ...(typeof returnTo === 'string' && returnTo ? { returnTo } : {}),
+            },
+          });
+        } else {
+          const chatRoute = typeof returnTo === 'string' && returnTo
+            ? { pathname: `/chat/${sessionId}`, params: { returnTo } }
+            : `/chat/${sessionId}`;
+          router.push(chatRoute);
+        }
       } else {
         Alert.alert('Request Sent', res.message || 'Astrologer accept karenge tab start hoga.');
         router.back();
@@ -89,20 +186,33 @@ export default function BookingScreen() {
     }
   };
 
-  if (loading || !astro) {
+  if (loading) {
     return (
-      <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background} style={styles.center}>
+      <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background}>
         <Header title="Confirm Booking" />
         <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
       </Screen>
     );
   }
 
+  if (!astro) {
+    return (
+      <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background}>
+        <Header title="Confirm Booking" />
+        <View style={[styles.content, { alignItems: 'center', paddingTop: 40 }]}>
+          <Ionicons name="alert-circle-outline" size={48} color={COLORS.textLight} />
+          <Text style={styles.errorText}>{loadError || 'Astrologer available nahi hai'}</Text>
+          <Button title="Go Back" onPress={() => router.back()} style={{ marginTop: 20 }} />
+        </View>
+      </Screen>
+    );
+  }
+
   return (
-    <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background}>
+    <Screen edges={['left', 'right', 'bottom']} backgroundColor={COLORS.background} keyboard>
       <Header title="Confirm Booking" />
 
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <RemoteImage uri={astro.image} type="astrologer" style={styles.avatar} fallbackIcon="person" iconSize={32} />
           <Text style={styles.name}>{astro.name}</Text>
@@ -134,15 +244,90 @@ export default function BookingScreen() {
               </Text>
             </View>
           )}
+        </View>
 
-          <View style={styles.flowBox}>
-            <Text style={styles.flowTitle}>Kaise kaam karega?</Text>
-            <Text style={styles.flowStep}>1. Request bhejo → Astrologer accept karega</Text>
-            <Text style={styles.flowStep}>
-              2. {isCall ? 'Call connect hogi' : 'Chat start — 1 min free'}
-            </Text>
-            <Text style={styles.flowStep}>3. Time khatam → paise dekar continue karo</Text>
+        {/* Birth / Kundli details — shown first to astrologer */}
+        <View style={styles.birthCard}>
+          <View style={styles.birthHeader}>
+            <Ionicons name="planet-outline" size={22} color={COLORS.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.birthTitle}>Your Birth Details (Kundli)</Text>
+              <Text style={styles.birthSub}>
+                Ye details automatically astrologer ke chat me pehle message ke roop me jayengi
+              </Text>
+            </View>
           </View>
+
+          <Text style={styles.fieldLabel}>Full Name *</Text>
+          <TextInput
+            style={styles.input}
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder="Jaise certificate pe naam hai"
+            placeholderTextColor={COLORS.textLight}
+          />
+
+          <Text style={styles.fieldLabel}>Date of Birth * (DD/MM/YYYY)</Text>
+          <TextInput
+            style={styles.input}
+            value={dateOfBirth}
+            onChangeText={setDateOfBirth}
+            placeholder="15/08/1995"
+            placeholderTextColor={COLORS.textLight}
+            keyboardType="numbers-and-punctuation"
+          />
+          <Text style={styles.ageLine}>
+            Age: {age != null ? `${age} years (auto)` : '— DOB se auto calculate'}
+          </Text>
+
+          <Text style={styles.fieldLabel}>Time of Birth *</Text>
+          <TextInput
+            style={styles.input}
+            value={timeOfBirth}
+            onChangeText={setTimeOfBirth}
+            placeholder="10:30 AM"
+            placeholderTextColor={COLORS.textLight}
+          />
+
+          <Text style={styles.fieldLabel}>Place of Birth *</Text>
+          <TextInput
+            style={styles.input}
+            value={placeOfBirth}
+            onChangeText={setPlaceOfBirth}
+            placeholder="City, State / Country"
+            placeholderTextColor={COLORS.textLight}
+          />
+
+          <Text style={styles.fieldLabel}>Gender / Sex *</Text>
+          <View style={styles.genderRow}>
+            {GENDER_OPTIONS.map((g) => (
+              <TouchableOpacity
+                key={g.id}
+                style={[styles.genderChip, gender === g.id && styles.genderChipActive]}
+                onPress={() => setGender(g.id)}
+              >
+                <Text style={[styles.genderText, gender === g.id && styles.genderTextActive]}>
+                  {g.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.hintBox}>
+            <Ionicons name="information-circle-outline" size={16} color={COLORS.link} />
+            <Text style={styles.hintText}>
+              Accurate kundli ke liye sahi birth time + place zaroori hai. Profile me save bhi ho jayega.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.flowBox}>
+          <Text style={styles.flowTitle}>Kaise kaam karega?</Text>
+          <Text style={styles.flowStep}>1. Birth details bharo → Request bhejo</Text>
+          <Text style={styles.flowStep}>2. Astrologer ko pehle aapka Name, DOB, TOB, Place dikhega</Text>
+          <Text style={styles.flowStep}>
+            3. {isCall ? 'Accept ke baad call connect' : 'Accept ke baad chat + 1 min free'}
+          </Text>
         </View>
 
         <Button
@@ -151,17 +336,19 @@ export default function BookingScreen() {
           onPress={handleStart}
           loading={booking}
         />
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { justifyContent: 'flex-start' },
-  content: { padding: 16 },
+  content: { padding: 16, paddingBottom: 40 },
+  errorText: {
+    marginTop: 12, color: COLORS.textSecondary, textAlign: 'center', paddingHorizontal: 24,
+  },
   card: {
     backgroundColor: COLORS.surface, borderRadius: 16, padding: 24,
-    alignItems: 'center', marginBottom: 24, ...SHADOW,
+    alignItems: 'center', marginBottom: 16, ...SHADOW,
   },
   avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 },
   name: { fontSize: 20, fontWeight: '800', color: COLORS.text },
@@ -184,12 +371,39 @@ const styles = StyleSheet.create({
     marginTop: 16, width: '100%', justifyContent: 'center',
   },
   payText: { color: COLORS.text, fontSize: 13, fontWeight: '700', flex: 1 },
+  birthCard: {
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    marginBottom: 16, borderWidth: 1, borderColor: COLORS.primary + '44', ...SHADOW,
+  },
+  birthHeader: { flexDirection: 'row', gap: 10, marginBottom: 14, alignItems: 'flex-start' },
+  birthTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text },
+  birthSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 3, lineHeight: 17 },
+  fieldLabel: {
+    fontSize: 13, fontWeight: '600', color: COLORS.text, marginBottom: 6, marginTop: 4,
+  },
+  input: {
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15,
+    color: COLORS.text, backgroundColor: COLORS.cream, marginBottom: 10,
+  },
+  genderRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  genderChip: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.cream,
+  },
+  genderChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  genderText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  genderTextActive: { color: COLORS.text, fontWeight: '800' },
+  ageLine: {
+    fontSize: 13, fontWeight: '700', color: COLORS.primary, marginTop: -4, marginBottom: 10,
+  },
+  hintBox: {
+    flexDirection: 'row', gap: 8, marginTop: 8, backgroundColor: COLORS.primaryLight,
+    padding: 10, borderRadius: 8, alignItems: 'flex-start',
+  },
+  hintText: { flex: 1, fontSize: 12, color: COLORS.textSecondary, lineHeight: 17 },
   flowBox: {
-    marginTop: 16,
-    width: '100%',
-    backgroundColor: COLORS.cream,
-    borderRadius: 10,
-    padding: 12,
+    marginBottom: 16, backgroundColor: COLORS.cream, borderRadius: 10, padding: 12,
   },
   flowTitle: { fontSize: 13, fontWeight: '800', color: COLORS.text, marginBottom: 8 },
   flowStep: { fontSize: 12, color: COLORS.textSecondary, lineHeight: 18, marginBottom: 2 },
