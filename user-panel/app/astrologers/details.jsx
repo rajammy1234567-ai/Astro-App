@@ -23,6 +23,7 @@ export default function AstrologerDetailsScreen() {
   const [astro, setAstro] = useState(null);
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const [reviewRating, setReviewRating] = useState('5');
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -35,6 +36,20 @@ export default function AstrologerDetailsScreen() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Load follow state for this astrologer
+  useEffect(() => {
+    if (!isAuthenticated || !id) {
+      setFollowing(false);
+      return;
+    }
+    followingApi.getAll()
+      .then((list) => {
+        const arr = Array.isArray(list) ? list : [];
+        setFollowing(arr.some((a) => String(a._id) === String(id)));
+      })
+      .catch(() => setFollowing(false));
+  }, [isAuthenticated, id]);
+
   const handleFollow = async () => {
     if (!astro?._id) return;
     if (!isAuthenticated) {
@@ -44,11 +59,21 @@ export default function AstrologerDetailsScreen() {
       ]);
       return;
     }
+    setFollowLoading(true);
     try {
       const res = await followingApi.toggle(astro._id);
-      setFollowing(!!res.following);
+      const nowFollowing = !!res.following;
+      setFollowing(nowFollowing);
+      Alert.alert(
+        nowFollowing ? 'Following ❤️' : 'Unfollowed',
+        nowFollowing
+          ? `Ab aap ${astro.name} ko follow kar rahe ho.`
+          : `Aapne ${astro.name} ko unfollow kar diya.`
+      );
     } catch (err) {
       Alert.alert('Failed', err.message || 'Follow nahi ho saka');
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -144,9 +169,26 @@ export default function AstrologerDetailsScreen() {
             <Text style={styles.stat}>{astro.orders}+ orders</Text>
           </View>
 
-          <TouchableOpacity style={styles.followBtn} onPress={handleFollow}>
-            <Ionicons name={following ? 'heart' : 'heart-outline'} size={18} color={following ? COLORS.error : COLORS.text} />
-            <Text style={styles.followText}>{following ? 'Following' : 'Follow'}</Text>
+          <TouchableOpacity
+            style={[styles.followBtn, following && styles.followingBtn]}
+            onPress={handleFollow}
+            disabled={followLoading}
+            activeOpacity={0.85}
+          >
+            {followLoading ? (
+              <ActivityIndicator size="small" color={following ? COLORS.error : COLORS.text} />
+            ) : (
+              <>
+                <Ionicons
+                  name={following ? 'heart' : 'heart-outline'}
+                  size={18}
+                  color={following ? '#fff' : COLORS.text}
+                />
+                <Text style={[styles.followText, following && styles.followingText]}>
+                  {following ? 'Following · Unfollow' : 'Follow Astrologer'}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <View style={styles.btns}>
@@ -259,6 +301,8 @@ const styles = StyleSheet.create({
   bio: { fontSize: 13, color: COLORS.textSecondary, marginTop: 12, textAlign: 'center', lineHeight: 20 },
   stats: { flexDirection: 'row', gap: 16, marginTop: 14 },
   stat: { fontSize: 13, fontWeight: '600', color: COLORS.text },
+  followingBtn: { backgroundColor: COLORS.error, borderColor: COLORS.error },
+  followingText: { color: '#fff' },
   followBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14,
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,

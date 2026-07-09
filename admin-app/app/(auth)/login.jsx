@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getApiBaseUrl } from '../../utils/platform';
 import { colors } from '../../constants/theme';
@@ -11,6 +12,7 @@ import { colors } from '../../constants/theme';
 export default function Login() {
   const [email, setEmail] = useState('admin@astrotalk.com');
   const [password, setPassword] = useState('admin123');
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
@@ -49,14 +51,19 @@ export default function Login() {
         />
 
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="Enter password"
-          placeholderTextColor={colors.textMuted}
-        />
+        <View style={styles.passRow}>
+          <TextInput
+            style={styles.passInput}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPass}
+            placeholder="Enter password"
+            placeholderTextColor={colors.textMuted}
+          />
+          <TouchableOpacity onPress={() => setShowPass((v) => !v)} style={styles.eyeBtn} hitSlop={8}>
+            <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.btn} onPress={handleLogin} disabled={loading}>
           {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.btnText}>Sign In</Text>}
@@ -80,6 +87,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
     borderRadius: 10, padding: 14, color: colors.text, fontSize: 15,
   },
+  passRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+  },
+  passInput: { flex: 1, padding: 14, color: colors.text, fontSize: 15 },
+  eyeBtn: { paddingHorizontal: 12, paddingVertical: 10 },
   btn: {
     backgroundColor: colors.primary, borderRadius: 10, padding: 16,
     alignItems: 'center', marginTop: 24,
