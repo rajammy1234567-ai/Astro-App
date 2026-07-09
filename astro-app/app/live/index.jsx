@@ -30,6 +30,12 @@ export default function GoLiveScreen() {
   const [camPerm, requestCamPerm] = useCameraPermissions();
   const [micPerm, requestMicPerm] = useMicrophonePermissions();
   const listRef = useRef(null);
+  const MAX_RECENT = 40;
+
+  const trimRecent = (list) => {
+    const arr = Array.isArray(list) ? list : [];
+    return arr.length > MAX_RECENT ? arr.slice(-MAX_RECENT) : arr;
+  };
 
   const loadSession = useCallback(async () => {
     try {
@@ -39,11 +45,16 @@ export default function GoLiveScreen() {
         setIsMuted(!!live.isMuted);
         setIsCameraOff(!!live.isCameraOff);
         setViewerCount(live.viewerCount || 0);
+        // Sirf current live ke recent comments
         const list = await liveApi.getComments(live._id);
-        setComments(Array.isArray(list) ? list : []);
+        setComments(trimRecent(list));
+      } else {
+        setSession(null);
+        setComments([]);
       }
     } catch {
       setSession(null);
+      setComments([]);
     } finally {
       setLoading(false);
     }
@@ -55,14 +66,25 @@ export default function GoLiveScreen() {
     if (!session?._id) return undefined;
     joinLiveRoom(session._id);
     const socket = getSocket();
+    const sessionId = String(session._id);
 
-    const onComment = (c) => setComments((prev) => [...prev, c]);
+    const onComment = (c) => {
+      const sid = String(c?.liveSession || c?.liveSessionId || '');
+      if (sid && sid !== sessionId) return;
+      setComments((prev) => {
+        const nextId = c?._id ? String(c._id) : null;
+        if (nextId && prev.some((x) => String(x._id) === nextId)) return prev;
+        return trimRecent([...prev, c]);
+      });
+    };
     const onViewers = (d) => setViewerCount(d.viewerCount ?? 0);
     const onControls = (d) => {
       if (typeof d.isMuted === 'boolean') setIsMuted(d.isMuted);
       if (typeof d.isCameraOff === 'boolean') setIsCameraOff(d.isCameraOff);
     };
     const onEnded = () => {
+      setComments([]);
+      setSession(null);
       Alert.alert('Live Ended', 'Session has ended.');
       safeGoBack(router, '/(tabs)/dashboard');
     };
@@ -103,6 +125,7 @@ export default function GoLiveScreen() {
     setStarting(true);
     try {
       const live = await liveApi.startLive(title.trim() || `${astrologer?.name} is Live`);
+      // Naya live → comments hamesha empty se start
       setSession(live);
       setComments([]);
       setViewerCount(0);
@@ -123,6 +146,8 @@ export default function GoLiveScreen() {
           setEnding(true);
           try {
             await liveApi.endLive(session._id);
+            setComments([]);
+            setSession(null);
             safeGoBack(router, '/(tabs)/dashboard');
           } catch (e) {
             Alert.alert('Error', e.message);

@@ -23,6 +23,12 @@ export default function WatchLiveScreen() {
   const [viewerCount, setViewerCount] = useState(0);
   const [isCameraOff, setIsCameraOff] = useState(false);
   const listRef = useRef(null);
+  const MAX_RECENT = 40;
+
+  const trimRecent = (list) => {
+    const arr = Array.isArray(list) ? list : [];
+    return arr.length > MAX_RECENT ? arr.slice(-MAX_RECENT) : arr;
+  };
 
   const load = useCallback(async () => {
     try {
@@ -36,11 +42,13 @@ export default function WatchLiveScreen() {
       setSession(live);
       setViewerCount(live.viewerCount || 0);
       setIsCameraOff(!!live.isCameraOff);
-      setComments(Array.isArray(list) ? list : []);
+      // Sirf is live ke recent comments
+      setComments(trimRecent(list));
       liveApi.joinLive(id).then((joined) => {
         if (joined?.viewerCount != null) setViewerCount(joined.viewerCount);
       }).catch(() => {});
     } catch (e) {
+      setComments([]);
       Alert.alert('Live', e.message || 'Live session not available', [
         { text: 'OK', onPress: () => router.back() },
       ]);
@@ -56,12 +64,24 @@ export default function WatchLiveScreen() {
     joinLiveRoom(id);
     const socket = getSocket();
 
-    const onComment = (c) => setComments((prev) => [...prev, c]);
+    const onComment = (c) => {
+      // Same live session ke naye comments hi append
+      const sid = String(c?.liveSession || c?.liveSessionId || '');
+      if (sid && sid !== String(id)) return;
+      setComments((prev) => {
+        const nextId = c?._id ? String(c._id) : null;
+        if (nextId && prev.some((x) => String(x._id) === nextId)) return prev;
+        return trimRecent([...prev, c]);
+      });
+    };
     const onViewers = (d) => setViewerCount(d.viewerCount ?? 0);
     const onControls = (d) => {
       if (typeof d.isCameraOff === 'boolean') setIsCameraOff(d.isCameraOff);
     };
     const onEnded = () => {
+      // Live end → comments clear
+      setComments([]);
+      setSession(null);
       Alert.alert('Live Ended', 'Astrologer ne live end kar diya.', [
         { text: 'OK', onPress: () => router.back() },
       ]);

@@ -65,15 +65,26 @@ const getLiveById = async (req, res) => {
   }
 };
 
+// Live chat: only recent messages of the CURRENT live. Ended live → empty.
+const RECENT_COMMENT_LIMIT = 40;
+
 const getComments = async (req, res) => {
   try {
     const session = await LiveSession.findById(req.params.id);
     if (!session) return res.status(404).json({ message: 'Live session not found' });
 
-    const comments = await LiveComment.find({ liveSession: session._id })
-      .sort({ createdAt: 1 })
-      .limit(200);
-    res.json(comments);
+    // Live end ke baad purane comments nahi dikhne chahiye
+    if (session.status !== 'live') {
+      return res.json([]);
+    }
+
+    // Sirf recent comments (naye pehle fetch, UI ke liye chronological reverse)
+    const recent = await LiveComment.find({ liveSession: session._id })
+      .sort({ createdAt: -1 })
+      .limit(RECENT_COMMENT_LIMIT)
+      .lean();
+
+    res.json(recent.reverse());
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -126,6 +137,9 @@ const endLive = async (req, res) => {
     session.status = 'ended';
     session.endedAt = new Date();
     await session.save();
+
+    // Purane comments hata do — next live fresh shuru hogi
+    await LiveComment.deleteMany({ liveSession: session._id });
 
     await Astrologer.findByIdAndUpdate(req.astrologer._id, { isLive: false });
 
