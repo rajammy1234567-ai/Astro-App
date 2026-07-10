@@ -1,0 +1,59 @@
+# Render Blueprint — AstroTalk API backend
+# https://render.com/docs/blueprint-spec
+#
+# Dashboard me bhi set kar sakte ho:
+#   Root Directory : server
+#   Build Command  : npm install
+#   Start Command  : npm start
+#   Environment    : Node
+
+services:
+  - type: web
+    name: astrotalk-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Required — set in Render Dashboard (Environment)
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      # Optional
+      - key: USE_MEMORY_DB
+        value: "false"
+      - key: SEED_DEMO_DATA
+        value: "true"
+      - key: DEV_OTP
+        value: "123456"
+      - key: ADMIN_EMAIL
+        value: admin@astrotalk.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: AGORA_APP_ID
+        sync: false
+      - key: AGORA_APP_CERTIFICATE
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
