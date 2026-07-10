@@ -142,7 +142,13 @@ const createSession = async (req, res) => {
 
 const getMySessions = async (req, res) => {
   try {
-    const chats = await Chat.find({ user: req.user._id })
+    const typeFilter = String(req.query.type || '').toLowerCase();
+    const query = { user: req.user._id };
+    if (typeFilter === 'chat' || typeFilter === 'call') {
+      query.type = typeFilter;
+    }
+
+    const chats = await Chat.find(query)
       .sort({ updatedAt: -1 })
       .populate('astrologer', 'name image specialty pricePerMin isOnline');
     const sessions = [];

@@ -153,9 +153,20 @@ async function payForMinutes(chat, minutes) {
   return { balance, cost, minutes };
 }
 
+function getDurationSeconds(chat) {
+  const start = chat.startedAt || chat.acceptedAt || null;
+  if (!start) return 0;
+  const end =
+    chat.endedAt ||
+    (['active', 'paused', 'accepted'].includes(chat.status) ? new Date() : null);
+  if (!end) return 0;
+  return Math.max(0, Math.floor((new Date(end) - new Date(start)) / 1000));
+}
+
 function formatSession(chat) {
   const billing = getBillingState(chat);
   const birth = chat.userBirthDetails || {};
+  const durationSeconds = getDurationSeconds(chat);
   return {
     _id: chat._id,
     user: chat.user,
@@ -179,7 +190,11 @@ function formatSession(chat) {
     updatedAt: chat.updatedAt,
     agoraChannel: chat.agoraChannel || (chat._id ? `session_${chat._id}` : ''),
     callPaidUpfront: !!chat.callPaidUpfront,
-    billing,
+    durationSeconds,
+    billing: {
+      ...billing,
+      durationSeconds,
+    },
   };
 }
 

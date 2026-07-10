@@ -19,11 +19,14 @@ export default function EmptyState({ icon = 'file-tray-outline', title, subtitle
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24 },
-  title: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginTop: 12, textAlign: 'center' },
+  title: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginTop: 12, textAlign: 'center' },
   subtitle: { fontSize: 13, color: COLORS.textSecondary, marginTop: 6, textAlign: 'center', lineHeight: 20 },
   action: {
-    marginTop: 16, backgroundColor: COLORS.primary, paddingHorizontal: 20,
-    paddingVertical: 10, borderRadius: 8,
+    marginTop: 16,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+    borderRadius: 22,
   },
-  actionText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+  actionText: { color: COLORS.text, fontSize: 14, fontWeight: '800' },
 });

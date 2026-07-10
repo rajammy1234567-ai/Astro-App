@@ -165,15 +165,15 @@ export default function UserCallScreen() {
           await agoraService.leaveChannel();
           clearInterval(timerRef.current);
           try { await sessionApi.end(id); } catch {}
-          router.replace('/sessions');
+          router.replace({ pathname: '/sessions', params: { type: 'call' } });
         },
       },
     ]);
   };
 
   const leaveWithoutEnding = () => {
-    // Session stays open — user can resume from Chat tab / History
-    router.replace('/sessions');
+    // Session stays open — user can resume from Call tab / Call History
+    router.replace({ pathname: '/sessions', params: { type: 'call' } });
   };
 
   if (loading) {

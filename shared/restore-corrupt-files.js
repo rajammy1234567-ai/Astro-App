@@ -8,9 +8,23 @@ const devRoot = path.join('C:\\astro-app-dev', appName);
 const repoRoot = path.resolve(projectRoot, '..');
 const extensions = new Set(['.js', '.jsx', '.ts', '.tsx', '.json']);
 
+// Paths relative to project root. Nested package layouts (e.g. semver@6 at root +
+// semver@7 under expo/) are OK — we resolve any known good location.
 const criticalNodeModules = [
-  'node_modules/react-native/src/private/webapis/dom/events/internals/EventInternals.js',
-  'node_modules/semver/functions/satisfies.js',
+  {
+    label: 'react-native EventInternals',
+    candidates: [
+      'node_modules/react-native/src/private/webapis/dom/events/internals/EventInternals.js',
+    ],
+  },
+  {
+    label: 'semver satisfies',
+    candidates: [
+      'node_modules/semver/functions/satisfies.js',
+      'node_modules/expo/node_modules/semver/functions/satisfies.js',
+      'node_modules/react-native/node_modules/semver/functions/satisfies.js',
+    ],
+  },
 ];
 
 function isCorrupt(filePath) {
@@ -20,6 +34,10 @@ function isCorrupt(filePath) {
   } catch {
     return false;
   }
+}
+
+function isHealthyFile(filePath) {
+  return fs.existsSync(filePath) && !isCorrupt(filePath);
 }
 
 function walk(dir, files = []) {
@@ -79,10 +97,12 @@ function restoreFromGit(relativePath) {
 function checkCriticalNodeModules() {
   const missing = [];
 
-  for (const relativePath of criticalNodeModules) {
-    const fullPath = path.join(projectRoot, relativePath);
-    if (!fs.existsSync(fullPath) || isCorrupt(fullPath)) {
-      missing.push(relativePath);
+  for (const entry of criticalNodeModules) {
+    const ok = entry.candidates.some((relativePath) =>
+      isHealthyFile(path.join(projectRoot, relativePath))
+    );
+    if (!ok) {
+      missing.push(`${entry.label} (${entry.candidates[0]})`);
     }
   }
 

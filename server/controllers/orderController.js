@@ -11,15 +11,25 @@ const getOrCreateWallet = async (userId) => {
   return wallet;
 };
 
+const ONLINE_METHODS = new Set(['upi', 'gpay', 'card', 'razorpay']);
+
 const createOrder = async (req, res) => {
   try {
-    const { products, shippingAddress } = req.body;
+    const { products, shippingAddress, paymentMethod: rawMethod, paymentId } = req.body;
 
     if (!Array.isArray(products) || !products.length) {
       return res.status(400).json({ message: 'Cart is empty' });
     }
     if (!shippingAddress?.trim()) {
       return res.status(400).json({ message: 'Shipping address is required' });
+    }
+
+    let paymentMethod = String(rawMethod || 'wallet').toLowerCase();
+    if (paymentMethod === 'googlepay') paymentMethod = 'gpay';
+    if (!['wallet', 'upi', 'gpay', 'card', 'razorpay'].includes(paymentMethod)) {
+      return res.status(400).json({
+        message: 'Invalid payment method. Use wallet, upi, gpay, card, or razorpay.',
+      });
     }
 
     const orderItems = [];
@@ -46,21 +56,49 @@ const createOrder = async (req, res) => {
       totalAmount += product.price * quantity;
     }
 
-    const wallet = await getOrCreateWallet(req.user._id);
-    if (wallet.balance < totalAmount) {
-      return res.status(400).json({ message: 'Insufficient wallet balance. Please recharge.' });
+    let balance = null;
+    let payRef = paymentId || null;
+
+    if (paymentMethod === 'wallet') {
+      const wallet = await getOrCreateWallet(req.user._id);
+      if (wallet.balance < totalAmount) {
+        return res.status(400).json({
+          message: 'Insufficient wallet balance. Recharge wallet ya UPI/GPay se pay karo.',
+          code: 'INSUFFICIENT_WALLET',
+          balance: wallet.balance,
+          required: totalAmount,
+        });
+      }
+
+      wallet.balance -= totalAmount;
+      await wallet.save();
+      balance = wallet.balance;
+      payRef = payRef || `wallet_${Date.now()}`;
+
+      await Transaction.create({
+        user: req.user._id,
+        amount: totalAmount,
+        type: 'debit',
+        description: `Store order (${orderItems.length} item${orderItems.length > 1 ? 's' : ''}) — Wallet`,
+        status: 'completed',
+        razorpayPaymentId: payRef,
+      });
+    } else if (ONLINE_METHODS.has(paymentMethod)) {
+      // Dummy / external UPI-GPay-Card flow — wallet se paise nahi katte
+      payRef = payRef || `pay_${paymentMethod}_${Date.now()}`;
+
+      await Transaction.create({
+        user: req.user._id,
+        amount: totalAmount,
+        type: 'debit',
+        description: `Store order (${orderItems.length} item${orderItems.length > 1 ? 's' : ''}) — ${paymentMethod.toUpperCase()}`,
+        status: 'completed',
+        razorpayPaymentId: payRef,
+      });
+
+      const wallet = await getOrCreateWallet(req.user._id);
+      balance = wallet.balance;
     }
-
-    wallet.balance -= totalAmount;
-    await wallet.save();
-
-    await Transaction.create({
-      user: req.user._id,
-      amount: totalAmount,
-      type: 'debit',
-      description: `Store order (${orderItems.length} item${orderItems.length > 1 ? 's' : ''})`,
-      status: 'completed',
-    });
 
     for (const item of orderItems) {
       await Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.quantity } });
@@ -73,12 +111,28 @@ const createOrder = async (req, res) => {
       totalAmount,
       shippingAddress: shippingAddress.trim(),
       status: 'confirmed',
+      paymentMethod,
+      paymentStatus: 'paid',
+      razorpayPaymentId: payRef,
     });
 
+    const methodLabel =
+      paymentMethod === 'wallet'
+        ? 'Wallet'
+        : paymentMethod === 'gpay'
+          ? 'GPay'
+          : paymentMethod === 'upi'
+            ? 'UPI'
+            : paymentMethod === 'card'
+              ? 'Card'
+              : 'Online';
+
     res.json({
-      message: 'Order placed successfully',
+      message: `Order placed successfully via ${methodLabel}`,
       order,
-      balance: wallet.balance,
+      balance,
+      paymentMethod,
+      paymentId: payRef,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

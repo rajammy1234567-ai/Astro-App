@@ -185,8 +185,8 @@ function OfferBanner({ item, onPress }) {
         <Text style={styles.offerTitle}>{item.title}</Text>
         <Text style={styles.offerSub}>{item.subtitle}</Text>
         <View style={styles.offerRow}>
-          <Text style={[styles.offerPrice, { color: item.accent }]}>{item.price}</Text>
-          <View style={[styles.offerCta, { backgroundColor: item.accent }]}>
+          <Text style={styles.offerPrice}>{item.price}</Text>
+          <View style={styles.offerCta}>
             <Text style={styles.offerCtaText}>{item.cta}</Text>
           </View>
         </View>
@@ -242,7 +242,7 @@ export default function RemediesScreen() {
           id: key,
           label: key.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
           icon: 'bag-handle',
-          color: COLORS.bannerDark,
+          color: COLORS.primaryDark,
           bg: COLORS.primaryLight,
         });
       }
@@ -268,11 +268,11 @@ export default function RemediesScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Hero */}
+        {/* Hero — soft gold, no dark blue */}
         <View style={styles.hero}>
           <View style={styles.heroContent}>
             <View style={styles.heroBadge}>
-              <Ionicons name="sparkles" size={12} color={COLORS.primary} />
+              <Ionicons name="sparkles" size={12} color={COLORS.primaryDark} />
               <Text style={styles.heroBadgeText}>ASTROTALK REMEDIES</Text>
             </View>
             <Text style={styles.heroTitle}>Authentic Spiritual{'\n'}Remedies Delivered</Text>
@@ -283,7 +283,7 @@ export default function RemediesScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.heroDecor}>
-            <Ionicons name="planet" size={56} color="rgba(253,185,19,0.35)" />
+            <Ionicons name="planet" size={64} color="rgba(253,185,19,0.45)" />
           </View>
         </View>
 
@@ -414,14 +414,17 @@ export default function RemediesScreen() {
           ))}
         </View>
 
-        {/* CTA */}
-        <TouchableOpacity style={styles.bottomCta} onPress={goStore} activeOpacity={0.9}>
-          <View>
+        {/* CTA — cream/gold card */}
+        <TouchableOpacity style={styles.bottomCta} onPress={() => router.push('/(tabs)/chat')} activeOpacity={0.9}>
+          <View style={styles.bottomCtaIcon}>
+            <Ionicons name="chatbubbles" size={20} color={COLORS.text} />
+          </View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.bottomCtaTitle}>Need personal guidance?</Text>
             <Text style={styles.bottomCtaSub}>Talk to our remedy expert — first 5 min free</Text>
           </View>
           <View style={styles.bottomCtaBtn}>
-            <Ionicons name="call" size={18} color="#FFF" />
+            <Ionicons name="arrow-forward" size={18} color={COLORS.text} />
           </View>
         </TouchableOpacity>
       </ScrollView>
@@ -459,28 +462,33 @@ const styles = StyleSheet.create({
   hero: {
     marginHorizontal: 16,
     marginTop: 14,
-    backgroundColor: COLORS.bannerDark,
+    backgroundColor: COLORS.primaryLight,
     borderRadius: 16,
     padding: 18,
     flexDirection: 'row',
     overflow: 'hidden',
     minHeight: 150,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '55',
+    ...SHADOW_MD,
   },
-  heroContent: { flex: 1, zIndex: 1 },
+  heroContent: { flex: 1, zIndex: 1, paddingRight: 8 },
   heroBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(253,185,19,0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 20,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
   },
-  heroBadgeText: { fontSize: 9, fontWeight: '800', color: COLORS.primary, letterSpacing: 0.5 },
-  heroTitle: { fontSize: 20, fontWeight: '800', color: '#FFF', lineHeight: 28 },
-  heroSub: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 6, lineHeight: 16 },
+  heroBadgeText: { fontSize: 9, fontWeight: '800', color: COLORS.primaryDark, letterSpacing: 0.5 },
+  heroTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, lineHeight: 28 },
+  heroSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 6, lineHeight: 17, fontWeight: '500' },
   heroBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -488,16 +496,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: COLORS.primary,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 22,
     marginTop: 14,
   },
   heroBtnText: { fontSize: 12, fontWeight: '800', color: COLORS.text },
   heroDecor: {
     position: 'absolute',
-    right: -8,
-    bottom: -8,
-    opacity: 0.9,
+    right: 4,
+    bottom: 4,
+    opacity: 0.95,
   },
   sectionHead: {
     flexDirection: 'row',
@@ -510,7 +518,7 @@ const styles = StyleSheet.create({
   sectionHeadLeft: { flex: 1 },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: COLORS.text },
   sectionSub: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2 },
-  viewAll: { fontSize: 13, color: COLORS.link, fontWeight: '700' },
+  viewAll: { fontSize: 13, color: COLORS.primaryDark, fontWeight: '800' },
   catScroll: { paddingHorizontal: 16, gap: 14 },
   catItem: { alignItems: 'center', width: 72 },
   catCircle: {
@@ -642,9 +650,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  offerPrice: { fontSize: 15, fontWeight: '800' },
-  offerCta: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  offerCtaText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
+  offerPrice: { fontSize: 15, fontWeight: '800', color: COLORS.primaryDark },
+  offerCta: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: COLORS.primary },
+  offerCtaText: { color: COLORS.text, fontSize: 11, fontWeight: '800' },
   productScroll: { paddingHorizontal: 16, gap: 12 },
   productCard: {
     width: 150,
@@ -767,20 +775,33 @@ const styles = StyleSheet.create({
   bottomCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
     marginHorizontal: 16,
     marginTop: 16,
-    backgroundColor: COLORS.bannerDark,
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '66',
+    ...SHADOW_MD,
   },
-  bottomCtaTitle: { fontSize: 14, fontWeight: '800', color: '#FFF' },
-  bottomCtaSub: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 3 },
-  bottomCtaBtn: {
+  bottomCtaIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.success,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  bottomCtaTitle: { fontSize: 14, fontWeight: '800', color: COLORS.text },
+  bottomCtaSub: { fontSize: 11, color: COLORS.textSecondary, marginTop: 3, fontWeight: '500' },
+  bottomCtaBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

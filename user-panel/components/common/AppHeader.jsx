@@ -9,7 +9,10 @@ import { COLORS } from '../../constants/colors';
 export default function AppHeader({
   showSearch = false,
   showLang = false,
+  /** Opens full chat history (all past + ongoing chats) */
   showChat = false,
+  /** Opens full call history (duration summary) */
+  showCallHistory = false,
   onMenuPress,
   onSearchPress,
 }) {
@@ -56,8 +59,24 @@ export default function AppHeader({
           )}
 
           {showChat && (
-            <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7} onPress={() => router.push('/(tabs)/chat')}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              activeOpacity={0.7}
+              onPress={() => router.push({ pathname: '/sessions', params: { type: 'chat' } })}
+              accessibilityLabel="Chat history"
+            >
               <Ionicons name="chatbubble-outline" size={22} color={COLORS.text} />
+            </TouchableOpacity>
+          )}
+
+          {showCallHistory && (
+            <TouchableOpacity
+              style={styles.iconBtn}
+              activeOpacity={0.7}
+              onPress={() => router.push({ pathname: '/sessions', params: { type: 'call' } })}
+              accessibilityLabel="Call history"
+            >
+              <Ionicons name="time-outline" size={22} color={COLORS.text} />
             </TouchableOpacity>
           )}
         </View>

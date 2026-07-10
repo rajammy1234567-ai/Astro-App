@@ -179,7 +179,7 @@ export default function UserChatScreen() {
         onPress: async () => {
           try {
             await sessionApi.end(id);
-            router.replace('/sessions');
+            router.replace({ pathname: '/sessions', params: { type: 'chat' } });
           } catch (err) {
             Alert.alert('Error', err.message);
           }
@@ -202,7 +202,10 @@ export default function UserChatScreen() {
         <Header title="Session" />
         <View style={styles.center}>
           <Text style={styles.muted}>Session not found</Text>
-          <TouchableOpacity style={styles.historyBtn} onPress={() => router.push('/sessions')}>
+          <TouchableOpacity
+            style={styles.historyBtn}
+            onPress={() => router.push({ pathname: '/sessions', params: { type: 'chat' } })}
+          >
             <Text style={styles.historyBtnText}>My Chats dekho</Text>
           </TouchableOpacity>
         </View>
@@ -365,8 +368,8 @@ export default function UserChatScreen() {
       {isEnded && (
         <View style={styles.closedBar}>
           <Text style={styles.closedText}>Session ended</Text>
-          <TouchableOpacity onPress={() => router.push('/sessions')}>
-            <Text style={styles.historyLink}>History dekho</Text>
+          <TouchableOpacity onPress={() => router.push({ pathname: '/sessions', params: { type: 'chat' } })}>
+            <Text style={styles.historyLink}>Chat history dekho</Text>
           </TouchableOpacity>
         </View>
       )}

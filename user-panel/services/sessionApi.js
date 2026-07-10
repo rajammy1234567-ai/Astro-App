@@ -2,7 +2,9 @@ import api from './api';
 
 export const sessionApi = {
   book: (data) => api.post('/sessions/book', data),
-  getMy: () => api.get('/sessions/my'),
+  /** @param {'chat'|'call'|undefined} type — filter history */
+  getMy: (type) =>
+    api.get('/sessions/my', type ? { params: { type } } : undefined),
   get: (id) => api.get(`/sessions/${id}`),
   sendMessage: (id, content, extra = {}) =>
     api.post(`/sessions/${id}/messages`, { content, ...extra }),

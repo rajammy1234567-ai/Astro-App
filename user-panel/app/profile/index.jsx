@@ -18,7 +18,8 @@ const MENU = [
   { label: 'Order History', icon: 'receipt-outline', route: '/orders' },
   { label: 'Wallet Transactions', icon: 'swap-horizontal-outline', route: '/wallet/transactions' },
   { label: 'My Following', icon: 'people-outline', route: '/following' },
-  { label: 'Chat & Call History', icon: 'chatbubbles-outline', route: '/sessions' },
+  { label: 'Chat History', icon: 'chatbubbles-outline', route: '/sessions?type=chat' },
+  { label: 'Call History', icon: 'call-outline', route: '/sessions?type=call' },
   { label: 'Settings', icon: 'settings-outline', route: '/settings' },
 ];
 

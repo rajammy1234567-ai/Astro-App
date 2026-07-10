@@ -20,6 +20,17 @@ const orderSchema = new mongoose.Schema(
       default: 'pending',
     },
     shippingAddress: { type: String },
+    /** wallet | upi | gpay | card | razorpay */
+    paymentMethod: {
+      type: String,
+      enum: ['wallet', 'upi', 'gpay', 'card', 'razorpay'],
+      default: 'wallet',
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed', 'refunded'],
+      default: 'paid',
+    },
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
   },
