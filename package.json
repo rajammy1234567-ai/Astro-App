@@ -1,7 +1,8 @@
 {
   "name": "astro-app-monorepo",
-  
+
   "version": "1.0.0",
+  
   "private": true,
   "description": "AstroTalk — 1 backend, 3 Play Store apps (User, Admin, Astro)",
   "scripts": {
