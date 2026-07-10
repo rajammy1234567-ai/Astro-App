@@ -16,10 +16,15 @@ import TrustBadges from '../../components/home/TrustBadges';
 import DrawerMenu from '../../components/drawer/DrawerMenu';
 import { useHomeData } from '../../hooks/useHomeData';
 import ServerBanner from '../../components/common/ServerBanner';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { COLORS } from '../../constants/colors';
+
+/** Sticky strip height (~46 btn + 16 pad) above tab bar */
+const STICKY_STRIP = 62;
 
 export default function HomeScreen() {
   const router = useRouter();
+  const safe = useScreenInsets();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [search, setSearch] = useState('');
   const { astrologers, blogs, products, news, connectionError } = useHomeData();
@@ -29,6 +34,9 @@ export default function HomeScreen() {
     : astrologers;
   const featured = filtered.slice(0, 4);
 
+  // Tab bar + sticky chat/call strip
+  const scrollBottomPad = safe.tabBar + STICKY_STRIP + 16;
+
   return (
     <Screen>
       <AppHeader showLang onMenuPress={() => setDrawerOpen(true)} />
@@ -36,7 +44,8 @@ export default function HomeScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPad }]}
+        keyboardShouldPersistTaps="handled"
       >
         <ServerBanner message={connectionError} />
         <HomeHeroBanner />
@@ -67,7 +76,7 @@ export default function HomeScreen() {
         <TrustBadges />
       </ScrollView>
 
-      {/* Always-on Chat / Call bar */}
+      {/* Always-on — sits above tab bar (gesture or button nav) */}
       <ChatCallButtons sticky />
 
       <DrawerMenu visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -76,7 +85,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 100 },
+  scroll: {},
   astroSection: {
     marginTop: 6,
     paddingBottom: 4,

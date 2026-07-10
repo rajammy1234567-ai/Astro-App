@@ -3,11 +3,13 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../../constants/colors';
+import { floatingAboveTabBar } from '../../utils/layout';
 
-/** Sticky bottom bar — always visible on home */
+/** Home sticky strip — sits above tab bar (gestures OR 3-button nav safe) */
 export default function ChatCallButtons({ sticky = false, style }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const aboveTabs = floatingAboveTabBar(insets, 0);
 
   const body = (
     <View style={[styles.row, sticky && styles.stickyInner, style]}>
@@ -17,7 +19,7 @@ export default function ChatCallButtons({ sticky = false, style }) {
         activeOpacity={0.88}
       >
         <Ionicons name="chatbubbles" size={18} color="#fff" />
-        <Text style={styles.btnTextLight}>Chat with Astrologer</Text>
+        <Text style={styles.btnTextLight} numberOfLines={1}>Chat with Astrologer</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.btn, styles.callBtn]}
@@ -25,7 +27,7 @@ export default function ChatCallButtons({ sticky = false, style }) {
         activeOpacity={0.88}
       >
         <Ionicons name="call" size={18} color={COLORS.text} />
-        <Text style={styles.btnText}>Call with Astrologer</Text>
+        <Text style={styles.btnText} numberOfLines={1}>Call with Astrologer</Text>
       </TouchableOpacity>
     </View>
   );
@@ -33,7 +35,7 @@ export default function ChatCallButtons({ sticky = false, style }) {
   if (!sticky) return body;
 
   return (
-    <View style={[styles.stickyWrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+    <View style={[styles.stickyWrap, { bottom: aboveTabs }]} pointerEvents="box-none">
       {body}
     </View>
   );
@@ -50,19 +52,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255,252,248,0.96)',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderLight,
-    paddingTop: 10,
+    zIndex: 20,
+    backgroundColor: 'rgba(255,252,248,0.98)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
+    paddingTop: 8,
+    paddingBottom: 8,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOpacity: 0.12,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: -3 },
       },
-      android: { elevation: 12 },
+      android: { elevation: 10 },
     }),
   },
   stickyInner: {
@@ -74,19 +77,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
     gap: 6,
+    minHeight: 46,
   },
   chatBtn: { backgroundColor: COLORS.bannerDark },
   callBtn: { backgroundColor: COLORS.primary },
   btnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: COLORS.text,
+    flexShrink: 1,
   },
   btnTextLight: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: '#fff',
+    flexShrink: 1,
   },
 });

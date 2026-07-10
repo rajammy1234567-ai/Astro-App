@@ -8,9 +8,11 @@ import FilterChips from '../../components/common/FilterChips';
 import AstrologerListCard from '../../components/home/AstrologerListCard';
 import DrawerMenu from '../../components/drawer/DrawerMenu';
 import { useAstrologers } from '../../hooks/useHomeData';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { COLORS } from '../../constants/colors';
 
 export default function CallTabScreen() {
+  const safe = useScreenInsets();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -46,7 +48,7 @@ export default function CallTabScreen() {
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => <AstrologerListCard astrologer={item} mode="call" />}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: safe.tabBar + 24 }]}
         ListEmptyComponent={
           <Text style={styles.empty}>Koi astrologer online nahi. Thodi der baad check karo.</Text>
         }
@@ -58,6 +60,6 @@ export default function CallTabScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { paddingBottom: 16 },
+  list: { paddingBottom: 16, flexGrow: 1 },
   empty: { textAlign: 'center', color: COLORS.textSecondary, marginTop: 40, paddingHorizontal: 24 },
 });

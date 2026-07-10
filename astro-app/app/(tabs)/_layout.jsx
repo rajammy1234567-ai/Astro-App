@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS } from '../../constants/theme';
+import { TAB_BAR_BASE, tabBarBottomInset } from '../../utils/layout';
 
 function TabIcon({ name, focused, color }) {
   return (
@@ -17,7 +18,8 @@ function TabIcon({ name, focused, color }) {
 export default function TabsLayout() {
   const { isAuthenticated, loading } = useAuth();
   const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, 10);
+  const bottomPad = tabBarBottomInset(insets);
+  const barHeight = TAB_BAR_BASE + bottomPad;
 
   if (loading) {
     return (
@@ -40,9 +42,13 @@ export default function TabsLayout() {
           backgroundColor: COLORS.bannerDark,
           borderTopColor: 'rgba(245,197,24,0.14)',
           borderTopWidth: 1,
-          height: 62 + bottomPad,
+          height: barHeight,
           paddingBottom: bottomPad,
           paddingTop: 8,
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
           elevation: 16,
           shadowColor: '#000',
           shadowOpacity: 0.28,
@@ -57,7 +63,7 @@ export default function TabsLayout() {
           marginTop: 1,
           letterSpacing: 0.3,
         },
-        tabBarHideOnKeyboard: Platform.OS === 'android',
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen

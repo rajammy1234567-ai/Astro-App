@@ -12,10 +12,12 @@ import DrawerMenu from '../../components/drawer/DrawerMenu';
 import { useAstrologers } from '../../hooks/useHomeData';
 import { useAuth } from '../../hooks/useAuth';
 import { sessionApi } from '../../services/sessionApi';
+import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { COLORS } from '../../constants/colors';
 
 export default function ChatTabScreen() {
   const router = useRouter();
+  const safe = useScreenInsets();
   const { isAuthenticated } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -128,7 +130,7 @@ export default function ChatTabScreen() {
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => <AstrologerListCard astrologer={item} mode="chat" />}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: safe.tabBar + 24 }]}
         ListEmptyComponent={
           <Text style={styles.empty}>Koi astrologer online nahi. Thodi der baad check karo.</Text>
         }
@@ -140,7 +142,7 @@ export default function ChatTabScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { paddingBottom: 16 },
+  list: { paddingBottom: 16, flexGrow: 1 },
   empty: { textAlign: 'center', color: COLORS.textSecondary, marginTop: 40, paddingHorizontal: 24 },
   activeWrap: {
     marginHorizontal: 12, marginTop: 8, marginBottom: 4,
