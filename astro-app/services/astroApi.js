@@ -7,7 +7,8 @@ export const astroApi = {
   getChat: (id) => api.get(`/chats/${id}`),
   acceptChat: (id) => api.put(`/chats/${id}/accept`),
   rejectChat: (id) => api.put(`/chats/${id}/reject`),
-  sendMessage: (id, content) => api.post(`/chats/${id}/messages`, { content }),
+  sendMessage: (id, content, extra = {}) =>
+    api.post(`/chats/${id}/messages`, { content, ...extra }),
   closeChat: (id) => api.put(`/chats/${id}/close`),
   updateProfile: (data) => api.put('/me', data),
   setOnline: (isOnline) => api.put('/online', { isOnline }),

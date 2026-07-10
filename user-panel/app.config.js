@@ -8,7 +8,7 @@ export default {
     version: '1.0.0',
     platforms: ['ios', 'android', 'web'],
     orientation: 'portrait',
-    backgroundColor: '#FFFCF8',
+    backgroundColor: '#1E1033',
     primaryColor: '#FDB913',
     icon: './assets/images/icon.png',
     scheme: 'astrotalkuser',
@@ -17,7 +17,7 @@ export default {
       bundleIdentifier: 'com.astrotalk.user',
       buildNumber: '1',
       supportsTablet: false,
-      icon: './assets/expo.icon',
+      icon: './assets/images/icon.png',
       infoPlist: {
         NSAppTransportSecurity: isHttp
           ? { NSAllowsArbitraryLoads: true }
@@ -29,7 +29,7 @@ export default {
       versionCode: 1,
       edgeToEdgeEnabled: true,
       adaptiveIcon: {
-        backgroundColor: '#E6F4FE',
+        backgroundColor: '#1E1033',
         foregroundImage: './assets/images/android-icon-foreground.png',
         backgroundImage: './assets/images/android-icon-background.png',
         monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -43,15 +43,24 @@ export default {
       output: 'single',
       favicon: './assets/images/favicon.png',
       themeColor: '#FDB913',
-      backgroundColor: '#FFFCF8',
+      backgroundColor: '#1E1033',
     },
     plugins: [
       'expo-router',
       [
+        'expo-image-picker',
+        {
+          photosPermission: 'Chat me photo/video bhejne ke liye gallery access chahiye.',
+          cameraPermission: 'Chat me photo lene ke liye camera access chahiye.',
+        },
+      ],
+      [
         'expo-splash-screen',
         {
-          backgroundColor: '#FDB913',
-          android: { image: './assets/images/splash-icon.png', imageWidth: 76 },
+          backgroundColor: '#1E1033',
+          image: './assets/images/splash-icon.png',
+          imageWidth: 200,
+          android: { image: './assets/images/splash-icon.png', imageWidth: 200 },
         },
       ],
       [

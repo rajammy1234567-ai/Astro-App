@@ -64,7 +64,7 @@ export default function Login() {
           <View style={styles.card}>
             <Text style={styles.title}>Welcome back</Text>
             <Text style={styles.sub}>
-              Admin credentials se sign in karein. Chats, calls, live aur earnings yahin manage hote hain.
+              Partner credentials se sign in karein. Chats, calls aur earnings yahin manage hote hain.
             </Text>
 
             <Text style={styles.label}>Phone</Text>

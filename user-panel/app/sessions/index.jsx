@@ -93,6 +93,12 @@ export default function SessionsHistoryScreen() {
   return (
     <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Chat & Call History" />
+      <View style={styles.tipBox}>
+        <Ionicons name="information-circle-outline" size={16} color={COLORS.primaryDark || COLORS.text} />
+        <Text style={styles.tipText}>
+          Chat End kiye bina bahar nikalne se session band nahi hota. Active/Waiting pe tap karke wapas resume karo.
+        </Text>
+      </View>
       <FlatList
         data={sessions}
         keyExtractor={(item) => item._id}
@@ -147,6 +153,12 @@ export default function SessionsHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  tipBox: {
+    flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 10,
+    padding: 12, borderRadius: 12, backgroundColor: COLORS.yellowLight || '#FFF8E1',
+    borderWidth: 1, borderColor: COLORS.primary, alignItems: 'flex-start',
+  },
+  tipText: { flex: 1, fontSize: 12, color: COLORS.text, lineHeight: 17, fontWeight: '600' },
   list: { padding: 16, paddingBottom: 40, flexGrow: 1 },
   card: {
     flexDirection: 'row',

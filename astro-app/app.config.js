@@ -8,7 +8,7 @@ export default {
     version: '1.0.0',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
-    backgroundColor: '#FFFCF8',
+    backgroundColor: '#1E1033',
     primaryColor: '#FDB913',
     icon: './assets/images/icon.png',
     scheme: 'astro-app',
@@ -17,6 +17,7 @@ export default {
       bundleIdentifier: 'com.astrotalk.astro',
       buildNumber: '1',
       supportsTablet: false,
+      icon: './assets/images/icon.png',
       infoPlist: {
         NSAppTransportSecurity: isHttp
           ? { NSAllowsArbitraryLoads: true }
@@ -28,7 +29,7 @@ export default {
       versionCode: 1,
       edgeToEdgeEnabled: true,
       adaptiveIcon: {
-        backgroundColor: '#E6F4FE',
+        backgroundColor: '#1E1033',
         foregroundImage: './assets/images/android-icon-foreground.png',
         backgroundImage: './assets/images/android-icon-background.png',
         monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -56,8 +57,10 @@ export default {
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#FDB913',
-          android: { image: './assets/images/splash-icon.png', imageWidth: 76 },
+          backgroundColor: '#1E1033',
+          image: './assets/images/splash-icon.png',
+          imageWidth: 200,
+          android: { image: './assets/images/splash-icon.png', imageWidth: 200 },
         },
       ],
       [

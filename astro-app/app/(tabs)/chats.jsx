@@ -38,7 +38,8 @@ export default function Chats() {
   const [pending, setPending] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState('requests');
+  // Default = full chat history so partner always sees all conversations
+  const [filter, setFilter] = useState('all');
   const [acting, setActing] = useState(null);
 
   const load = useCallback(async () => {

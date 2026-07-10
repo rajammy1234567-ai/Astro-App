@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getApiBaseUrl } from '../../utils/platform';
 import { colors } from '../../constants/theme';
+
+const brandLogo = require('../../assets/images/icon.png');
 
 export default function Login() {
   const [email, setEmail] = useState('admin@astrotalk.com');
@@ -35,7 +37,7 @@ export default function Login() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.card}>
-        <Text style={styles.logo}>☀️</Text>
+        <Image source={brandLogo} style={styles.logoImg} resizeMode="cover" />
         <Text style={styles.title}>AstroTalk Admin</Text>
         <Text style={styles.subtitle}>Manage your platform on the go</Text>
 
@@ -79,7 +81,10 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 24 },
   card: { backgroundColor: colors.card, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: colors.border },
-  logo: { fontSize: 48, textAlign: 'center', marginBottom: 8 },
+  logoImg: {
+    width: 88, height: 88, borderRadius: 20, alignSelf: 'center', marginBottom: 12,
+    backgroundColor: '#1E1033',
+  },
   title: { fontSize: 24, fontWeight: '700', color: colors.text, textAlign: 'center' },
   subtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: 24 },
   label: { fontSize: 13, color: colors.textMuted, marginBottom: 6, marginTop: 12 },

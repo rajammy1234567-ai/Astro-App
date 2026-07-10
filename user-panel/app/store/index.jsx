@@ -1,9 +1,9 @@
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Screen from '../../components/common/Screen';
-import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import RemoteImage from '../../components/common/RemoteImage';
@@ -14,11 +14,17 @@ import { requireAuthForPurchase } from '../../utils/purchaseAuth';
 import { COLORS } from '../../constants/colors';
 import { formatCurrency } from '../../utils/formatters';
 
-const CATEGORIES = ['All', 'jewelry', 'rudraksha', 'gemstones', 'consultation', 'yantra', 'pooja-items'];
+function labelCategory(cat) {
+  if (!cat) return 'Other';
+  return String(cat)
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export default function StoreScreen() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { products, cart, loading, error } = useSelector((s) => s.store);
   const cartCount = useSelector(selectCartCount);
   const { isAuthenticated } = useAuth();
@@ -29,6 +35,20 @@ export default function StoreScreen() {
       dispatch(fetchProducts());
     }, [dispatch])
   );
+
+  useEffect(() => {
+    const c = params?.category;
+    if (c && typeof c === 'string') setCategory(c.toLowerCase());
+  }, [params?.category]);
+
+  // Only categories present on products uploaded by admin
+  const categories = useMemo(() => {
+    const set = new Set();
+    (products || []).forEach((p) => {
+      if (p.category && String(p.category).trim()) set.add(String(p.category).trim().toLowerCase());
+    });
+    return ['All', ...Array.from(set).sort()];
+  }, [products]);
 
   const filtered = category === 'All'
     ? products
@@ -110,14 +130,14 @@ export default function StoreScreen() {
                 <Text style={styles.heroSub}>Rudraksha, Gemstones, Yantras & more</Text>
               </View>
               <View style={styles.categories}>
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <TouchableOpacity
                     key={cat}
                     style={[styles.catChip, category === cat && styles.catActive]}
                     onPress={() => setCategory(cat)}
                   >
                     <Text style={[styles.catText, category === cat && styles.catTextActive]}>
-                      {cat === 'All' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1).replace('-', ' ')}
+                      {cat === 'All' ? 'All' : labelCategory(cat)}
                     </Text>
                   </TouchableOpacity>
                 ))}

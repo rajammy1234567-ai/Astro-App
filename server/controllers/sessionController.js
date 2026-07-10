@@ -177,8 +177,10 @@ const getSession = async (req, res) => {
 
 const sendMessage = async (req, res) => {
   try {
-    const { content } = req.body;
-    if (!content?.trim()) return res.status(400).json({ message: 'Message required' });
+    const { content, mediaType, mediaUrl } = req.body;
+    const hasMedia = !!(mediaUrl && String(mediaUrl).trim());
+    const text = (content || '').trim();
+    if (!text && !hasMedia) return res.status(400).json({ message: 'Message or media required' });
 
     const chat = await Chat.findOne({ _id: req.params.id, user: req.user._id });
     if (!chat) return res.status(404).json({ message: 'Session not found' });
@@ -217,7 +219,15 @@ const sendMessage = async (req, res) => {
       });
     }
 
-    chat.messages.push({ sender: 'user', content: content.trim() });
+    const kind = hasMedia && (mediaType === 'video' || mediaType === 'image')
+      ? mediaType
+      : 'text';
+    chat.messages.push({
+      sender: 'user',
+      content: text || (kind === 'video' ? '🎥 Video' : kind === 'image' ? '📷 Photo' : ''),
+      mediaType: kind,
+      mediaUrl: hasMedia ? String(mediaUrl).trim() : '',
+    });
     chat.lastTickAt = chat.lastTickAt || new Date();
     await chat.save();
 

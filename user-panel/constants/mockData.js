@@ -135,11 +135,13 @@ export const DRAWER_MENU = [
   { label: 'AstroRemedy', icon: 'medical-outline', route: '/(tabs)/remedies' },
   { label: 'Astrology Blog', icon: 'newspaper-outline', route: '/blog' },
   { label: 'Chat with Astrologers', icon: 'chatbubbles-outline', route: '/(tabs)/chat' },
-  { label: 'Chat & Call History', icon: 'time-outline', route: '/sessions' },
+  { label: 'My Active Chats', icon: 'chatbubble-ellipses-outline', route: '/sessions' },
   { label: 'Video Testimonials', icon: 'play-circle-outline', route: '/testimonials' },
   { label: 'My Following', icon: 'people-outline', route: '/following' },
   { label: 'My Kundli', icon: 'planet-outline', route: '/kundli' },
   { label: 'Free Services', icon: 'sparkles-outline', route: '/free-services' },
+  { label: 'About Us', icon: 'information-circle-outline', route: '/about' },
+  { label: 'Privacy Policy', icon: 'shield-checkmark-outline', route: '/privacy' },
   { label: 'Settings', icon: 'settings-outline', route: '/settings' },
 ];
 

@@ -312,9 +312,11 @@ const rejectChat = async (req, res) => {
 
 const sendMessage = async (req, res) => {
   try {
-    const { content } = req.body;
-    if (!content?.trim()) {
-      return res.status(400).json({ message: 'Message content required' });
+    const { content, mediaType, mediaUrl } = req.body;
+    const hasMedia = !!(mediaUrl && String(mediaUrl).trim());
+    const text = (content || '').trim();
+    if (!text && !hasMedia) {
+      return res.status(400).json({ message: 'Message or media required' });
     }
     const chat = await Chat.findOne({
       _id: req.params.id,
@@ -334,7 +336,15 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ message: 'Session not active' });
     }
 
-    chat.messages.push({ sender: 'astrologer', content: content.trim() });
+    const kind = hasMedia && (mediaType === 'video' || mediaType === 'image')
+      ? mediaType
+      : 'text';
+    chat.messages.push({
+      sender: 'astrologer',
+      content: text || (kind === 'video' ? '🎥 Video' : kind === 'image' ? '📷 Photo' : ''),
+      mediaType: kind,
+      mediaUrl: hasMedia ? String(mediaUrl).trim() : '',
+    });
     await chat.save();
     res.json(formatSession(chat));
   } catch (error) {

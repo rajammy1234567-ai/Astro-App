@@ -88,7 +88,7 @@ export default function UserCallScreen() {
     return () => clearInterval(interval);
   }, [session?.status, loadSession, session]);
 
-  // Join Agora only after session is active
+  // Join Agora only after session is active (and keep call resumable if user left screen)
   useEffect(() => {
     if (!session) return undefined;
     if (session.status !== 'active' && session.status !== 'paused') return undefined;
@@ -96,35 +96,47 @@ export default function UserCallScreen() {
 
     joinedRef.current = true;
     setCallState('connecting');
-    const channelName = `session_${id}`;
+    const channelName = session.agoraChannel || `session_${id}`;
+
+    // Immediately mark active for billing/timer UX; agora is dummy until real App ID
+    const goActive = () => {
+      setCallState('active');
+      Vibration.vibrate(120);
+      if (!timerRef.current) {
+        timerRef.current = setInterval(() => {
+          setDuration((prev) => prev + 1);
+        }, 1000);
+      }
+    };
 
     agoraService.joinChannel({
       channelName,
       uid: 0,
       token: null,
-      onUserJoined: () => {
-        setCallState('active');
-        Vibration.vibrate(200);
-        timerRef.current = setInterval(() => {
-          setDuration((prev) => prev + 1);
-        }, 1000);
-      },
+      onUserJoined: () => goActive(),
       onUserOffline: () => {
         setCallState('ended');
         clearInterval(timerRef.current);
-        setTimeout(() => router.back(), 2000);
+        timerRef.current = null;
       },
       onError: (err) => {
         console.warn('[Agora] error:', err);
+        // Still allow UI call session if media stack fails
+        goActive();
       },
     });
 
+    // Safety: if dummy callback delayed, still open call
+    const safety = setTimeout(goActive, 1200);
+
     return () => {
+      clearTimeout(safety);
       agoraService.leaveChannel();
       clearInterval(timerRef.current);
+      timerRef.current = null;
       joinedRef.current = false;
     };
-  }, [session?.status, id, router, session]);
+  }, [session?.status, id, session]);
 
   const handleMute = async () => {
     const next = !isMuted;
@@ -153,10 +165,15 @@ export default function UserCallScreen() {
           await agoraService.leaveChannel();
           clearInterval(timerRef.current);
           try { await sessionApi.end(id); } catch {}
-          router.back();
+          router.replace('/sessions');
         },
       },
     ]);
+  };
+
+  const leaveWithoutEnding = () => {
+    // Session stays open — user can resume from Chat tab / History
+    router.replace('/sessions');
   };
 
   if (loading) {
@@ -178,7 +195,7 @@ export default function UserCallScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={leaveWithoutEnding}>
           <Ionicons name="chevron-down" size={28} color="#fff" />
         </TouchableOpacity>
         <View>

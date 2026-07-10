@@ -1,20 +1,24 @@
-import { View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/colors';
+import { Image, StyleSheet } from 'react-native';
 
-export default function AppLogo({ size = 88 }) {
-  const iconSize = Math.round(size * 0.48);
+const logo = require('../../assets/images/icon.png');
+
+export default function AppLogo({ size = 88, style }) {
   return (
-    <View style={[styles.circle, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Ionicons name="sunny" size={iconSize} color={COLORS.text} />
-    </View>
+    <Image
+      source={logo}
+      style={[
+        styles.logo,
+        { width: size, height: size, borderRadius: Math.round(size * 0.22) },
+        style,
+      ]}
+      resizeMode="cover"
+      accessibilityLabel="AstroTalk"
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  circle: {
-    backgroundColor: COLORS.logoYellow,
-    justifyContent: 'center',
-    alignItems: 'center',
+  logo: {
+    backgroundColor: '#1E1033',
   },
 });

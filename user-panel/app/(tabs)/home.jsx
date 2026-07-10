@@ -7,11 +7,11 @@ import AppHeader from '../../components/common/AppHeader';
 import SearchBar from '../../components/common/SearchBar';
 import CashbackBanner from '../../components/common/CashbackBanner';
 import CategoryCircles from '../../components/home/CategoryCircles';
+import HomeHeroBanner from '../../components/home/HomeHeroBanner';
 import AstrologerHorizontalCard from '../../components/home/AstrologerHorizontalCard';
 import StoreSection from '../../components/home/StoreSection';
 import ChatCallButtons from '../../components/home/ChatCallButtons';
 import BlogNewsSection from '../../components/home/BlogNewsSection';
-import LiveNowSection from '../../components/home/LiveNowSection';
 import TrustBadges from '../../components/home/TrustBadges';
 import DrawerMenu from '../../components/drawer/DrawerMenu';
 import { useHomeData } from '../../hooks/useHomeData';
@@ -34,10 +34,13 @@ export default function HomeScreen() {
       <AppHeader showLang onMenuPress={() => setDrawerOpen(true)} />
       <SearchBar value={search} onChangeText={setSearch} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+      >
         <ServerBanner message={connectionError} />
+        <HomeHeroBanner />
         <CategoryCircles />
-        <LiveNowSection />
         <CashbackBanner variant="dark" />
 
         <View style={styles.astroSection}>
@@ -60,10 +63,12 @@ export default function HomeScreen() {
         </View>
 
         <StoreSection products={products} />
-        <ChatCallButtons />
         <BlogNewsSection blogs={blogs} news={news} />
         <TrustBadges />
       </ScrollView>
+
+      {/* Always-on Chat / Call bar */}
+      <ChatCallButtons sticky />
 
       <DrawerMenu visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </Screen>
@@ -71,7 +76,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 20 },
+  scroll: { paddingBottom: 100 },
   astroSection: {
     marginTop: 6,
     paddingBottom: 4,

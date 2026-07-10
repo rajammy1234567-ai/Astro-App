@@ -22,10 +22,10 @@ export async function joinChannel({ channelName, uid, token, onUserJoined, onUse
 
   _dummyCallbacks = { onUserJoined, onUserOffline, onError };
 
-  // Simulate astrologer joining after 2s
+  // Dummy mode: connect quickly so call UI becomes Active after accept
   setTimeout(() => {
-    onUserJoined && onUserJoined(uid + 1);
-  }, 2000);
+    onUserJoined && onUserJoined((uid || 0) + 1);
+  }, 400);
 
   return { channelName, uid, appId: AGORA_APP_ID };
 }

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Animated,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Animated, Image, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { astroApi } from '../../services/astroApi';
 import { safeGoBack } from '../../utils/navigation';
 import { colors, COLORS } from '../../constants/theme';
@@ -68,13 +69,19 @@ export default function ChatScreen() {
   const isPending = chat?.status === 'pending';
   const isCall = chat?.type === 'call';
   const isEnded = chat?.status === 'ended';
-  const canReply = (chat?.status === 'active' || chat?.status === 'paused') && !isCall;
+  // Calls can still have chat notes; always allow reply when session is open
+  const canReply = chat?.status === 'active' || chat?.status === 'paused';
 
   const accept = async () => {
     setAccepting(true);
     try {
       const res = await astroApi.acceptChat(id);
-      setChat(res.session || res);
+      const next = res.session || res;
+      setChat(next);
+      if (next?.type === 'call') {
+        const userName = next?.user?.name || 'User';
+        router.push(`/call/${id}?type=voice&userName=${encodeURIComponent(userName)}`);
+      }
     } catch (err) {
       Alert.alert('Failed', err.message);
     } finally {
@@ -92,6 +99,41 @@ export default function ChatScreen() {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (err) {
       Alert.alert('Failed', err.message || 'Message nahi gaya');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const pickAndSendMedia = async (kind) => {
+    if (!canReply) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permission', 'Gallery access chahiye.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: kind === 'video'
+        ? ImagePicker.MediaTypeOptions.Videos
+        : ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      base64: true,
+      videoMaxDuration: 30,
+    });
+    if (result.canceled || !result.assets?.[0]?.base64) return;
+    const asset = result.assets[0];
+    const mime = asset.mimeType || (kind === 'video' ? 'video/mp4' : 'image/jpeg');
+    setSending(true);
+    try {
+      const dataUrl = `data:${mime};base64,${asset.base64}`;
+      const up = await astroApi.uploadImage(dataUrl);
+      const updated = await astroApi.sendMessage(id, '', {
+        mediaType: up.mediaType || kind,
+        mediaUrl: up.url,
+      });
+      setChat(updated);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (err) {
+      Alert.alert('Upload failed', err.message || 'Media nahi gaya');
     } finally {
       setSending(false);
     }
@@ -285,53 +327,71 @@ export default function ChatScreen() {
         </View>
       )}
 
-      {/* Messages */}
-      {!isCall && (
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(_, i) => String(i)}
-          contentContainerStyle={styles.messages}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-          renderItem={({ item }) => {
-            if (item.sender === 'system') {
-              return (
-                <View style={styles.systemBubble}>
-                  <Text style={styles.systemText}>{item.content}</Text>
-                </View>
-              );
-            }
-            const isAstro = item.sender === 'astrologer';
+      {/* Messages (chat + call notes / media) */}
+      <FlatList
+        ref={listRef}
+        data={messages}
+        keyExtractor={(_, i) => String(i)}
+        contentContainerStyle={styles.messages}
+        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+        renderItem={({ item }) => {
+          if (item.sender === 'system') {
             return (
-              <View style={[styles.bubbleWrap, isAstro ? styles.bubbleRight : styles.bubbleLeft]}>
-                <View style={[styles.bubble, isAstro ? styles.bubbleMine : styles.bubbleTheirs]}>
+              <View style={styles.systemBubble}>
+                <Text style={styles.systemText}>{item.content}</Text>
+              </View>
+            );
+          }
+          const isAstro = item.sender === 'astrologer';
+          const mediaUrl = item.mediaUrl || '';
+          const isImage = item.mediaType === 'image' && mediaUrl;
+          const isVideo = item.mediaType === 'video' && mediaUrl;
+          return (
+            <View style={[styles.bubbleWrap, isAstro ? styles.bubbleRight : styles.bubbleLeft]}>
+              <View style={[styles.bubble, isAstro ? styles.bubbleMine : styles.bubbleTheirs]}>
+                {isImage ? (
+                  <Image source={{ uri: mediaUrl }} style={styles.mediaImage} resizeMode="cover" />
+                ) : null}
+                {isVideo ? (
+                  <TouchableOpacity style={styles.videoChip} onPress={() => Linking.openURL(mediaUrl).catch(() => {})}>
+                    <Ionicons name="play-circle" size={26} color={isAstro ? '#1A1A1A' : COLORS.primary} />
+                    <Text style={[styles.bubbleText, isAstro && styles.bubbleTextMine]}>Video open</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {!!item.content && item.content !== '📷 Photo' && item.content !== '🎥 Video' ? (
                   <Text style={[styles.bubbleText, isAstro && styles.bubbleTextMine]}>
                     {item.content}
                   </Text>
-                  {item.createdAt && (
-                    <Text style={[styles.bubbleTime, isAstro && styles.bubbleTimeMine]}>
-                      {formatMsgTime(item.createdAt)}
-                    </Text>
-                  )}
-                </View>
+                ) : null}
+                {(item.createdAt || item.timestamp) && (
+                  <Text style={[styles.bubbleTime, isAstro && styles.bubbleTimeMine]}>
+                    {formatMsgTime(item.createdAt || item.timestamp)}
+                  </Text>
+                )}
               </View>
-            );
-          }}
-          ListEmptyComponent={
-            !isPending && (
-              <View style={styles.emptyMsg}>
-                <Ionicons name="chatbubble-ellipses-outline" size={36} color={colors.border} />
-                <Text style={styles.emptyMsgText}>No messages yet</Text>
-              </View>
-            )
-          }
-        />
-      )}
+            </View>
+          );
+        }}
+        ListEmptyComponent={
+          !isPending && (
+            <View style={styles.emptyMsg}>
+              <Ionicons name="chatbubble-ellipses-outline" size={36} color={colors.border} />
+              <Text style={styles.emptyMsgText}>No messages yet</Text>
+            </View>
+          )
+        }
+      />
 
       {/* Input */}
       {canReply && (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.inputRow}>
+            <TouchableOpacity style={styles.attachBtn} onPress={() => pickAndSendMedia('image')} disabled={sending}>
+              <Ionicons name="image-outline" size={20} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.attachBtn} onPress={() => pickAndSendMedia('video')} disabled={sending}>
+              <Ionicons name="videocam-outline" size={20} color={colors.text} />
+            </TouchableOpacity>
             <TextInput
               style={styles.input}
               value={message}
@@ -390,6 +450,12 @@ const styles = StyleSheet.create({
     borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
   },
   endBtnText: { color: COLORS.error, fontWeight: '800', fontSize: 12 },
+  mediaImage: { width: 180, height: 180, borderRadius: 10, marginBottom: 6, backgroundColor: '#ddd' },
+  videoChip: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  attachBtn: {
+    width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.border,
+  },
 
   timerBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

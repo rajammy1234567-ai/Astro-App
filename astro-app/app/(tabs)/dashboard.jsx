@@ -7,7 +7,6 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { astroApi } from '../../services/astroApi';
-import liveApi from '../../services/liveApi';
 import PanelHeader from '../../components/common/PanelHeader';
 import { colors, COLORS, SHADOW_MD, SHADOW_SM, RADIUS } from '../../constants/theme';
 
@@ -18,7 +17,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [toggling, setToggling] = useState(false);
-  const [activeLive, setActiveLive] = useState(null);
   const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -34,7 +32,7 @@ export default function Dashboard() {
   }, [astrologer?.isOnline, pulse]);
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Partner panel se logout?', [
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Logout',
@@ -49,12 +47,8 @@ export default function Dashboard() {
 
   const load = async () => {
     try {
-      const [res, live] = await Promise.all([
-        astroApi.getDashboard(),
-        liveApi.getMyLive().catch(() => null),
-      ]);
+      const res = await astroApi.getDashboard();
       setData(res);
-      setActiveLive(live);
     } catch {
       setData(null);
     } finally {
@@ -186,35 +180,6 @@ export default function Dashboard() {
           <MiniStat icon="chatbubbles" color={COLORS.link} label="Chats" value={`${stats?.totalChats ?? 0}`} />
           <MiniStat icon="briefcase" color={COLORS.violet} label="Orders" value={`${stats?.totalOrders ?? 0}`} />
         </View>
-
-        {/* Live */}
-        <Text style={styles.section}>Broadcast</Text>
-        {activeLive ? (
-          <TouchableOpacity style={styles.liveOn} onPress={() => router.push('/live')} activeOpacity={0.92}>
-            <View style={styles.liveBadge}>
-              <View style={styles.livePulse} />
-              <Text style={styles.liveBadgeText}>LIVE</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.liveTitle} numberOfLines={1}>{activeLive.title}</Text>
-              <Text style={styles.liveSub}>👁 {activeLive.viewerCount || 0} viewers watching</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.liveOff} onPress={() => router.push('/live')} activeOpacity={0.9}>
-            <View style={styles.liveOffIcon}>
-              <Ionicons name="radio" size={22} color={COLORS.error} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.liveOffTitle}>Go Live</Text>
-              <Text style={styles.liveOffSub}>Audience se real-time connect karein</Text>
-            </View>
-            <View style={styles.startPill}>
-              <Text style={styles.startPillText}>Start</Text>
-            </View>
-          </TouchableOpacity>
-        )}
 
         {/* Workspace */}
         <Text style={styles.section}>Workspace</Text>

@@ -9,7 +9,7 @@ export default {
     version: '1.0.0',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#1E1033',
     primaryColor: '#FDB913',
     icon: './assets/images/icon.png',
     scheme: 'astrotalkadmin',
@@ -18,6 +18,7 @@ export default {
       bundleIdentifier: 'com.astrotalk.admin',
       buildNumber: '1',
       supportsTablet: true,
+      icon: './assets/images/icon.png',
       infoPlist: {
         NSAppTransportSecurity: isHttp
           ? { NSAllowsArbitraryLoads: true }
@@ -28,9 +29,10 @@ export default {
       package: 'com.astrotalk.admin',
       versionCode: 1,
       adaptiveIcon: {
-        backgroundColor: '#0f172a',
+        backgroundColor: '#1E1033',
         foregroundImage: './assets/images/android-icon-foreground.png',
         backgroundImage: './assets/images/android-icon-background.png',
+        monochromeImage: './assets/images/android-icon-monochrome.png',
       },
       permissions: ['INTERNET', 'ACCESS_NETWORK_STATE'],
       usesCleartextTraffic: isHttp,
@@ -47,8 +49,10 @@ export default {
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#0f172a',
-          android: { image: './assets/images/splash-icon.png', imageWidth: 76 },
+          backgroundColor: '#1E1033',
+          image: './assets/images/splash-icon.png',
+          imageWidth: 200,
+          android: { image: './assets/images/splash-icon.png', imageWidth: 200 },
         },
       ],
       [

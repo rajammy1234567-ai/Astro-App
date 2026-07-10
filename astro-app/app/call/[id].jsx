@@ -68,36 +68,47 @@ export default function AstroCallScreen() {
 
   useEffect(() => { loadSession(); }, [loadSession]);
 
-  // Join Agora channel
+  // Join only when call is active/paused (after accept)
   useEffect(() => {
-    if (!session) return;
-    const channelName = `session_${id}`;
+    if (!session) return undefined;
+    if (!['active', 'paused'].includes(session.status)) {
+      setCallState(session.status === 'pending' ? 'connecting' : 'ended');
+      return undefined;
+    }
 
-    agoraService.joinChannel({
-      channelName,
-      uid: 0,
-      token: null,
-      onUserJoined: () => {
-        setCallState('active');
-        Vibration.vibrate(100);
-        // Start billing timer
+    const channelName = session.agoraChannel || `session_${id}`;
+    const goActive = () => {
+      setCallState('active');
+      Vibration.vibrate(100);
+      if (!timerRef.current) {
         timerRef.current = setInterval(() => {
           setDuration((prev) => prev + 1);
         }, 1000);
-      },
+      }
+    };
+
+    agoraService.joinChannel({
+      channelName,
+      uid: 1,
+      token: null,
+      onUserJoined: () => goActive(),
       onUserOffline: () => {
         setCallState('ended');
         clearInterval(timerRef.current);
-        setTimeout(() => safeGoBack(router, '/(tabs)/calls'), 2000);
+        timerRef.current = null;
       },
       onError: (err) => {
         console.warn('[Agora] error:', err);
+        goActive();
       },
     });
+    const safety = setTimeout(goActive, 1000);
 
     return () => {
+      clearTimeout(safety);
       agoraService.leaveChannel();
       clearInterval(timerRef.current);
+      timerRef.current = null;
     };
   }, [session, id, router]);
 

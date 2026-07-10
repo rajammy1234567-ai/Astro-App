@@ -50,9 +50,9 @@ export default function BlogScreen() {
             <>
               <ServerBanner message={error} />
               <View style={styles.hero}>
-                <Ionicons name="book" size={28} color="#FFF" />
-                <Text style={styles.heroTitle}>Learn Astrology</Text>
-                <Text style={styles.heroSub}>Expert articles on planets, remedies & more</Text>
+                <Ionicons name="planet" size={32} color={COLORS.primary} />
+                <Text style={styles.heroTitle}>Astrology Blog</Text>
+                <Text style={styles.heroSub}>Expert articles on planets, remedies, kundli & life guidance</Text>
               </View>
             </>
           }
@@ -91,15 +91,23 @@ export default function BlogScreen() {
 
 const styles = StyleSheet.create({
   list: { padding: 16, paddingBottom: 32 },
-  hero: { backgroundColor: COLORS.primary, borderRadius: 12, padding: 20, marginBottom: 16, alignItems: 'center' },
-  heroTitle: { color: '#FFF', fontSize: 18, fontWeight: '800', marginTop: 8 },
-  heroSub: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 4 },
-  card: { backgroundColor: COLORS.surface, borderRadius: 12, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.borderLight },
-  cover: { width: '100%', height: 160 },
-  cardBody: { padding: 14 },
-  badge: { alignSelf: 'flex-start', backgroundColor: COLORS.primaryLight, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, marginBottom: 8 },
-  badgeText: { color: COLORS.primaryDark, fontSize: 11, fontWeight: '600' },
-  title: { fontSize: 16, fontWeight: '700', color: COLORS.text, lineHeight: 24 },
-  excerpt: { fontSize: 13, color: COLORS.textSecondary, marginTop: 6, lineHeight: 20 },
-  meta: { fontSize: 12, color: COLORS.textLight, marginTop: 8 },
+  hero: {
+    backgroundColor: COLORS.bannerDark, borderRadius: 16, padding: 22, marginBottom: 16, alignItems: 'center',
+  },
+  heroTitle: { color: COLORS.primary, fontSize: 20, fontWeight: '900', marginTop: 8 },
+  heroSub: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 6, textAlign: 'center' },
+  card: {
+    backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: 14, overflow: 'hidden',
+    borderWidth: 1, borderColor: COLORS.borderLight,
+  },
+  cover: { width: '100%', height: 180 },
+  cardBody: { padding: 16 },
+  badge: {
+    alignSelf: 'flex-start', backgroundColor: COLORS.bannerDark,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 8,
+  },
+  badgeText: { color: COLORS.primary, fontSize: 11, fontWeight: '700' },
+  title: { fontSize: 17, fontWeight: '800', color: COLORS.text, lineHeight: 24 },
+  excerpt: { fontSize: 13, color: COLORS.textSecondary, marginTop: 8, lineHeight: 20 },
+  meta: { fontSize: 12, color: COLORS.textLight, marginTop: 10, fontWeight: '600' },
 });

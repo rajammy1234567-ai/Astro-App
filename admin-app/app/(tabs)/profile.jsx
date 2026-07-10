@@ -34,6 +34,10 @@ export default function Profile() {
         <Text style={styles.role}>{admin?.role || 'admin'}</Text>
       </View>
 
+      <TouchableOpacity style={styles.linkBtn} onPress={() => router.push('/notifications')}>
+        <Text style={styles.linkText}>Notifications</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
@@ -58,8 +62,13 @@ const styles = StyleSheet.create({
   name: { fontSize: 20, fontWeight: '700', color: colors.text },
   email: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
   role: { fontSize: 12, color: colors.primary, marginTop: 8, textTransform: 'uppercase' },
+  linkBtn: {
+    marginTop: 16, backgroundColor: colors.card, borderRadius: 10, padding: 16,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+  },
+  linkText: { color: colors.text, fontWeight: '700', fontSize: 15 },
   logoutBtn: {
-    marginTop: 24, backgroundColor: colors.danger, borderRadius: 10,
+    marginTop: 12, backgroundColor: colors.danger, borderRadius: 10,
     padding: 16, alignItems: 'center',
   },
   logoutText: { color: '#fff', fontWeight: '700', fontSize: 16 },

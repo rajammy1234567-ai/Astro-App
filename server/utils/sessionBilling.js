@@ -177,6 +177,8 @@ function formatSession(chat) {
     endedAt: chat.endedAt,
     createdAt: chat.createdAt,
     updatedAt: chat.updatedAt,
+    agoraChannel: chat.agoraChannel || (chat._id ? `session_${chat._id}` : ''),
+    callPaidUpfront: !!chat.callPaidUpfront,
     billing,
   };
 }

@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
   sender: { type: String, enum: ['user', 'astrologer', 'system'], required: true },
-  content: { type: String, required: true },
+  content: { type: String, default: '' },
+  mediaType: { type: String, enum: ['text', 'image', 'video'], default: 'text' },
+  mediaUrl: { type: String, default: '' },
   timestamp: { type: Date, default: Date.now },
 });
 

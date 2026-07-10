@@ -231,6 +231,26 @@ export default function RemediesScreen() {
 
   const popularProducts = products.filter((p) => p.stock > 0).slice(0, 8);
 
+  // Categories from admin-uploaded products only; dummy fallback if store empty
+  const shopCategories = (() => {
+    const map = new Map();
+    (products || []).forEach((p) => {
+      const key = String(p.category || '').trim().toLowerCase();
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, {
+          id: key,
+          label: key.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          icon: 'bag-handle',
+          color: COLORS.bannerDark,
+          bg: COLORS.primaryLight,
+        });
+      }
+    });
+    const fromAdmin = Array.from(map.values());
+    return fromAdmin.length ? fromAdmin : REMEDY_CATEGORIES;
+  })();
+
   return (
     <Screen style={styles.screen}>
       <RemedyHeader onMenuPress={() => setDrawerOpen(true)} />
@@ -253,7 +273,7 @@ export default function RemediesScreen() {
           <View style={styles.heroContent}>
             <View style={styles.heroBadge}>
               <Ionicons name="sparkles" size={12} color={COLORS.primary} />
-              <Text style={styles.heroBadgeText}>TRUSTED BY 40 LAKH+ USERS</Text>
+              <Text style={styles.heroBadgeText}>ASTROTALK REMEDIES</Text>
             </View>
             <Text style={styles.heroTitle}>Authentic Spiritual{'\n'}Remedies Delivered</Text>
             <Text style={styles.heroSub}>Energized products · Expert consultations · Online Pooja</Text>
@@ -267,15 +287,19 @@ export default function RemediesScreen() {
           </View>
         </View>
 
-        {/* Categories */}
+        {/* Categories from admin products */}
         <SectionHeader title="Shop by Category" action="See All" onAction={goStore} />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.catScroll}
         >
-          {REMEDY_CATEGORIES.map((cat) => (
-            <CategoryChip key={cat.id} item={cat} onPress={goStore} />
+          {shopCategories.map((cat) => (
+            <CategoryChip
+              key={cat.id}
+              item={cat}
+              onPress={() => router.push({ pathname: '/store', params: { category: cat.id } })}
+            />
           ))}
         </ScrollView>
 

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import Screen from '../../components/common/Screen';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -17,9 +17,22 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { logout } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/(auth)/login');
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/(auth)/login');
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -60,8 +73,9 @@ export default function SettingsScreen() {
             { label: 'Help & FAQ', route: '/support' },
             { label: 'Contact Us', route: '/support' },
             { label: 'Redeem Gift Card', route: '/wallet/gift-card' },
-            { label: 'Privacy Policy', route: null },
-            { label: 'Terms of Service', route: null },
+            { label: 'About Us', route: '/about' },
+            { label: 'Privacy Policy', route: '/privacy' },
+            { label: 'Notifications', route: '/notifications' },
           ].map((item, i, arr) => (
             <TouchableOpacity
               key={item.label}

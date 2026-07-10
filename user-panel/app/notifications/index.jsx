@@ -7,18 +7,12 @@ import Screen from '../../components/common/Screen';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
+import EmptyState from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
+import { sessionApi } from '../../services/sessionApi';
 import { astrologerApplicationApi } from '../../services/astrologerApplicationApi';
 import { COLORS } from '../../constants/colors';
 import { safeOpenUrl } from '../../utils/openUrl';
-
-const TYPE_ICONS = {
-  application: 'document-text-outline',
-  interview: 'videocam-outline',
-  selected: 'checkmark-circle-outline',
-  rejected: 'close-circle-outline',
-  info: 'notifications-outline',
-};
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -28,18 +22,68 @@ export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
+    const items = [];
+
+    // Session-based notifications (ongoing / pending / paused)
     try {
-      const data = await astrologerApplicationApi.getNotifications();
-      setNotifications(data || []);
-    } catch {
-      setNotifications([]);
-    }
+      const sessions = await sessionApi.getMy();
+      (Array.isArray(sessions) ? sessions : []).slice(0, 30).forEach((s) => {
+        const name = s.astrologer?.name || 'Astrologer';
+        const isCall = s.type === 'call';
+        if (s.status === 'pending') {
+          items.push({
+            _id: `s-pending-${s._id}`,
+            type: 'session',
+            title: isCall ? 'Call request waiting' : 'Chat request waiting',
+            message: `${name} se ${isCall ? 'call' : 'chat'} accept hone ka wait.`,
+            createdAt: s.updatedAt || s.createdAt,
+            route: isCall ? `/call/${s._id}` : `/chat/${s._id}`,
+            read: false,
+          });
+        } else if (s.status === 'active') {
+          items.push({
+            _id: `s-active-${s._id}`,
+            type: 'session',
+            title: isCall ? 'Call active' : 'Chat active',
+            message: `${name} ke saath session chal raha hai. Resume karo.`,
+            createdAt: s.updatedAt || s.createdAt,
+            route: isCall ? `/call/${s._id}` : `/chat/${s._id}`,
+            read: true,
+          });
+        } else if (s.status === 'paused') {
+          items.push({
+            _id: `s-paused-${s._id}`,
+            type: 'session',
+            title: 'Session paused',
+            message: `${name} — time khatam. Recharge karke continue karo.`,
+            createdAt: s.updatedAt || s.createdAt,
+            route: `/chat/${s._id}`,
+            read: false,
+          });
+        }
+      });
+    } catch { /* ignore */ }
+
+    // Application notifications (become astrologer flow)
+    try {
+      const appNotes = await astrologerApplicationApi.getNotifications();
+      (appNotes || []).forEach((n) => {
+        items.push({
+          ...n,
+          type: n.type || 'application',
+        });
+      });
+    } catch { /* ignore */ }
+
+    items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    setNotifications(items);
   }, []);
 
   useEffect(() => {
     if (!initialized || sessionLoading) return;
     if (!isAuthenticated) {
       setLoading(false);
+      setNotifications([]);
       return;
     }
     load().finally(() => setLoading(false));
@@ -52,29 +96,20 @@ export default function NotificationsScreen() {
   };
 
   const handlePress = async (item) => {
-    if (!item.read && item._id) {
-      try {
-        await astrologerApplicationApi.markRead(item._id);
-        setNotifications((prev) =>
-          prev.map((n) => (n._id === item._id ? { ...n, read: true } : n))
-        );
-      } catch { /* ignore */ }
+    if (item.route) {
+      router.push(item.route);
+      return;
     }
     if (item.data?.googleMeetLink) {
       safeOpenUrl(item.data.googleMeetLink, 'Google Meet link');
-    } else if (item.type === 'application' || item.type === 'interview' || item.type === 'selected') {
+      return;
+    }
+    if (item.type === 'application' || item.type === 'interview' || item.type === 'selected') {
       router.push('/become-astrologer');
     }
   };
 
-  const markAllRead = async () => {
-    try {
-      await astrologerApplicationApi.markAllRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    } catch { /* ignore */ }
-  };
-
-  if (!initialized || sessionLoading) {
+  if (!initialized || sessionLoading || loading) {
     return (
       <Screen edges={['left', 'right', 'bottom']}>
         <Header title="Notifications" />
@@ -87,15 +122,13 @@ export default function NotificationsScreen() {
     return (
       <Screen edges={['left', 'right', 'bottom']}>
         <Header title="Notifications" />
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>Login to see notifications</Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.authBtn}>
-            <Text style={styles.authBtnText}>Login</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/(auth)/login?mode=signup')} style={styles.authBtnOutline}>
-            <Text style={styles.authBtnOutlineText}>Create Account</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          icon="lock-closed-outline"
+          title="Login required"
+          subtitle="Notifications dekhne ke liye login karo."
+          actionLabel="Login"
+          onAction={() => router.push('/(auth)/login')}
+        />
       </Screen>
     );
   }
@@ -103,85 +136,63 @@ export default function NotificationsScreen() {
   return (
     <Screen edges={['left', 'right', 'bottom']}>
       <Header title="Notifications" />
-      {notifications.some((n) => !n.read) && (
-        <TouchableOpacity style={styles.markAll} onPress={markAllRead}>
-          <Text style={styles.markAllText}>Mark all as read</Text>
-        </TouchableOpacity>
-      )}
-
-      {loading ? (
-        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          data={notifications}
-          keyExtractor={(item, i) => item._id || String(i)}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          contentContainerStyle={notifications.length ? styles.list : styles.emptyList}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="notifications-off-outline" size={48} color={COLORS.textLight} />
-              <Text style={styles.emptyText}>No notifications yet</Text>
+      <FlatList
+        data={notifications}
+        keyExtractor={(item) => String(item._id)}
+        contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+        ListEmptyComponent={
+          <EmptyState
+            icon="notifications-outline"
+            title="No notifications"
+            subtitle="Chat/call updates yahan dikhenge."
+          />
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[styles.card, !item.read && styles.unread]}
+            onPress={() => handlePress(item)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.iconWrap}>
+              <Ionicons
+                name={item.type === 'session' ? 'chatbubble-ellipses-outline' : 'notifications-outline'}
+                size={20}
+                color={COLORS.primary}
+              />
             </View>
-          }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.card, !item.read && styles.cardUnread]}
-              onPress={() => handlePress(item)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.cardIcon}>
-                <Ionicons
-                  name={TYPE_ICONS[item.type] || 'notifications-outline'}
-                  size={22}
-                  color={COLORS.primary}
-                />
-              </View>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardMsg} numberOfLines={4}>{item.message}</Text>
-                <Text style={styles.cardTime}>
-                  {item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : ''}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.msg}>{item.message}</Text>
+              {item.createdAt ? (
+                <Text style={styles.time}>
+                  {new Date(item.createdAt).toLocaleString('en-IN', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                  })}
                 </Text>
-              </View>
-              {!item.read && <View style={styles.dot} />}
-            </TouchableOpacity>
-          )}
-        />
-      )}
+              ) : null}
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
+          </TouchableOpacity>
+        )}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  markAll: { alignSelf: 'flex-end', paddingHorizontal: 16, paddingVertical: 8 },
-  markAllText: { fontSize: 13, color: COLORS.primary, fontWeight: '600' },
-  list: { padding: 16, paddingBottom: 32 },
-  emptyList: { flex: 1 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { fontSize: 15, color: COLORS.textSecondary, marginTop: 12, textAlign: 'center' },
-  authBtn: {
-    marginTop: 20, backgroundColor: COLORS.primary, paddingHorizontal: 32,
-    paddingVertical: 12, borderRadius: 8,
-  },
-  authBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
-  authBtnOutline: {
-    marginTop: 10, borderWidth: 1.5, borderColor: COLORS.primary, paddingHorizontal: 32,
-    paddingVertical: 12, borderRadius: 8,
-  },
-  authBtnOutlineText: { color: COLORS.primary, fontWeight: '700', fontSize: 15 },
+  list: { padding: 16, paddingBottom: 40, flexGrow: 1 },
   card: {
-    flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 10,
-    padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.borderLight,
-    alignItems: 'flex-start', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: COLORS.borderLight,
   },
-  cardUnread: { borderColor: COLORS.primary, backgroundColor: '#FFFBEB' },
-  cardIcon: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primaryLight,
+  unread: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  iconWrap: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.bannerDark,
     alignItems: 'center', justifyContent: 'center',
   },
-  cardBody: { flex: 1 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text },
-  cardMsg: { fontSize: 13, color: COLORS.textSecondary, marginTop: 4, lineHeight: 18 },
-  cardTime: { fontSize: 11, color: COLORS.textLight, marginTop: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary, marginTop: 4 },
+  title: { fontSize: 14, fontWeight: '800', color: COLORS.text },
+  msg: { fontSize: 12, color: COLORS.textSecondary, marginTop: 3, lineHeight: 17 },
+  time: { fontSize: 11, color: COLORS.textLight, marginTop: 6 },
 });

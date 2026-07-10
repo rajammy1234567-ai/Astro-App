@@ -43,7 +43,7 @@ export default function Profile() {
   const isOnline = !!astrologer?.isOnline;
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Partner panel se logout?', [
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Logout',
@@ -157,6 +157,11 @@ export default function Profile() {
           />
         </View>
 
+        <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/notifications')}>
+          <Ionicons name="notifications-outline" size={20} color={COLORS.text} />
+          <Text style={styles.notifText}>Notifications</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.logout} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color="#fff" />
           <Text style={styles.logoutText}>Logout</Text>
@@ -235,6 +240,12 @@ const styles = StyleSheet.create({
   settingSub: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   divider: { height: 1, backgroundColor: COLORS.borderLight, marginVertical: 4 },
 
+  notifBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#fff', borderRadius: 16, paddingVertical: 15, marginBottom: 10,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  notifText: { color: COLORS.text, fontWeight: '900', fontSize: 15 },
   logout: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: COLORS.error, borderRadius: 16, paddingVertical: 15, marginBottom: 12,

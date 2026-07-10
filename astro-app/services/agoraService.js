@@ -23,10 +23,10 @@ export async function joinChannel({ channelName, uid, token, onUserJoined, onUse
   // Store callbacks for dummy simulation
   _dummyCallbacks = { onUserJoined, onUserOffline, onError };
 
-  // Simulate remote user joining after 1.5s
+  // Dummy: connect fast so both sides share same channel name from session
   setTimeout(() => {
-    onUserJoined && onUserJoined(uid + 1);
-  }, 1500);
+    onUserJoined && onUserJoined((uid || 0) + 1);
+  }, 400);
 
   return { channelName, uid, appId: AGORA_APP_ID };
 }

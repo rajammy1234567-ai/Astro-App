@@ -25,8 +25,8 @@ const astrologerApplicationRoutes = require('./routes/astrologerApplicationRoute
 const app = express();
 
 app.use(cors({ origin: '*', credentials: true }));
-app.use(express.json({ limit: '12mb' }));
-app.use(express.urlencoded({ extended: true, limit: '12mb' }));
+app.use(express.json({ limit: '30mb' }));
+app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/health', (req, res) => {
