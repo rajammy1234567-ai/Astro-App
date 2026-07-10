@@ -3,7 +3,7 @@ import { getApiBaseUrl } from '../utils/platform';
 import { storage } from '../utils/storage';
 
 const api = axios.create({
-  timeout: 12000,
+  timeout: 45000,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -19,7 +19,7 @@ api.interceptors.response.use(
   async (err) => {
     if (!err.response) {
       return Promise.reject({
-        message: 'Server connect nahi ho raha. Backend chalao: cd server && npm run dev',
+        message: 'Server connect nahi ho raha. APK me Render EXPO_PUBLIC_API_URL set karke rebuild karo.',
         networkError: true,
       });
     }

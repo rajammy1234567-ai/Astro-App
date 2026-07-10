@@ -13,13 +13,13 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://YOUR_PC_IP:5000/api"
+        "EXPO_PUBLIC_API_URL": "https://astro-app-ru1d.onrender.com/api"
       }
     },
     "production": {
       "android": { "buildType": "app-bundle" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://YOUR_DOMAIN.com/api"
+        "EXPO_PUBLIC_API_URL": "https://astro-app-ru1d.onrender.com/api"
       }
     }
   },

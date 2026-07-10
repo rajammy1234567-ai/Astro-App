@@ -3,7 +3,8 @@ import { getApiBaseUrl } from '../utils/platform';
 import { storage } from '../utils/storage';
 
 const api = axios.create({
-  timeout: 15000,
+  // Render free tier cold-start can take 30–60s
+  timeout: 45000,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -22,7 +23,7 @@ api.interceptors.response.use(
     if (!error.response) {
       const base = error.config?.baseURL || getApiBaseUrl();
       return Promise.reject({
-        message: `Server se connect nahi ho pa raha (${base}). PC pe server chalao (port 5000) aur phone same WiFi pe rakho.`,
+        message: `Server se connect nahi ho pa raha (${base}). Render URL sahi hai? Free plan pe pehli request 30–60s lag sakti hai. APK me EXPO_PUBLIC_API_URL bake hona chahiye.`,
         networkError: true,
         baseURL: base,
       });

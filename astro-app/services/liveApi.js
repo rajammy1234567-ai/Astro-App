@@ -3,7 +3,7 @@ import { getApiBaseUrl } from '../utils/platform';
 import { storage } from '../utils/storage';
 
 const liveApi = axios.create({
-  timeout: 12000,
+  timeout: 45000,
   headers: { 'Content-Type': 'application/json' },
 });
 
