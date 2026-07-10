@@ -34,16 +34,19 @@ export default function UserCallScreen() {
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [callState, setCallState] = useState('connecting'); // connecting | active | ended
+  // waiting = astrologer not accepted yet | connecting | active | ended
+  const [callState, setCallState] = useState('waiting');
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(isVideo);
   const [duration, setDuration] = useState(0);
   const timerRef = useRef(null);
+  const joinedRef = useRef(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Pulse animation for connecting
+  // Pulse animation while waiting / connecting
   useEffect(() => {
+    if (callState !== 'waiting' && callState !== 'connecting') return undefined;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.12, duration: 900, useNativeDriver: true }),
@@ -52,7 +55,7 @@ export default function UserCallScreen() {
     );
     loop.start();
     return () => loop.stop();
-  }, [pulseAnim]);
+  }, [pulseAnim, callState]);
 
   const loadSession = useCallback(async () => {
     try {
@@ -68,9 +71,31 @@ export default function UserCallScreen() {
 
   useEffect(() => { loadSession(); }, [loadSession]);
 
-  // Join Agora channel
+  // Poll until astrologer accepts (or session ends)
   useEffect(() => {
-    if (!session) return;
+    if (!session) return undefined;
+    const status = session.status;
+    if (status === 'ended' || status === 'rejected') {
+      setCallState('ended');
+      return undefined;
+    }
+    if (status === 'active' || status === 'paused') {
+      return undefined;
+    }
+    // pending / accepted — keep polling
+    setCallState('waiting');
+    const interval = setInterval(loadSession, 2500);
+    return () => clearInterval(interval);
+  }, [session?.status, loadSession, session]);
+
+  // Join Agora only after session is active
+  useEffect(() => {
+    if (!session) return undefined;
+    if (session.status !== 'active' && session.status !== 'paused') return undefined;
+    if (joinedRef.current) return undefined;
+
+    joinedRef.current = true;
+    setCallState('connecting');
     const channelName = `session_${id}`;
 
     agoraService.joinChannel({
@@ -97,8 +122,9 @@ export default function UserCallScreen() {
     return () => {
       agoraService.leaveChannel();
       clearInterval(timerRef.current);
+      joinedRef.current = false;
     };
-  }, [session, id, router]);
+  }, [session?.status, id, router, session]);
 
   const handleMute = async () => {
     const next = !isMuted;
@@ -181,7 +207,7 @@ export default function UserCallScreen() {
         {/* Avatar */}
         <Animated.View style={[
           styles.avatarWrap,
-          callState === 'connecting' && { transform: [{ scale: pulseAnim }] },
+          (callState === 'connecting' || callState === 'waiting') && { transform: [{ scale: pulseAnim }] },
         ]}>
           {/* Outer glow ring */}
           <View style={[
@@ -215,7 +241,12 @@ export default function UserCallScreen() {
 
         {/* Status */}
         <View style={styles.statusRow}>
-          {callState === 'connecting' ? (
+          {callState === 'waiting' ? (
+            <>
+              <ActivityIndicator size="small" color={COLORS.primary} />
+              <Text style={styles.statusText}>Waiting for astrologer to accept...</Text>
+            </>
+          ) : callState === 'connecting' ? (
             <>
               <ActivityIndicator size="small" color={COLORS.primary} />
               <Text style={styles.statusText}>Connecting...</Text>
@@ -223,7 +254,9 @@ export default function UserCallScreen() {
           ) : callState === 'active' ? (
             <Text style={styles.timerText}>{formatDuration(duration)}</Text>
           ) : (
-            <Text style={styles.endedText}>Call Ended</Text>
+            <Text style={styles.endedText}>
+              {session?.status === 'rejected' ? 'Call Declined' : 'Call Ended'}
+            </Text>
           )}
         </View>
       </View>

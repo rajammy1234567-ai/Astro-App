@@ -7,19 +7,18 @@
     "setup:env": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-mobile-env.ps1",
     "server": "cd server && npm run dev",
     "server:start": "cd server && npm start",
-    "user:dev": "cd client && npm run dev",
-    "user:android": "cd client && npm run android",
-    "user:apk": "cd client && npm run build:apk",
-    "user:playstore": "cd client && npm run build:playstore",
+    "user:dev": "cd user-panel && npm run dev",
+    "user:android": "cd user-panel && npm run android",
+    "user:apk": "cd user-panel && npm run build:apk",
+    "user:playstore": "cd user-panel && npm run build:playstore",
     "admin:dev": "cd admin-app && npm run dev",
-    "admin:web": "cd admin-panel && npm run dev",
     "admin:android": "cd admin-app && npm run android",
     "admin:apk": "cd admin-app && npm run build:apk",
     "admin:playstore": "cd admin-app && npm run build:playstore",
-    "astro:dev": "cd astro-app && npm run dev:lan",
+    "astro:dev": "cd astro-app && npm run start",
     "astro:android": "cd astro-app && npm run android",
     "astro:apk": "cd astro-app && npm run build:apk",
     "astro:playstore": "cd astro-app && npm run build:playstore",
-    "install:all": "cd server && npm install && cd ../client && npm install && cd ../admin-app && npm install && cd ../astro-app && npm install"
+    "install:all": "cd server && npm install && cd ../user-panel && npm install && cd ../admin-app && npm install && cd ../astro-app && npm install"
   }
 }

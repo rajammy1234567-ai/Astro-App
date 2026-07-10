@@ -10,9 +10,9 @@ export const SECTION_DEFAULTS = {
   },
   blogs: {
     title: '', excerpt: '', content: '', author: 'Astrologer Anshika',
-    category: 'Astrology', image: '', views: '0',
+    category: 'Astrology', image: '', views: '0', isPublished: true,
   },
-  news: { title: '', source: '', image: '' },
+  news: { title: '', source: '', image: '', isPublished: true },
   poojas: {
     name: '', description: '', duration: '2 hours', price: 1500,
     icon: 'flame-outline', isActive: true,
@@ -41,7 +41,7 @@ export const SECTION_FIELDS = {
     { key: 'image', label: 'Image', type: 'image' },
     { key: 'badge', label: 'Badge (Celebrity, Top Choice)' },
     { key: 'bio', label: 'Bio', type: 'textarea' },
-    { key: 'isPublished', label: 'Publish', type: 'checkbox', checkboxLabel: 'Show on User App' },
+    { key: 'isPublished', label: 'Publish', type: 'checkbox', checkboxLabel: 'Show on User App (auto-approves)' },
     { key: 'isOnline', label: 'Online', type: 'checkbox', checkboxLabel: 'Show as online' },
     { key: 'isVerified', label: 'Verified', type: 'checkbox', checkboxLabel: 'Verified astrologer' },
     { key: 'chatEnabled', label: 'Chat', type: 'checkbox', checkboxLabel: 'Chat enabled' },
@@ -73,11 +73,13 @@ export const SECTION_FIELDS = {
     { key: 'category', label: 'Category' },
     { key: 'views', label: 'Views' },
     { key: 'image', label: 'Image', type: 'image' },
+    { key: 'isPublished', label: 'Published', type: 'checkbox', checkboxLabel: 'Show on User App' },
   ],
   news: [
     { key: 'title', label: 'Title', required: true },
     { key: 'source', label: 'Source' },
     { key: 'image', label: 'Image', type: 'image' },
+    { key: 'isPublished', label: 'Published', type: 'checkbox', checkboxLabel: 'Show on User App' },
   ],
   poojas: [
     { key: 'name', label: 'Name', required: true },
@@ -143,5 +145,9 @@ export function buildPayload(sectionId, form) {
     if (f.type === 'number') payload[f.key] = Number(payload[f.key]) || 0;
     if (f.type === 'checkbox') payload[f.key] = !!payload[f.key];
   });
+  // Publishing an astrologer also marks them approved for the user app
+  if (sectionId === 'astrologers' && payload.isPublished === true) {
+    payload.approvedViaApplication = true;
+  }
   return payload;
 }

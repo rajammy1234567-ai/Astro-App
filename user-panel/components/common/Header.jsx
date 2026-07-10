@@ -13,7 +13,11 @@ export default function Header({ title, showBack = true, rightComponent, light =
       onBack();
       return;
     }
-    router.back();
+    if (router.canGoBack?.()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/home');
   };
 
   return (

@@ -281,6 +281,25 @@ const listAstrologers = async (req, res) => {
   }
 };
 
+/** Publish on User App also marks as approved (admin "auto-approves") */
+const updateAstrologer = async (req, res) => {
+  try {
+    const body = { ...req.body };
+    delete body.password;
+    if (body.isPublished === true) {
+      body.approvedViaApplication = true;
+    }
+    const item = await Astrologer.findByIdAndUpdate(req.params.id, body, {
+      new: true,
+      runValidators: true,
+    }).select('-password');
+    if (!item) return res.status(404).json({ message: 'Not found' });
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getAstrologerDetails = async (req, res) => {
   try {
     const astrologer = await Astrologer.findById(req.params.id).select('-password');
@@ -338,7 +357,7 @@ const blockAstrologer = async (req, res) => {
   }
 };
 
-const astrologers = { ...crud(Astrologer), list: listAstrologers };
+const astrologers = { ...crud(Astrologer), list: listAstrologers, update: updateAstrologer };
 const products = crud(Product);
 const blogs = crud(Blog);
 const news = crud(News);

@@ -16,7 +16,7 @@ import { COLORS } from '../../constants/colors';
 import { SHADOW } from '../../constants/theme';
 
 export default function BookingScreen() {
-  const { id, type = 'chat', returnTo } = useLocalSearchParams();
+  const { id, type = 'chat' } = useLocalSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
   const { isAuthenticated } = useAuth();
@@ -74,10 +74,17 @@ export default function BookingScreen() {
       });
       const sessionId = res.session?._id;
       if (sessionId) {
-        const chatRoute = typeof returnTo === 'string' && returnTo
-          ? { pathname: `/chat/${sessionId}`, params: { returnTo } }
-          : `/chat/${sessionId}`;
-        router.push(chatRoute);
+        if (isCall) {
+          router.replace({
+            pathname: `/call/${sessionId}`,
+            params: {
+              type: 'voice',
+              astroName: astro?.name || 'Astrologer',
+            },
+          });
+        } else {
+          router.replace(`/chat/${sessionId}`);
+        }
       } else {
         Alert.alert('Request Sent', res.message || 'Astrologer accept karenge tab start hoga.');
         router.back();

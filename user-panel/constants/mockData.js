@@ -130,6 +130,7 @@ export const DRAWER_MENU = [
   { label: 'Wallet Transactions', icon: 'wallet-outline', route: '/wallet/transactions' },
   { label: 'Redeem Gift Card', icon: 'gift-outline', route: '/wallet/gift-card' },
   { label: 'Order History', icon: 'time-outline', route: '/orders' },
+  { label: 'Chat & Call History', icon: 'chatbox-ellipses-outline', route: '/sessions' },
   { label: 'Gemstones', icon: 'diamond-outline', route: '/store' },
   { label: 'AstroRemedy', icon: 'medical-outline', route: '/(tabs)/remedies' },
   { label: 'Astrology Blog', icon: 'newspaper-outline', route: '/blog' },

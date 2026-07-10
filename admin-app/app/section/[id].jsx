@@ -55,10 +55,24 @@ export default function SectionScreen() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (section?.mode === 'applications') {
+      router.replace('/section/astrologer-applications');
+    }
+  }, [section, router]);
+
   if (!section) {
     return (
       <View style={styles.center}>
         <Text style={styles.empty}>Section not found</Text>
+      </View>
+    );
+  }
+
+  if (section.mode === 'applications') {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -167,6 +181,34 @@ export default function SectionScreen() {
     ]);
   };
 
+  const handleBlockToggle = (item) => {
+    if (!item?._id) return;
+    const next = !item.isBlocked;
+    Alert.alert(
+      next ? 'Block' : 'Unblock',
+      `${next ? 'Block' : 'Unblock'} "${getItemLabel(item)}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: next ? 'Block' : 'Unblock',
+          style: next ? 'destructive' : 'default',
+          onPress: async () => {
+            try {
+              await api.put(`${section.endpoint}/${item._id}/block`, {
+                isBlocked: next,
+                blockReason: next ? 'Blocked by admin' : '',
+              });
+              load();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Block update failed');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const canBlock = isUsers || id === 'astrologers';
   const showActions = !isReadonly;
 
   return (
@@ -207,6 +249,13 @@ export default function SectionScreen() {
               </View>
               {showActions && (
                 <View style={styles.actions}>
+                  {canBlock && (
+                    <TouchableOpacity onPress={() => handleBlockToggle(item)}>
+                      <Text style={item.isBlocked ? styles.edit : styles.delete}>
+                        {item.isBlocked ? 'Unblock' : 'Block'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity onPress={() => openEdit(item)}>
                     <Text style={styles.edit}>{isOrders ? 'Status' : 'Edit'}</Text>
                   </TouchableOpacity>

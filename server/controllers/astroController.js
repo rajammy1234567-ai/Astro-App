@@ -83,6 +83,7 @@ const updateProfile = async (req, res) => {
       updates.gallery = (updates.gallery || []).slice(0, 12);
     }
 
+    // Auto-publish when approved applicants finish their core profile
     const currentAstrologer = req.astrologer.toObject ? req.astrologer.toObject() : req.astrologer;
     const mergedProfile = { ...currentAstrologer, ...updates };
     const normalizedLanguages = Array.isArray(mergedProfile.languages)
@@ -98,7 +99,8 @@ const updateProfile = async (req, res) => {
       mergedProfile.image &&
       Number(mergedProfile.experience) > 0 &&
       normalizedLanguages.length > 0 &&
-      Array.isArray(mergedProfile.pricingPackages) && mergedProfile.pricingPackages.some((pkg) => Number(pkg.price) > 0) &&
+      Array.isArray(mergedProfile.pricingPackages) &&
+      mergedProfile.pricingPackages.some((pkg) => Number(pkg.price) > 0) &&
       (mergedProfile.chatEnabled !== false || mergedProfile.callEnabled !== false)
     );
 
