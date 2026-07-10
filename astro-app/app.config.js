@@ -76,7 +76,7 @@ export default {
     experiments: { typedRoutes: true },
     extra: {
       apiUrl,
-      eas: { projectId: process.env.EAS_PROJECT_ID || undefined },
+      eas: {"projectId": "bd897ff7-209e-4dc9-a215-33ae6875352f"},
     },
   },
 };
