@@ -54,9 +54,11 @@ export default {
         'expo-build-properties',
         {
           android: {
-            compileSdkVersion: 35,
-            targetSdkVersion: 35,
+            // androidx libs (via RN/Expo 57) require compileSdk >= 36
+            compileSdkVersion: 36,
+            targetSdkVersion: 36,
             minSdkVersion: 24,
+            buildToolsVersion: '36.0.0',
           },
         },
       ],
