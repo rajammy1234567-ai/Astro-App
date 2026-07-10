@@ -5,6 +5,7 @@ export default {
   expo: {
     name: 'AstroTalk Admin',
     slug: 'astrotalk-admin',
+    owner: 'sunaina0s-team',
     version: '1.0.0',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
@@ -66,7 +67,7 @@ export default {
     experiments: { typedRoutes: true },
     extra: {
       apiUrl,
-      eas: { projectId: process.env.EAS_PROJECT_ID || undefined },
+      eas: { projectId: '359dc5a5-10f0-4799-857b-fc16fe693d6c' },
     },
   },
 };
