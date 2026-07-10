@@ -3,8 +3,11 @@ import { authApi } from '../services/authApi';
 import { storage } from '../utils/storage';
 
 const persistAuth = async (response) => {
-  if (response.token) {
-    await storage.set('token', response.token);
+  if (!response?.token) {
+    throw { message: 'Server ne token nahi bheja. Dobara try karo.' };
+  }
+  await storage.set('token', response.token);
+  if (response.user) {
     await storage.set('user', response.user);
   }
   return response;
@@ -12,17 +15,27 @@ const persistAuth = async (response) => {
 
 export const register = createAsyncThunk('auth/register', async (payload, { rejectWithValue }) => {
   try {
-    return await persistAuth(await authApi.register(payload));
+    const data = await authApi.register(payload);
+    return await persistAuth(data);
   } catch (err) {
-    return rejectWithValue(err);
+    return rejectWithValue({
+      message: err?.message || 'Account create nahi ho saka',
+      networkError: !!err?.networkError,
+      status: err?.status,
+    });
   }
 });
 
 export const login = createAsyncThunk('auth/login', async (payload, { rejectWithValue }) => {
   try {
-    return await persistAuth(await authApi.login(payload));
+    const data = await authApi.login(payload);
+    return await persistAuth(data);
   } catch (err) {
-    return rejectWithValue(err);
+    return rejectWithValue({
+      message: err?.message || 'Login failed',
+      networkError: !!err?.networkError,
+      status: err?.status,
+    });
   }
 });
 

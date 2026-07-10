@@ -11,6 +11,7 @@ import { COLORS } from '../../constants/colors';
 import { formatCurrency, formatPhone } from '../../utils/formatters';
 
 const MENU = [
+  { label: 'Birth Details (Kundli)', icon: 'planet-outline', route: '/profile/edit' },
   { label: 'Become an Astrologer', icon: 'star-outline', route: '/become-astrologer' },
   { label: 'Notifications', icon: 'notifications-outline', route: '/notifications' },
   { label: 'My Wallet', icon: 'wallet-outline', route: '/wallet' },
@@ -51,6 +52,19 @@ export default function ProfileScreen() {
             <Text style={styles.phone}>
               {user?.phone ? formatPhone(user.phone) : user?.email || ''}
             </Text>
+            {user?.dateOfBirth ? (
+              <Text style={styles.birthLine}>
+                🎂 {user.dateOfBirth}
+                {user.age != null ? ` · ${user.age} yrs` : ''}
+                {user.gender ? ` · ${user.gender}` : ''}
+                {user.timeOfBirth ? ` · ⏰ ${user.timeOfBirth}` : ''}
+                {user.placeOfBirth ? ` · 📍 ${user.placeOfBirth}` : ''}
+              </Text>
+            ) : (
+              <TouchableOpacity onPress={() => router.push('/onboarding/profile')}>
+                <Text style={styles.addBirth}>+ Complete basic details (name, DOB, sex…)</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.statsRow}>
@@ -94,6 +108,10 @@ const styles = StyleSheet.create({
   avatarImg: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 },
   name: { fontSize: 22, fontWeight: '800', color: COLORS.text },
   phone: { fontSize: 14, color: COLORS.textSecondary, marginTop: 4 },
+  birthLine: {
+    fontSize: 12, color: COLORS.textSecondary, marginTop: 10, textAlign: 'center', lineHeight: 18,
+  },
+  addBirth: { fontSize: 13, color: COLORS.link, fontWeight: '700', marginTop: 10 },
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   statCard: {
     flex: 1, backgroundColor: COLORS.surface, borderRadius: 10,

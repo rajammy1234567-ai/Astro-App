@@ -230,7 +230,12 @@ const crud = (Model, opts = {}) => ({
   },
   create: async (req, res) => {
     try {
-      const item = await Model.create(req.body);
+      const body = { ...req.body };
+      // Admin-created/published astrologers must show on user app
+      if (Model.modelName === 'Astrologer') {
+        if (body.isPublished) body.approvedViaApplication = true;
+      }
+      const item = await Model.create(body);
       res.status(201).json(item);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -238,7 +243,11 @@ const crud = (Model, opts = {}) => ({
   },
   update: async (req, res) => {
     try {
-      const item = await Model.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+      const body = { ...req.body };
+      if (Model.modelName === 'Astrologer' && body.isPublished === true) {
+        body.approvedViaApplication = true;
+      }
+      const item = await Model.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true });
       if (!item) return res.status(404).json({ message: 'Not found' });
       res.json(item);
     } catch (error) {

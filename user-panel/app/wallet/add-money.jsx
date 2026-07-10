@@ -41,6 +41,15 @@ export default function AddMoneyScreen() {
     setLoading(true);
     try {
       const res = await walletApi.addMoney(numAmount);
+      // Razorpay configured: server returns orderId but does not credit yet
+      if (res?.orderId && !res?.devMode && res?.balance == null) {
+        Alert.alert(
+          'Payment Gateway',
+          'Razorpay order ban gaya, lekin app mein checkout abhi wired nahi hai. Dev mode ke liye server/.env se RAZORPAY_KEY_ID hatao — tab seedha wallet credit hoga.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
       await dispatch(fetchWallet());
       Alert.alert(
         'Success',

@@ -5,6 +5,7 @@ const {
   FREE_CHAT_SECONDS,
   updateSessionTimer,
   formatSession,
+  creditWallet,
 } = require('../utils/sessionBilling');
 
 const signAstroToken = (id) =>
@@ -170,7 +171,7 @@ const getPendingRequests = async (req, res) => {
       status: 'pending',
     })
       .sort({ createdAt: -1 })
-      .populate('user', 'name phone email avatar');
+      .populate('user', 'name phone email avatar dateOfBirth timeOfBirth placeOfBirth gender');
     res.json(chats.map((c) => formatSession(c)));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -181,7 +182,7 @@ const getChats = async (req, res) => {
   try {
     const chats = await Chat.find({ astrologer: req.astrologer._id })
       .sort({ updatedAt: -1 })
-      .populate('user', 'name phone email avatar');
+      .populate('user', 'name phone email avatar dateOfBirth timeOfBirth placeOfBirth gender');
 
     const result = [];
     for (const chat of chats) {
@@ -200,7 +201,7 @@ const getChatById = async (req, res) => {
     const chat = await Chat.findOne({
       _id: req.params.id,
       astrologer: req.astrologer._id,
-    }).populate('user', 'name phone email avatar');
+    }).populate('user', 'name phone email avatar dateOfBirth timeOfBirth placeOfBirth gender');
 
     if (!chat) return res.status(404).json({ message: 'Chat not found' });
 
@@ -268,10 +269,42 @@ const rejectChat = async (req, res) => {
     chat.status = 'rejected';
     chat.isActive = false;
     chat.endedAt = new Date();
-    chat.messages.push({ sender: 'system', content: 'Astrologer declined the request.' });
+
+    // Refund prepaid call amount when request is declined
+    let refunded = 0;
+    if (chat.type === 'call' && chat.callPaidUpfront && (chat.totalCharged || 0) > 0) {
+      refunded = chat.totalCharged;
+      try {
+        await creditWallet(
+          chat.user,
+          refunded,
+          `Call refund — astrologer declined (₹${refunded})`
+        );
+        chat.totalCharged = 0;
+        chat.paidSecondsRemaining = 0;
+        chat.callPaidUpfront = false;
+        chat.messages.push({
+          sender: 'system',
+          content: `Astrologer declined. ₹${refunded} refunded to your wallet.`,
+        });
+      } catch (refundErr) {
+        console.error('Call refund failed:', refundErr.message);
+        chat.messages.push({
+          sender: 'system',
+          content: 'Astrologer declined the request. Refund pending — contact support.',
+        });
+      }
+    } else {
+      chat.messages.push({ sender: 'system', content: 'Astrologer declined the request.' });
+    }
+
     await chat.save();
 
-    res.json({ message: 'Request declined', session: formatSession(chat) });
+    res.json({
+      message: refunded > 0 ? `Request declined. ₹${refunded} refunded to user.` : 'Request declined',
+      session: formatSession(chat),
+      refunded,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -2,7 +2,7 @@ const AstrologerReview = require('../models/AstrologerReview');
 const Astrologer = require('../models/Astrologer');
 const { recalcRating } = require('../utils/astrologerHelpers');
 
-const publicFilter = { isPublished: true, approvedViaApplication: true };
+const publicFilter = { isPublished: true, isBlocked: { $ne: true } };
 
 const getReviewsForAstrologer = async (req, res) => {
   try {

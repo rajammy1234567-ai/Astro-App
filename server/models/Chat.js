@@ -17,6 +17,14 @@ const chatSchema = new mongoose.Schema(
       default: 'pending',
     },
     messages: [messageSchema],
+    // Snapshot at booking time so astrologer always sees kundli details
+    userBirthDetails: {
+      name: { type: String, default: '' },
+      dateOfBirth: { type: String, default: '' },
+      timeOfBirth: { type: String, default: '' },
+      placeOfBirth: { type: String, default: '' },
+      gender: { type: String, default: '' },
+    },
     isActive: { type: Boolean, default: true },
     pricePerMin: { type: Number, default: 20 },
     startedAt: { type: Date },

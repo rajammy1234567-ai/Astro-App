@@ -9,6 +9,7 @@ import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo
 import { Ionicons } from '@expo/vector-icons';
 import liveApi from '../../services/liveApi';
 import { getSocket, joinLiveRoom, leaveLiveRoom } from '../../utils/socket';
+import { safeGoBack } from '../../utils/navigation';
 import { colors, COLORS } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 
@@ -29,6 +30,12 @@ export default function GoLiveScreen() {
   const [camPerm, requestCamPerm] = useCameraPermissions();
   const [micPerm, requestMicPerm] = useMicrophonePermissions();
   const listRef = useRef(null);
+  const MAX_RECENT = 40;
+
+  const trimRecent = (list) => {
+    const arr = Array.isArray(list) ? list : [];
+    return arr.length > MAX_RECENT ? arr.slice(-MAX_RECENT) : arr;
+  };
 
   const loadSession = useCallback(async () => {
     try {
@@ -38,11 +45,16 @@ export default function GoLiveScreen() {
         setIsMuted(!!live.isMuted);
         setIsCameraOff(!!live.isCameraOff);
         setViewerCount(live.viewerCount || 0);
+        // Sirf current live ke recent comments
         const list = await liveApi.getComments(live._id);
-        setComments(Array.isArray(list) ? list : []);
+        setComments(trimRecent(list));
+      } else {
+        setSession(null);
+        setComments([]);
       }
     } catch {
       setSession(null);
+      setComments([]);
     } finally {
       setLoading(false);
     }
@@ -54,16 +66,27 @@ export default function GoLiveScreen() {
     if (!session?._id) return undefined;
     joinLiveRoom(session._id);
     const socket = getSocket();
+    const sessionId = String(session._id);
 
-    const onComment = (c) => setComments((prev) => [...prev, c]);
+    const onComment = (c) => {
+      const sid = String(c?.liveSession || c?.liveSessionId || '');
+      if (sid && sid !== sessionId) return;
+      setComments((prev) => {
+        const nextId = c?._id ? String(c._id) : null;
+        if (nextId && prev.some((x) => String(x._id) === nextId)) return prev;
+        return trimRecent([...prev, c]);
+      });
+    };
     const onViewers = (d) => setViewerCount(d.viewerCount ?? 0);
     const onControls = (d) => {
       if (typeof d.isMuted === 'boolean') setIsMuted(d.isMuted);
       if (typeof d.isCameraOff === 'boolean') setIsCameraOff(d.isCameraOff);
     };
     const onEnded = () => {
+      setComments([]);
+      setSession(null);
       Alert.alert('Live Ended', 'Session has ended.');
-      router.back();
+      safeGoBack(router, '/(tabs)/dashboard');
     };
 
     socket.on('live-comment', onComment);
@@ -102,6 +125,7 @@ export default function GoLiveScreen() {
     setStarting(true);
     try {
       const live = await liveApi.startLive(title.trim() || `${astrologer?.name} is Live`);
+      // Naya live → comments hamesha empty se start
       setSession(live);
       setComments([]);
       setViewerCount(0);
@@ -122,7 +146,9 @@ export default function GoLiveScreen() {
           setEnding(true);
           try {
             await liveApi.endLive(session._id);
-            router.back();
+            setComments([]);
+            setSession(null);
+            safeGoBack(router, '/(tabs)/dashboard');
           } catch (e) {
             Alert.alert('Error', e.message);
           } finally {
@@ -177,7 +203,7 @@ export default function GoLiveScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.preHeader}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)/dashboard')}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.preTitle}>Go Live</Text>
@@ -207,8 +233,9 @@ export default function GoLiveScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.liveSafe} edges={['top', 'left', 'right']}>
-      <View style={styles.videoArea}>
+    <View style={styles.liveRoot}>
+      {/* FULL SCREEN camera */}
+      <View style={styles.videoFull}>
         {!isCameraOff && camPerm?.granted ? (
           <CameraView style={styles.camera} facing="front" mute={isMuted} />
         ) : !isCameraOff && !camPerm?.granted ? (
@@ -223,9 +250,11 @@ export default function GoLiveScreen() {
             <Text style={styles.cameraOffText}>Camera Off</Text>
           </View>
         )}
+      </View>
 
+      <SafeAreaView style={styles.overlaySafe} edges={['top', 'left', 'right', 'bottom']} pointerEvents="box-none">
         <View style={styles.liveTopBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.topBtn}>
+          <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)/dashboard')} style={styles.topBtn}>
             <Ionicons name="chevron-down" size={22} color="#fff" />
           </TouchableOpacity>
           <View style={styles.liveBadge}>
@@ -238,74 +267,70 @@ export default function GoLiveScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.controls}>
-          <TouchableOpacity style={styles.ctrlBtn} onPress={toggleMute}>
-            <Ionicons name={isMuted ? 'mic-off' : 'mic'} size={22} color="#fff" />
-            <Text style={styles.ctrlLabel}>{isMuted ? 'Unmute' : 'Mute'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.ctrlBtn} onPress={toggleCamera}>
-            <Ionicons name={isCameraOff ? 'videocam-off' : 'videocam'} size={22} color="#fff" />
-            <Text style={styles.ctrlLabel}>{isCameraOff ? 'Camera On' : 'Camera Off'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.ctrlBtn, styles.endCtrl]} onPress={handleEnd}>
-            <Ionicons name="stop-circle" size={22} color="#fff" />
-            <Text style={styles.ctrlLabel}>End</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        <View style={{ flex: 1 }} pointerEvents="box-none" />
 
-      <KeyboardAvoidingView
-        style={styles.commentSection}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={80}
-      >
-        <Text style={styles.commentTitle}>Live Comments</Text>
-        <FlatList
-          ref={listRef}
-          data={comments}
-          keyExtractor={(item) => item._id}
-          style={styles.commentList}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.commentRow, item.authorType === 'astrologer' && styles.astroComment]}
-              onPress={() => item.authorType === 'user' && setReplyTo(item)}
-            >
-              <Text style={styles.commentName}>
-                {item.authorName}
-                {item.authorType === 'astrologer' ? ' (You)' : ''}
-              </Text>
-              <Text style={styles.commentText}>{item.text}</Text>
-              {item.authorType === 'user' && (
-                <Text style={styles.replyHint}>Tap to reply</Text>
-              )}
-            </TouchableOpacity>
+        {/* Comments overlay bottom */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.commentOverlay}
+        >
+          <FlatList
+            ref={listRef}
+            data={comments}
+            keyExtractor={(item, i) => item._id || String(i)}
+            style={styles.commentList}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.commentRow, item.authorType === 'astrologer' && styles.astroComment]}
+                onPress={() => item.authorType === 'user' && setReplyTo(item)}
+              >
+                <Text style={styles.commentName}>
+                  {item.authorName}
+                  {item.authorType === 'astrologer' ? ' (You)' : ''}
+                </Text>
+                <Text style={styles.commentText}>{item.text}</Text>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={<Text style={styles.noComments}>Recent comments yahan…</Text>}
+          />
+
+          {replyTo && (
+            <View style={styles.replyBar}>
+              <Text style={styles.replyingTo} numberOfLines={1}>Replying to {replyTo.authorName}</Text>
+              <TouchableOpacity onPress={() => setReplyTo(null)}>
+                <Ionicons name="close" size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
           )}
-          ListEmptyComponent={<Text style={styles.noComments}>Comments yahan dikhenge...</Text>}
-        />
 
-        {replyTo && (
-          <View style={styles.replyBar}>
-            <Text style={styles.replyingTo} numberOfLines={1}>Replying to {replyTo.authorName}</Text>
-            <TouchableOpacity onPress={() => setReplyTo(null)}>
-              <Ionicons name="close" size={18} color={colors.textMuted} />
+          <View style={styles.controls}>
+            <TouchableOpacity style={styles.ctrlBtn} onPress={toggleMute}>
+              <Ionicons name={isMuted ? 'mic-off' : 'mic'} size={20} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.ctrlBtn} onPress={toggleCamera}>
+              <Ionicons name={isCameraOff ? 'videocam-off' : 'videocam'} size={20} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.replyInput}
+                placeholder="Reply to viewers..."
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                value={replyText}
+                onChangeText={setReplyText}
+              />
+              <TouchableOpacity style={styles.sendBtn} onPress={sendReply}>
+                <Ionicons name="send" size={16} color="#1A1A1A" />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={[styles.ctrlBtn, styles.endCtrl]} onPress={handleEnd}>
+              <Ionicons name="stop" size={18} color="#fff" />
             </TouchableOpacity>
           </View>
-        )}
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.replyInput}
-            placeholder="Reply to viewers..."
-            placeholderTextColor={colors.textMuted}
-            value={replyText}
-            onChangeText={setReplyText}
-          />
-          <TouchableOpacity style={styles.sendBtn} onPress={sendReply}>
-            <Ionicons name="send" size={18} color={COLORS.text} />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -330,64 +355,60 @@ const styles = StyleSheet.create({
     padding: 16, alignItems: 'center',
   },
   startBtnText: { color: COLORS.text, fontWeight: '800', fontSize: 16 },
-  liveSafe: { flex: 1, backgroundColor: '#000' },
-  videoArea: { flex: 1, backgroundColor: '#111' },
+  liveRoot: { flex: 1, backgroundColor: '#000' },
+  videoFull: { ...StyleSheet.absoluteFillObject, backgroundColor: '#111' },
   camera: { flex: 1 },
-  cameraOff: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1a1a1a' },
+  cameraOff: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#12081F' },
   avatarBig: {
-    width: 100, height: 100, borderRadius: 50, backgroundColor: colors.primary,
+    width: 100, height: 100, borderRadius: 50, backgroundColor: COLORS.primary,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarLetter: { fontSize: 42, fontWeight: '800', color: COLORS.text },
+  avatarLetter: { fontSize: 42, fontWeight: '800', color: '#1A1A1A' },
   cameraOffText: { color: '#aaa', marginTop: 12, fontSize: 14 },
+  overlaySafe: { flex: 1 },
   liveTopBar: {
-    position: 'absolute', top: 8, left: 12, right: 12,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 12, paddingTop: 4,
   },
-  topBtn: { padding: 8, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
+  topBtn: { padding: 8, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 20 },
   liveBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(220,38,38,0.9)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+    backgroundColor: 'rgba(220,38,38,0.92)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
   },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' },
-  liveBadgeText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  liveBadgeText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   viewerText: { color: '#fff', fontSize: 11, marginLeft: 4 },
   endTopBtn: { backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16 },
   endTopText: { color: '#fff', fontWeight: '700' },
-  controls: {
-    position: 'absolute', bottom: 16, left: 0, right: 0,
-    flexDirection: 'row', justifyContent: 'center', gap: 20,
-  },
-  ctrlBtn: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.55)', padding: 12, borderRadius: 14, minWidth: 72 },
-  endCtrl: { backgroundColor: 'rgba(220,38,38,0.85)' },
-  ctrlLabel: { color: '#fff', fontSize: 10, marginTop: 4, fontWeight: '600' },
-  commentSection: {
-    maxHeight: '42%', backgroundColor: colors.bg, borderTopLeftRadius: 16,
-    borderTopRightRadius: 16, padding: 12,
-  },
-  commentTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 8 },
-  commentList: { flexGrow: 0 },
+  commentOverlay: { paddingHorizontal: 12, paddingBottom: 8, maxHeight: '42%' },
+  commentList: { maxHeight: 160, marginBottom: 8 },
   commentRow: {
-    backgroundColor: colors.card, borderRadius: 10, padding: 10, marginBottom: 6,
-    borderWidth: 1, borderColor: colors.border,
+    alignSelf: 'flex-start', maxWidth: '90%',
+    backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 12, padding: 10, marginBottom: 5,
   },
-  astroComment: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
-  commentName: { fontSize: 12, fontWeight: '700', color: colors.text },
-  commentText: { fontSize: 13, color: colors.text, marginTop: 2 },
-  replyHint: { fontSize: 10, color: colors.primary, marginTop: 4 },
-  noComments: { textAlign: 'center', color: colors.textMuted, padding: 16 },
+  astroComment: { backgroundColor: 'rgba(253,185,19,0.88)' },
+  commentName: { fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.9)' },
+  commentText: { fontSize: 13, color: '#fff', marginTop: 2 },
+  noComments: { textAlign: 'center', color: 'rgba(255,255,255,0.45)', padding: 10, fontSize: 12 },
   replyBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.primaryLight, padding: 8, borderRadius: 8, marginBottom: 6,
+    backgroundColor: 'rgba(253,185,19,0.25)', padding: 8, borderRadius: 8, marginBottom: 6,
   },
-  replyingTo: { flex: 1, fontSize: 12, color: colors.primary, fontWeight: '600' },
-  inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  replyingTo: { flex: 1, fontSize: 12, color: '#fff', fontWeight: '600' },
+  controls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  ctrlBtn: {
+    width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  endCtrl: { backgroundColor: 'rgba(220,38,38,0.9)' },
+  inputRow: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center' },
   replyInput: {
-    flex: 1, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
-    borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10, color: colors.text,
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)', borderRadius: 22,
+    paddingHorizontal: 12, paddingVertical: 10, color: '#fff', fontSize: 13,
   },
   sendBtn: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary,
+    width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
     alignItems: 'center', justifyContent: 'center',
   },
 });

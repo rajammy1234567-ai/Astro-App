@@ -7,14 +7,26 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-const formatUser = (user) => ({
-  _id: user._id,
-  name: user.name,
-  phone: user.phone,
-  email: user.email,
-  avatar: user.avatar,
-  isVerified: user.isVerified,
-});
+const { ageFromDob, hasCompleteBirthDetails } = require('../utils/birthDetails');
+
+const formatUser = (user) => {
+  const dateOfBirth = user.dateOfBirth || '';
+  const age = ageFromDob(dateOfBirth);
+  return {
+    _id: user._id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    avatar: user.avatar,
+    isVerified: user.isVerified,
+    dateOfBirth,
+    timeOfBirth: user.timeOfBirth || '',
+    placeOfBirth: user.placeOfBirth || '',
+    gender: user.gender || '',
+    age: age != null ? age : null,
+    hasBirthDetails: hasCompleteBirthDetails(user),
+  };
+};
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -45,6 +57,8 @@ const register = async (req, res) => {
       existing.name = name.trim();
       existing.password = password;
       existing.isVerified = true;
+      // clear empty phone so unique sparse index never blocks
+      if (!existing.phone) existing.phone = undefined;
       await existing.save();
       user = existing;
     } else {
@@ -55,7 +69,14 @@ const register = async (req, res) => {
         password,
         isVerified: true,
       });
-      await Wallet.create({ user: user._id, balance: 100 });
+      const walletExists = await Wallet.findOne({ user: user._id });
+      if (!walletExists) {
+        await Wallet.create({ user: user._id, balance: 100 });
+      }
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'Server JWT_SECRET missing — check server/.env' });
     }
 
     const token = generateToken(user._id);
@@ -65,7 +86,17 @@ const register = async (req, res) => {
       isNewUser,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('register error:', error.code || '', error.message);
+    // Duplicate key (email/phone unique)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0] || 'email';
+      return res.status(400).json({
+        message: field === 'email'
+          ? 'Email already registered. Please login.'
+          : `Account create nahi hua (${field} already used). Dusra email try karo.`,
+      });
+    }
+    res.status(500).json({ message: error.message || 'Registration failed' });
   }
 };
 
@@ -227,9 +258,15 @@ const getMe = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, dateOfBirth, timeOfBirth, placeOfBirth, gender, avatar } = req.body;
     const user = await User.findById(req.user._id);
-    if (name) user.name = name;
+    if (name !== undefined) {
+      const trimmed = String(name || '').trim();
+      if (trimmed.length < 2) {
+        return res.status(400).json({ message: 'Name min 2 characters' });
+      }
+      user.name = trimmed;
+    }
     if (email !== undefined) {
       const normalizedEmail = email?.trim().toLowerCase();
       if (normalizedEmail && !isValidEmail(normalizedEmail)) {
@@ -237,6 +274,14 @@ const updateProfile = async (req, res) => {
       }
       user.email = normalizedEmail || undefined;
     }
+    if (dateOfBirth !== undefined) user.dateOfBirth = String(dateOfBirth || '').trim();
+    if (timeOfBirth !== undefined) user.timeOfBirth = String(timeOfBirth || '').trim();
+    if (placeOfBirth !== undefined) user.placeOfBirth = String(placeOfBirth || '').trim();
+    if (gender !== undefined) {
+      const g = String(gender || '').trim().toLowerCase();
+      user.gender = ['male', 'female', 'other', ''].includes(g) ? g : '';
+    }
+    if (avatar !== undefined) user.avatar = avatar;
     await user.save();
     res.json(formatUser(user));
   } catch (error) {

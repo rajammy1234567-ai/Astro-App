@@ -33,6 +33,12 @@ export function getApiBaseUrl() {
     return envUrl.replace(/\/$/, '');
   }
 
+  // Last resort: packager hostname from env.local (REACT_NATIVE_PACKAGER_HOSTNAME)
+  const packagerHost = process.env.REACT_NATIVE_PACKAGER_HOSTNAME;
+  if (packagerHost && packagerHost !== 'localhost' && packagerHost !== '127.0.0.1') {
+    return `http://${packagerHost}:5000/api`;
+  }
+
   if (isWeb) return 'http://localhost:5000/api';
   if (isAndroid) return 'http://10.0.2.2:5000/api';
   return 'http://localhost:5000/api';

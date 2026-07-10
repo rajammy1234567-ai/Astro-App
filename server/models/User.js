@@ -8,6 +8,11 @@ const userSchema = new mongoose.Schema(
     email: { type: String, sparse: true, unique: true, lowercase: true, trim: true },
     password: { type: String },
     avatar: { type: String, default: 'https://i.pravatar.cc/150?img=47' },
+    // Kundli / consultation birth chart details (required before chat/call)
+    dateOfBirth: { type: String, default: '' }, // DD/MM/YYYY
+    timeOfBirth: { type: String, default: '' }, // HH:MM AM/PM
+    placeOfBirth: { type: String, default: '' },
+    gender: { type: String, enum: ['male', 'female', 'other', ''], default: '' },
     isVerified: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
     blockReason: { type: String },
@@ -28,6 +33,10 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function hashPassword(next) {
+  // Empty phone/email must be unset so sparse unique indexes don't collide
+  if (this.phone === '' || this.phone === null) this.phone = undefined;
+  if (this.email === '' || this.email === null) this.email = undefined;
+
   if (!this.isModified('password') || !this.password) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();

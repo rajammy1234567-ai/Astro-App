@@ -2,11 +2,13 @@ const Astrologer = require('../models/Astrologer');
 const AstrologerReview = require('../models/AstrologerReview');
 const { formatPublicAstrologer } = require('../utils/astrologerHelpers');
 
-const publicFilter = { isPublished: true, approvedViaApplication: true, isOnline: true, isBlocked: { $ne: true } };
+// List: only online + published. Detail: published even if offline (profile/follow).
+const listFilter = { isPublished: true, isOnline: true, isBlocked: { $ne: true } };
+const profileFilter = { isPublished: true, isBlocked: { $ne: true } };
 
 const getAstrologers = async (req, res) => {
   try {
-    const filter = { ...publicFilter };
+    const filter = { ...listFilter };
     if (req.query.type === 'chat') filter.chatEnabled = true;
     if (req.query.type === 'call') filter.callEnabled = true;
     if (req.query.filter === 'new') filter.isNew = true;
@@ -24,7 +26,7 @@ const getAstrologers = async (req, res) => {
 const getChatList = async (req, res) => {
   try {
     const astrologers = await Astrologer.find({
-      ...publicFilter,
+      ...listFilter,
       chatEnabled: true,
     }).select('-password').sort({ rating: -1 });
     res.json(astrologers.map((a) => formatPublicAstrologer(a)));
@@ -36,7 +38,7 @@ const getChatList = async (req, res) => {
 const getCallList = async (req, res) => {
   try {
     const astrologers = await Astrologer.find({
-      ...publicFilter,
+      ...listFilter,
       callEnabled: true,
     }).select('-password').sort({ rating: -1 });
     res.json(astrologers.map((a) => formatPublicAstrologer(a)));
@@ -49,10 +51,10 @@ const getAstrologerById = async (req, res) => {
   try {
     const astrologer = await Astrologer.findOne({
       _id: req.params.id,
-      ...publicFilter,
+      ...profileFilter,
     }).select('-password');
     if (!astrologer) {
-      return res.status(404).json({ message: 'Astrologer is offline or not available' });
+      return res.status(404).json({ message: 'Astrologer not found or not available' });
     }
 
     const reviews = await AstrologerReview.find({

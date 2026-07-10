@@ -1,5 +1,6 @@
 const Chat = require('../models/Chat');
 const Astrologer = require('../models/Astrologer');
+const User = require('../models/User');
 const {
   FREE_CHAT_SECONDS,
   updateSessionTimer,
@@ -7,16 +8,25 @@ const {
   deductWallet,
   formatSession,
 } = require('../utils/sessionBilling');
+const {
+  normalizeBirthDetails,
+  validateBirthDetails,
+  buildKundliIntroMessage,
+} = require('../utils/birthDetails');
 
-const publicFilter = { isPublished: true, approvedViaApplication: true };
+const bookableFilter = {
+  isPublished: true,
+  isOnline: true,
+  isBlocked: { $ne: true },
+};
 
 const createSession = async (req, res) => {
   try {
-    const { astrologerId, type = 'chat', minutes = 1 } = req.body;
+    const { astrologerId, type = 'chat', minutes = 1, birthDetails: bodyBirth } = req.body;
     const sessionType = type === 'call' ? 'call' : 'chat';
 
-    const astrologer = await Astrologer.findOne({ _id: astrologerId, ...publicFilter });
-    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
+    const astrologer = await Astrologer.findOne({ _id: astrologerId, ...bookableFilter });
+    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found or offline' });
 
     if (sessionType === 'chat' && !astrologer.chatEnabled) {
       return res.status(400).json({ message: 'Astrologer not available for chat' });
@@ -25,18 +35,56 @@ const createSession = async (req, res) => {
       return res.status(400).json({ message: 'Astrologer not available for call' });
     }
 
+    // Birth chart details — required for every consultation
+    const userDoc = await User.findById(req.user._id);
+    const birthDetails = normalizeBirthDetails(bodyBirth || req.body, userDoc || {});
+    const birthCheck = validateBirthDetails(birthDetails);
+    if (!birthCheck.ok) {
+      return res.status(400).json({
+        message: birthCheck.message,
+        requiresBirthDetails: true,
+        missing: birthCheck.missing || [],
+      });
+    }
+
+    // Persist latest details on user profile for next booking
+    if (userDoc) {
+      userDoc.name = birthDetails.name;
+      userDoc.dateOfBirth = birthDetails.dateOfBirth;
+      userDoc.timeOfBirth = birthDetails.timeOfBirth;
+      userDoc.placeOfBirth = birthDetails.placeOfBirth;
+      if (birthDetails.gender) userDoc.gender = birthDetails.gender;
+      await userDoc.save();
+    }
+
+    // Reuse only same type (chat vs call) so call booking is not blocked by open chat
     const existing = await Chat.findOne({
       user: req.user._id,
       astrologer: astrologerId,
+      type: sessionType,
       status: { $in: ['pending', 'active', 'paused', 'accepted'] },
     });
     if (existing) {
+      // Refresh birth snapshot if session already open
+      existing.userBirthDetails = birthDetails;
+      const hasKundliMsg = (existing.messages || []).some(
+        (m) => m.sender === 'user' && String(m.content || '').includes('Client Kundli Details')
+      );
+      if (!hasKundliMsg) {
+        existing.messages.unshift({
+          sender: 'user',
+          content: buildKundliIntroMessage(birthDetails),
+          timestamp: new Date(),
+        });
+      }
+      await existing.save();
       return res.json({
         message: 'Existing session found',
         session: formatSession(existing),
       });
     }
 
+    const kundliMessage = buildKundliIntroMessage(birthDetails);
     const chat = await Chat.create({
       user: req.user._id,
       astrologer: astrologerId,
@@ -44,13 +92,20 @@ const createSession = async (req, res) => {
       status: 'pending',
       pricePerMin: astrologer.pricePerMin,
       isActive: true,
+      userBirthDetails: birthDetails,
       agoraChannel: `call_${Date.now()}_${req.user._id.toString().slice(-6)}`,
-      messages: [{
-        sender: 'system',
-        content: sessionType === 'call'
-          ? 'Call request sent. Waiting for astrologer to accept.'
-          : 'Chat request sent. Waiting for astrologer to accept. 1st minute FREE after accept!',
-      }],
+      messages: [
+        {
+          sender: 'user',
+          content: kundliMessage,
+        },
+        {
+          sender: 'system',
+          content: sessionType === 'call'
+            ? 'Call request sent. Waiting for astrologer to accept. Client birth details attached above.'
+            : 'Chat request sent. Waiting for astrologer to accept. 1st minute FREE after accept! Client birth details attached above.',
+        },
+      ],
     });
 
     if (sessionType === 'call') {

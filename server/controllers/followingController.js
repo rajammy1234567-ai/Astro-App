@@ -16,7 +16,7 @@ const toggleFollow = async (req, res) => {
     const astrologer = await Astrologer.findOne({
       _id: astrologerId,
       isPublished: true,
-      approvedViaApplication: true,
+      isBlocked: { $ne: true },
     });
     if (!astrologer) {
       return res.status(404).json({ message: 'Astrologer not found' });

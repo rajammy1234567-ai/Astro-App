@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from '../redux/store';
 import WebShell from '../components/common/WebShell';
 import AuthBootstrap from '../components/auth/AuthBootstrap';
+import ProfileGate from '../components/auth/ProfileGate';
 import { COLORS } from '../constants/colors';
 
 export default function RootLayout() {
@@ -15,8 +16,10 @@ export default function RootLayout() {
       <WebShell>
         <Provider store={store}>
           <AuthBootstrap>
-            <StatusBar style="dark" translucent={Platform.OS === 'android'} backgroundColor={COLORS.cream} />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.cream } }} />
+            <ProfileGate>
+              <StatusBar style="dark" translucent={Platform.OS === 'android'} backgroundColor={COLORS.cream} />
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.cream } }} />
+            </ProfileGate>
           </AuthBootstrap>
         </Provider>
       </WebShell>

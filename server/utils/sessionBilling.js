@@ -26,6 +26,21 @@ const deductWallet = async (userId, amount, description) => {
   return wallet.balance;
 };
 
+const creditWallet = async (userId, amount, description) => {
+  if (!amount || amount <= 0) return null;
+  const wallet = await getOrCreateWallet(userId);
+  wallet.balance += amount;
+  await wallet.save();
+  await Transaction.create({
+    user: userId,
+    amount,
+    type: 'credit',
+    description,
+    status: 'completed',
+  });
+  return wallet.balance;
+};
+
 async function updateSessionTimer(chat) {
   if (chat.status !== 'active' || !chat.lastTickAt) return chat;
 
@@ -140,6 +155,7 @@ async function payForMinutes(chat, minutes) {
 
 function formatSession(chat) {
   const billing = getBillingState(chat);
+  const birth = chat.userBirthDetails || {};
   return {
     _id: chat._id,
     user: chat.user,
@@ -147,6 +163,13 @@ function formatSession(chat) {
     type: chat.type,
     status: chat.status,
     messages: chat.messages,
+    userBirthDetails: {
+      name: birth.name || '',
+      dateOfBirth: birth.dateOfBirth || '',
+      timeOfBirth: birth.timeOfBirth || '',
+      placeOfBirth: birth.placeOfBirth || '',
+      gender: birth.gender || '',
+    },
     isActive: chat.isActive,
     pricePerMin: chat.pricePerMin,
     startedAt: chat.startedAt,
@@ -164,5 +187,6 @@ module.exports = {
   getBillingState,
   payForMinutes,
   deductWallet,
+  creditWallet,
   formatSession,
 };

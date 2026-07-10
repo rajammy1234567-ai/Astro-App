@@ -1,19 +1,33 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import Screen from '../../components/common/Screen';
+import { useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { giftCardApi } from '../../services/giftCardApi';
+import { fetchWallet } from '../../redux/walletSlice';
+import { useAuth } from '../../hooks/useAuth';
 import { COLORS } from '../../constants/colors';
 import { SHADOW } from '../../constants/theme';
 
 export default function GiftCardScreen() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useAuth();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRedeem = async () => {
+    if (!isAuthenticated) {
+      Alert.alert('Login Required', 'Gift card redeem ke liye pehle login karo.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Login', onPress: () => router.push('/(auth)/login') },
+      ]);
+      return;
+    }
     if (!code.trim()) {
       Alert.alert('Error', 'Please enter a gift card code');
       return;
@@ -21,7 +35,12 @@ export default function GiftCardScreen() {
     setLoading(true);
     try {
       const res = await giftCardApi.redeem(code.trim());
-      Alert.alert('Success', res.message);
+      await dispatch(fetchWallet());
+      Alert.alert(
+        'Success',
+        res.message || 'Gift card redeemed!',
+        [{ text: 'View Wallet', onPress: () => router.replace('/wallet') }]
+      );
       setCode('');
     } catch (err) {
       Alert.alert('Error', err.message || 'Failed to redeem gift card');

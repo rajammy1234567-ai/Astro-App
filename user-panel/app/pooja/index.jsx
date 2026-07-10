@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Button from '../../components/common/Button';
 import { poojaApi } from '../../services/poojaApi';
-import { POOJA_SERVICES } from '../../constants/mockData';
 import { COLORS } from '../../constants/colors';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -13,15 +12,26 @@ export default function PoojaScreen() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bookingId, setBookingId] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     poojaApi.getAll()
-      .then(setServices)
-      .catch(() => setServices(POOJA_SERVICES))
+      .then((data) => {
+        setServices(Array.isArray(data) ? data : []);
+        setError('');
+      })
+      .catch((err) => {
+        setServices([]);
+        setError(err.message || 'Pooja list load nahi hui. Server check karo.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const handleBook = async (item) => {
+    if (!item?._id || String(item._id).length < 12) {
+      Alert.alert('Unavailable', 'Ye service abhi book nahi ho sakti. Server se list refresh karein.');
+      return;
+    }
     setBookingId(item._id);
     try {
       const res = await poojaApi.book(item._id);
@@ -43,6 +53,11 @@ export default function PoojaScreen() {
           data={services}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', color: COLORS.textSecondary, marginTop: 24, paddingHorizontal: 20 }}>
+              {error || 'Koi pooja service available nahi hai'}
+            </Text>
+          }
           ListHeaderComponent={
             <View style={styles.hero}>
               <Ionicons name="flame" size={28} color="#FFF" />

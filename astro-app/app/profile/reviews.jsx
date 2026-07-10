@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { astroApi } from '../../services/astroApi';
+import { safeGoBack } from '../../utils/navigation';
 import { colors } from '../../constants/theme';
 
 export default function ReviewsScreen() {
@@ -102,7 +103,7 @@ export default function ReviewsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)/profile')}>
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Reviews & Ratings</Text>
