@@ -218,7 +218,7 @@ export default function RemediesScreen() {
       return;
     }
     dispatch(addToCart(product));
-    Alert.alert('Added', `${product.name} cart mein add ho gaya.`, [
+    Alert.alert('Added', `${product.name} has been added to your cart.`, [
       { text: 'OK', style: 'cancel' },
       { text: 'Checkout', onPress: () => router.push('/store/cart') },
     ]);
@@ -386,7 +386,7 @@ export default function RemediesScreen() {
         ) : (
           <TouchableOpacity style={styles.emptyProducts} onPress={goStore} activeOpacity={0.85}>
             <Ionicons name="bag-handle-outline" size={22} color={COLORS.textSecondary} />
-            <Text style={styles.emptyProductsText}>Store se products browse karo</Text>
+            <Text style={styles.emptyProductsText}>Browse products in the store</Text>
           </TouchableOpacity>
         )}
 

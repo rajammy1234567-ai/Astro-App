@@ -66,7 +66,7 @@ export default function BookingScreen() {
       .then(setAstro)
       .catch((err) => {
         setAstro(null);
-        setLoadError(err.message || 'Astrologer load nahi hua.');
+        setLoadError(err.message || 'Could not load astrologer details.');
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -99,11 +99,11 @@ export default function BookingScreen() {
 
   const handleStart = async () => {
     if (!astro?._id) {
-      Alert.alert('Unavailable', loadError || 'Astrologer available nahi hai.');
+      Alert.alert('Unavailable', loadError || 'This astrologer is not available.');
       return;
     }
     if (!isAuthenticated) {
-      Alert.alert('Login Required', 'Consultation ke liye pehle login ya account banao.', [
+      Alert.alert('Login Required', 'Please log in or create an account for consultation.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Create Account', onPress: () => router.push('/(auth)/login?mode=signup') },
         { text: 'Login', onPress: () => router.push('/(auth)/login') },
@@ -112,7 +112,7 @@ export default function BookingScreen() {
     }
 
     if (!astro.isOnline) {
-      Alert.alert('Offline', 'Astrologer abhi offline hain. Baad mein try karo.');
+      Alert.alert('Offline', 'This astrologer is offline. Please try again later.');
       return;
     }
 
@@ -125,7 +125,7 @@ export default function BookingScreen() {
     if (isCall && balance < callMinCost) {
       Alert.alert(
         'Payment Required',
-        `Call ke liye pehle kam se kam 1 minute (₹${callMinCost}) pay karna hoga.`,
+        `For calls, you need to pay for at least 1 minute (₹${callMinCost}) first.`,
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Add Money', onPress: () => router.push('/wallet/add-money') },
@@ -176,11 +176,11 @@ export default function BookingScreen() {
           router.replace(chatRoute);
         }
       } else {
-        Alert.alert('Request Sent', res.message || 'Astrologer accept karenge tab start hoga.');
+        Alert.alert('Request Sent', res.message || 'The session will start when the astrologer accepts.');
         router.back();
       }
     } catch (err) {
-      Alert.alert('Failed', err.message || 'Request nahi bhej paaye.');
+      Alert.alert('Failed', err.message || 'Could not send the request.');
     } finally {
       setBooking(false);
     }
@@ -201,7 +201,7 @@ export default function BookingScreen() {
         <Header title="Confirm Booking" />
         <View style={[styles.content, { alignItems: 'center', paddingTop: 40 }]}>
           <Ionicons name="alert-circle-outline" size={48} color={COLORS.textLight} />
-          <Text style={styles.errorText}>{loadError || 'Astrologer available nahi hai'}</Text>
+          <Text style={styles.errorText}>{loadError || 'This astrologer is not available'}</Text>
           <Button title="Go Back" onPress={() => router.back()} style={{ marginTop: 20 }} />
         </View>
       </Screen>
@@ -234,13 +234,13 @@ export default function BookingScreen() {
           {!isCall ? (
             <View style={styles.freeBox}>
               <Ionicons name="gift" size={20} color={COLORS.success} />
-              <Text style={styles.freeText}>Pehla 1 minute chat FREE!</Text>
+              <Text style={styles.freeText}>First 1 minute of chat is FREE!</Text>
             </View>
           ) : (
             <View style={styles.payBox}>
               <Ionicons name="wallet" size={20} color={COLORS.warning} />
               <Text style={styles.payText}>
-                Call ke liye pehle ₹{callMinCost} (1 min) pay hoga
+                Calls require ₹{callMinCost} (1 min) payment first
               </Text>
             </View>
           )}
@@ -253,7 +253,7 @@ export default function BookingScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.birthTitle}>Your Birth Details (Kundli)</Text>
               <Text style={styles.birthSub}>
-                Ye details automatically astrologer ke chat me pehle message ke roop me jayengi
+                These details will be sent automatically as the first message to the astrologer
               </Text>
             </View>
           </View>
@@ -263,7 +263,7 @@ export default function BookingScreen() {
             style={styles.input}
             value={fullName}
             onChangeText={setFullName}
-            placeholder="Jaise certificate pe naam hai"
+            placeholder="As on your certificate"
             placeholderTextColor={COLORS.textLight}
           />
 
@@ -277,7 +277,7 @@ export default function BookingScreen() {
             keyboardType="numbers-and-punctuation"
           />
           <Text style={styles.ageLine}>
-            Age: {age != null ? `${age} years (auto)` : '— DOB se auto calculate'}
+            Age: {age != null ? `${age} years (auto)` : '— calculated from DOB'}
           </Text>
 
           <Text style={styles.fieldLabel}>Time of Birth *</Text>
@@ -316,17 +316,17 @@ export default function BookingScreen() {
           <View style={styles.hintBox}>
             <Ionicons name="information-circle-outline" size={16} color={COLORS.link} />
             <Text style={styles.hintText}>
-              Accurate kundli ke liye sahi birth time + place zaroori hai. Profile me save bhi ho jayega.
+              Accurate kundli needs the correct birth time and place. These will also be saved to your profile.
             </Text>
           </View>
         </View>
 
         <View style={styles.flowBox}>
-          <Text style={styles.flowTitle}>Kaise kaam karega?</Text>
-          <Text style={styles.flowStep}>1. Birth details bharo → Request bhejo</Text>
-          <Text style={styles.flowStep}>2. Astrologer ko pehle aapka Name, DOB, TOB, Place dikhega</Text>
+          <Text style={styles.flowTitle}>How it works</Text>
+          <Text style={styles.flowStep}>1. Enter birth details → Send request</Text>
+          <Text style={styles.flowStep}>2. The astrologer first sees your Name, DOB, TOB and Place</Text>
           <Text style={styles.flowStep}>
-            3. {isCall ? 'Accept ke baad call connect' : 'Accept ke baad chat + 1 min free'}
+            3. {isCall ? 'Call connects after they accept' : 'Chat starts after they accept + 1 min free'}
           </Text>
         </View>
 

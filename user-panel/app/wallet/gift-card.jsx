@@ -22,7 +22,7 @@ export default function GiftCardScreen() {
 
   const handleRedeem = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Login Required', 'Gift card redeem ke liye pehle login karo.', [
+      Alert.alert('Login Required', 'Please log in to redeem a gift card.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Login', onPress: () => router.push('/(auth)/login') },
       ]);

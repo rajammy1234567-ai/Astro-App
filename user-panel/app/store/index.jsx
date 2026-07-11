@@ -68,7 +68,7 @@ export default function StoreScreen() {
     }
 
     dispatch(addToCart(item));
-    Alert.alert('Added', `${item.name} cart mein add ho gaya.`, [
+    Alert.alert('Added', `${item.name} has been added to your cart.`, [
       { text: 'OK', style: 'cancel' },
       { text: 'Checkout', onPress: () => router.push('/store/cart') },
     ]);

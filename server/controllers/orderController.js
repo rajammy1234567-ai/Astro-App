@@ -63,7 +63,7 @@ const createOrder = async (req, res) => {
       const wallet = await getOrCreateWallet(req.user._id);
       if (wallet.balance < totalAmount) {
         return res.status(400).json({
-          message: 'Insufficient wallet balance. Recharge wallet ya UPI/GPay se pay karo.',
+          message: 'Insufficient wallet balance. Please recharge your wallet or pay with UPI/GPay.',
           code: 'INSUFFICIENT_WALLET',
           balance: wallet.balance,
           required: totalAmount,
@@ -84,7 +84,7 @@ const createOrder = async (req, res) => {
         razorpayPaymentId: payRef,
       });
     } else if (ONLINE_METHODS.has(paymentMethod)) {
-      // Dummy / external UPI-GPay-Card flow — wallet se paise nahi katte
+      // Dummy / external UPI-GPay-Card flow — does not debit wallet
       payRef = payRef || `pay_${paymentMethod}_${Date.now()}`;
 
       await Transaction.create({

@@ -4,7 +4,7 @@ import { storage } from '../utils/storage';
 
 const persistAuth = async (response) => {
   if (!response?.token) {
-    throw { message: 'Server ne token nahi bheja. Dobara try karo.' };
+    throw { message: 'Server did not return a token. Please try again.' };
   }
   await storage.set('token', response.token);
   if (response.user) {
@@ -19,7 +19,7 @@ export const register = createAsyncThunk('auth/register', async (payload, { reje
     return await persistAuth(data);
   } catch (err) {
     return rejectWithValue({
-      message: err?.message || 'Account create nahi ho saka',
+      message: err?.message || 'Could not create account',
       networkError: !!err?.networkError,
       status: err?.status,
     });
@@ -106,6 +106,10 @@ const authSlice = createSlice({
     },
     setUser: (state, action) => {
       state.user = action.payload;
+      // Persist so profile edits (name/avatar/DOB) survive app restart
+      if (action.payload) {
+        storage.set('user', action.payload);
+      }
     },
   },
   extraReducers: (builder) => {

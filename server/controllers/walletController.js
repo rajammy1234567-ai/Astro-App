@@ -110,8 +110,8 @@ const verifyPayment = async (req, res) => {
 
     res.json({
       message: isDummy
-        ? `₹${amount} wallet mein add ho gaya (dummy payment)`
-        : `₹${amount} wallet mein add ho gaya`,
+        ? `₹${amount} added to your wallet (dummy payment)`
+        : `₹${amount} added to your wallet`,
       balance: wallet.balance,
       paymentId: payRef,
       orderId: orderId || null,

@@ -63,7 +63,7 @@ export function validateProfile(input) {
   if (p.name.length < 2) missing.push('Full Name');
   if (!p.dateOfBirth) missing.push('Date of Birth');
   else if (!parseDob(p.dateOfBirth)) {
-    return { ok: false, message: 'Date of Birth galat hai. Format: DD/MM/YYYY (e.g. 15/08/1995)' };
+    return { ok: false, message: 'Invalid Date of Birth. Format: DD/MM/YYYY (e.g. 15/08/1995)' };
   }
   if (!p.timeOfBirth || p.timeOfBirth.length < 3) missing.push('Time of Birth');
   if (!p.placeOfBirth || p.placeOfBirth.length < 2) missing.push('Place of Birth');
@@ -72,17 +72,17 @@ export function validateProfile(input) {
   if (missing.length) {
     return {
       ok: false,
-      message: `Ye details zaroori hain: ${missing.join(', ')}`,
+      message: `These details are required: ${missing.join(', ')}`,
       missing,
     };
   }
 
   const age = ageFromDob(p.dateOfBirth);
   if (age == null) {
-    return { ok: false, message: 'Valid Date of Birth daalo taaki age calculate ho sake' };
+    return { ok: false, message: 'Enter a valid Date of Birth so age can be calculated' };
   }
   if (age < 13) {
-    return { ok: false, message: 'App use karne ke liye minimum age 13 years honi chahiye' };
+    return { ok: false, message: 'You must be at least 13 years old to use this app' };
   }
 
   return { ok: true, profile: p, age };

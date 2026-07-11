@@ -35,7 +35,7 @@ export default function NotificationsScreen() {
             _id: `s-pending-${s._id}`,
             type: 'session',
             title: isCall ? 'Call request waiting' : 'Chat request waiting',
-            message: `${name} se ${isCall ? 'call' : 'chat'} accept hone ka wait.`,
+            message: `Waiting for ${name} to accept your ${isCall ? 'call' : 'chat'}.`,
             createdAt: s.updatedAt || s.createdAt,
             route: isCall ? `/call/${s._id}` : `/chat/${s._id}`,
             read: false,
@@ -45,7 +45,7 @@ export default function NotificationsScreen() {
             _id: `s-active-${s._id}`,
             type: 'session',
             title: isCall ? 'Call active' : 'Chat active',
-            message: `${name} ke saath session chal raha hai. Resume karo.`,
+            message: `Your session with ${name} is in progress. Tap to resume.`,
             createdAt: s.updatedAt || s.createdAt,
             route: isCall ? `/call/${s._id}` : `/chat/${s._id}`,
             read: true,
@@ -55,7 +55,7 @@ export default function NotificationsScreen() {
             _id: `s-paused-${s._id}`,
             type: 'session',
             title: 'Session paused',
-            message: `${name} — time khatam. Recharge karke continue karo.`,
+            message: `${name} — time is up. Recharge to continue.`,
             createdAt: s.updatedAt || s.createdAt,
             route: `/chat/${s._id}`,
             read: false,
@@ -125,7 +125,7 @@ export default function NotificationsScreen() {
         <EmptyState
           icon="lock-closed-outline"
           title="Login required"
-          subtitle="Notifications dekhne ke liye login karo."
+          subtitle="Please log in to view notifications."
           actionLabel="Login"
           onAction={() => router.push('/(auth)/login')}
         />
@@ -145,7 +145,7 @@ export default function NotificationsScreen() {
           <EmptyState
             icon="notifications-outline"
             title="No notifications"
-            subtitle="Chat/call updates yahan dikhenge."
+            subtitle="Chat and call updates will appear here."
           />
         }
         renderItem={({ item }) => (

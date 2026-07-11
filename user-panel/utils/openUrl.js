@@ -23,7 +23,7 @@ export async function safeOpenUrl(url, label = 'link') {
   if (!isValidUrl(trimmed)) {
     Alert.alert(
       'Invalid Link',
-      `This ${label} is not valid. Admin ko sahi URL add karna hoga (https://meet.google.com/...)`
+      `This ${label} is not valid. Please ask the admin to add a correct URL (https://meet.google.com/...)`
     );
     return false;
   }
@@ -31,13 +31,13 @@ export async function safeOpenUrl(url, label = 'link') {
   try {
     const supported = await Linking.canOpenURL(trimmed);
     if (!supported) {
-      Alert.alert('Cannot Open', 'Is link ko is device par open nahi kar sakte.');
+      Alert.alert('Cannot Open', 'This link cannot be opened on this device.');
       return false;
     }
     await Linking.openURL(trimmed);
     return true;
   } catch {
-    Alert.alert('Error', 'Link open nahi ho paya. Baad mein try karo.');
+    Alert.alert('Error', 'Could not open the link. Please try again later.');
     return false;
   }
 }

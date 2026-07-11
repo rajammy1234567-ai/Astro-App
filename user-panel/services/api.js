@@ -23,7 +23,7 @@ api.interceptors.response.use(
     if (!error.response) {
       const base = error.config?.baseURL || getApiBaseUrl();
       return Promise.reject({
-        message: `Server se connect nahi ho pa raha (${base}). Render URL sahi hai? Free plan pe pehli request 30–60s lag sakti hai. APK me EXPO_PUBLIC_API_URL bake hona chahiye.`,
+        message: `Could not connect to the server (${base}). Is the Render URL correct? On the free plan the first request may take 30–60s. EXPO_PUBLIC_API_URL must be baked into the APK.`,
         networkError: true,
         baseURL: base,
       });

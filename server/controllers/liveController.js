@@ -73,12 +73,12 @@ const getComments = async (req, res) => {
     const session = await LiveSession.findById(req.params.id);
     if (!session) return res.status(404).json({ message: 'Live session not found' });
 
-    // Live end ke baad purane comments nahi dikhne chahiye
+    // Clear old comments after live ends
     if (session.status !== 'live') {
       return res.json([]);
     }
 
-    // Sirf recent comments (naye pehle fetch, UI ke liye chronological reverse)
+    // Recent comments only (newest first fetch, reverse for chronological UI)
     const recent = await LiveComment.find({ liveSession: session._id })
       .sort({ createdAt: -1 })
       .limit(RECENT_COMMENT_LIMIT)
@@ -138,7 +138,7 @@ const endLive = async (req, res) => {
     session.endedAt = new Date();
     await session.save();
 
-    // Purane comments hata do — next live fresh shuru hogi
+    // Remove old comments so the next live starts fresh
     await LiveComment.deleteMany({ liveSession: session._id });
 
     await Astrologer.findByIdAndUpdate(req.astrologer._id, { isLive: false });

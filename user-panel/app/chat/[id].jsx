@@ -95,7 +95,7 @@ export default function UserChatScreen() {
     } catch (err) {
       if (err.requiresPayment) {
         await load();
-        Alert.alert('Time Up!', 'Chat continue karne ke liye recharge karo.');
+        Alert.alert('Time Up!', 'Please recharge to continue this chat.');
       } else {
         Alert.alert('Failed', err.message || 'Message not sent');
       }
@@ -108,7 +108,7 @@ export default function UserChatScreen() {
     if (!canSend) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permission', 'Gallery access chahiye photo/video bhejne ke liye.');
+      Alert.alert('Permission', 'Gallery access is required to send photos or videos.');
       return;
     }
 
@@ -126,7 +126,7 @@ export default function UserChatScreen() {
     const mime = asset.mimeType
       || (kind === 'video' ? 'video/mp4' : 'image/jpeg');
     if (!asset.base64) {
-      Alert.alert('Error', 'File read nahi ho paya. Chhoti photo/video try karo.');
+      Alert.alert('Error', 'Could not read the file. Try a smaller photo or video.');
       return;
     }
 
@@ -142,7 +142,7 @@ export default function UserChatScreen() {
       setSession(updated);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (err) {
-      Alert.alert('Upload failed', err.message || 'Media nahi bhej paye');
+      Alert.alert('Upload failed', err.message || 'Could not send media');
     } finally {
       setUploading(false);
     }
@@ -151,7 +151,7 @@ export default function UserChatScreen() {
   const handlePay = async (minutes) => {
     const cost = (session?.pricePerMin || 20) * minutes;
     if (balance < cost) {
-      Alert.alert('Low Balance', `₹${cost} chahiye. Wallet mein paise daalo.`, [
+      Alert.alert('Low Balance', `₹${cost} required. Please add money to your wallet.`, [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Add Money', onPress: () => router.push('/wallet/add-money') },
       ]);
@@ -171,7 +171,7 @@ export default function UserChatScreen() {
   };
 
   const handleEnd = () => {
-    Alert.alert('End Session', 'Kya aap session end karna chahte ho?', [
+    Alert.alert('End Session', 'Do you want to end this session?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'End',
@@ -256,12 +256,12 @@ export default function UserChatScreen() {
       {isPending && (
         <View style={styles.waitingBox}>
           <ActivityIndicator color={COLORS.primary} />
-          <Text style={styles.waitingTitle}>Request bhej di gayi hai</Text>
+          <Text style={styles.waitingTitle}>Request sent</Text>
           <Text style={styles.waitingSub}>
-            {astroName} accept karenge tab chat start hogi — pehla 1 minute FREE!
+            Chat will start when {astroName} accepts — first 1 minute is FREE!
           </Text>
           <Text style={styles.waitingHint}>
-            Back jao to bhi chat khatam nahi hoti. Profile → Chat & Call History se wapas aa sakte ho.
+            Going back does not end the chat. You can return from Profile → Chat & Call History.
           </Text>
         </View>
       )}
@@ -296,7 +296,7 @@ export default function UserChatScreen() {
                   onPress={() => Linking.openURL(mediaUrl).catch(() => {})}
                 >
                   <Ionicons name="play-circle" size={28} color={isUser ? COLORS.text : COLORS.primary} />
-                  <Text style={[styles.bubbleText, isUser && styles.mineText]}>Video open karo</Text>
+                  <Text style={[styles.bubbleText, isUser && styles.mineText]}>Open video</Text>
                 </TouchableOpacity>
               ) : null}
               {!!item.content && !(isImage && item.content === '📷 Photo') && !(isVideo && item.content === '🎥 Video') ? (
@@ -310,8 +310,8 @@ export default function UserChatScreen() {
 
       {isPaused && (
         <View style={styles.payBox}>
-          <Text style={styles.payTitle}>Free minute khatam!</Text>
-          <Text style={styles.paySub}>Continue karne ke liye minutes khareedo</Text>
+          <Text style={styles.payTitle}>Free minute over!</Text>
+          <Text style={styles.paySub}>Purchase minutes to continue</Text>
           <View style={styles.payRow}>
             {[1, 5, 10].map((mins) => (
               <TouchableOpacity

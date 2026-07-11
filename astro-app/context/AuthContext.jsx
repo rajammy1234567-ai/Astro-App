@@ -87,9 +87,28 @@ export function AuthProvider({ children }) {
     return updated;
   };
 
+  /** Permanently delete partner account (requires password + confirm DELETE) */
+  const deleteAccount = async (password) => {
+    const res = await api.delete('/me', {
+      data: { password, confirm: 'DELETE' },
+    });
+    await storage.remove('astroToken');
+    await storage.remove('astroUser');
+    setAstrologer(null);
+    return res;
+  };
+
   return (
     <AuthContext.Provider value={{
-      astrologer, loading, bootstrapError, login, logout, refreshProfile, setOnline, updateProfile,
+      astrologer,
+      loading,
+      bootstrapError,
+      login,
+      logout,
+      deleteAccount,
+      refreshProfile,
+      setOnline,
+      updateProfile,
       isAuthenticated: !!astrologer,
     }}
     >

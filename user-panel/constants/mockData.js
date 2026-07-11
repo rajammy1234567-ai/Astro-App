@@ -10,10 +10,12 @@ export const BANNERS = [
 ];
 
 export const CATEGORIES = [
-  { id: 'horoscope', label: 'Daily Horoscope', icon: 'sunny-outline', route: '/kundli' },
+  { id: 'horoscope', label: 'Daily Horoscope', icon: 'sunny-outline', route: '/horoscope' },
   { id: 'kundli', label: 'Free Kundli', icon: 'grid-outline', route: '/kundli' },
   { id: 'gemstones', label: 'Gemstones', icon: 'diamond-outline', route: '/store' },
-  { id: 'matching', label: 'Kundli Matching', icon: 'heart-outline', route: '/kundli' },
+  { id: 'matching', label: 'Kundli Matching', icon: 'heart-outline', route: '/kundli/match' },
+  { id: 'panchang', label: 'Panchang', icon: 'calendar-outline', route: '/panchang' },
+  { id: 'numerology', label: 'Numerology', icon: 'calculator-outline', route: '/numerology' },
   { id: 'blog', label: 'Astrology Blog', icon: 'book-outline', route: '/blog' },
 ];
 

@@ -93,7 +93,7 @@ const register = async (req, res) => {
       return res.status(400).json({
         message: field === 'email'
           ? 'Email already registered. Please login.'
-          : `Account create nahi hua (${field} already used). Dusra email try karo.`,
+          : `Could not create account (${field} already in use). Please try a different email.`,
       });
     }
     res.status(500).json({ message: error.message || 'Registration failed' });

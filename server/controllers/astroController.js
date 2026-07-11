@@ -62,6 +62,70 @@ const getMe = async (req, res) => {
   res.json(toPublicProfile(req.astrologer));
 };
 
+/**
+ * Permanently delete astrologer partner account.
+ * Body: { password, confirm: 'DELETE' }
+ */
+const deleteAccount = async (req, res) => {
+  try {
+    const password = String(req.body.password || '');
+    const confirm = String(req.body.confirm || '').trim().toUpperCase();
+
+    if (confirm !== 'DELETE') {
+      return res.status(400).json({
+        message: 'Type DELETE to confirm account deletion.',
+      });
+    }
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required to delete account.' });
+    }
+
+    const astrologer = await Astrologer.findById(req.astrologer._id);
+    if (!astrologer) {
+      return res.status(404).json({ message: 'Account not found' });
+    }
+
+    const ok = await astrologer.matchPassword(password);
+    if (!ok) {
+      return res.status(401).json({ message: 'Incorrect password. Account not deleted.' });
+    }
+
+    const astroId = astrologer._id;
+
+    // Close any open sessions so users are not left hanging
+    await Chat.updateMany(
+      {
+        astrologer: astroId,
+        status: { $in: ['pending', 'accepted', 'active', 'paused'] },
+      },
+      {
+        $set: {
+          status: 'ended',
+          isActive: false,
+          endedAt: new Date(),
+        },
+        $push: {
+          messages: {
+            sender: 'system',
+            content: 'Session ended — astrologer deleted their account.',
+            timestamp: new Date(),
+          },
+        },
+      }
+    );
+
+    // Hide from live / public listing side-effects
+    await Astrologer.findByIdAndDelete(astroId);
+
+    res.json({
+      message: 'Your astrologer account has been permanently deleted.',
+      deleted: true,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const updateProfile = async (req, res) => {
   try {
     const allowed = [
@@ -375,6 +439,7 @@ module.exports = {
   login,
   getMe,
   updateProfile,
+  deleteAccount,
   toggleOnline,
   getDashboard,
   getPendingRequests,

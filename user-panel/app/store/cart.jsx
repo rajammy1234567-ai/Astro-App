@@ -92,7 +92,7 @@ export default function CartScreen() {
         setBuyNowItem({ ...product, quantity: 1 });
       })
       .catch(() => {
-        Alert.alert('Error', 'Product load nahi ho paya.', [
+        Alert.alert('Error', 'Could not load this product.', [
           { text: 'OK', onPress: () => router.replace('/store') },
         ]);
       })
@@ -173,7 +173,7 @@ export default function CartScreen() {
       if (!walletOk) {
         Alert.alert(
           'Low Wallet Balance',
-          `Wallet me ${formatCurrency(balance)} hai, order ${formatCurrency(total)} ka hai.\n\nUPI / GPay / Card se bhi pay kar sakte ho — wallet zaroori nahi.`,
+          `Your wallet has ${formatCurrency(balance)}; this order is ${formatCurrency(total)}.\n\nYou can also pay with UPI, GPay or Card — wallet is not required.`,
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Pay with UPI', onPress: () => setPayMethod('upi') },
@@ -207,7 +207,7 @@ export default function CartScreen() {
       const res = await orderApi.create(placeOrderPayload(paymentId));
       await finishSuccess(res);
     } catch (err) {
-      Alert.alert('Payment Failed', err.message || 'Payment complete nahi hua.');
+      Alert.alert('Payment Failed', err.message || 'Payment could not be completed.');
     } finally {
       setPaying(false);
     }
@@ -229,7 +229,7 @@ export default function CartScreen() {
         <EmptyState
           icon="lock-closed-outline"
           title="Login Required"
-          subtitle="Product buy karne ke liye pehle login ya account banao"
+          subtitle="Please log in or create an account to buy products"
           actionLabel="Login"
           onAction={() => router.push('/(auth)/login')}
         />
@@ -309,7 +309,7 @@ export default function CartScreen() {
 
               <Text style={[styles.label, { marginTop: 12 }]}>Payment method</Text>
               <Text style={styles.payHint}>
-                Store ke liye wallet zaroori nahi — UPI / GPay / Card se bhi order kar sakte ho.
+                Wallet is optional for store orders. You can also pay via UPI, GPay, or card.
               </Text>
               <View style={styles.payGrid}>
                 {PAY_METHODS.map((m) => {
@@ -385,7 +385,7 @@ export default function CartScreen() {
             </View>
 
             <Text style={styles.demoNote}>
-              Abhi dummy payment hai — success pe order place ho jayega. Real GPay/UPI keys baad me laga lena.
+              Demo payment mode — your order will be placed on success. Connect live GPay/UPI keys for production.
             </Text>
 
             <TouchableOpacity

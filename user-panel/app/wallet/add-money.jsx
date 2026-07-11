@@ -36,7 +36,7 @@ export default function AddMoneyScreen() {
 
   const handlePay = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Login Required', 'Wallet recharge ke liye pehle login ya account banao.', [
+      Alert.alert('Login Required', 'Please log in or create an account to recharge your wallet.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Create Account', onPress: () => router.push('/(auth)/login?mode=signup') },
         { text: 'Login', onPress: () => router.push('/(auth)/login') },
@@ -44,7 +44,7 @@ export default function AddMoneyScreen() {
       return;
     }
     if (numAmount < 1) {
-      Alert.alert('Invalid Amount', 'Kam se kam ₹1 enter karo.');
+      Alert.alert('Invalid Amount', 'Please enter at least ₹1.');
       return;
     }
 
@@ -59,7 +59,7 @@ export default function AddMoneyScreen() {
         dummy: order.dummy !== false,
       });
     } catch (err) {
-      Alert.alert('Payment Failed', err.message || 'Order create nahi hua. Try again.');
+      Alert.alert('Payment Failed', err.message || 'Could not create the order. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -82,11 +82,11 @@ export default function AddMoneyScreen() {
       await dispatch(fetchWallet());
       Alert.alert(
         'Payment Successful',
-        res.message || `₹${paySheet.amount} wallet mein add ho gaya!`,
+        res.message || `₹${paySheet.amount} has been added to your wallet!`,
         [{ text: 'View Wallet', onPress: () => router.replace('/wallet') }]
       );
     } catch (err) {
-      Alert.alert('Payment Failed', err.message || 'Verify nahi hua. Try again.');
+      Alert.alert('Payment Failed', err.message || 'Payment verification failed. Please try again.');
     } finally {
       setPaying(false);
     }
@@ -115,8 +115,8 @@ export default function AddMoneyScreen() {
         <View style={styles.tipBox}>
           <Ionicons name="flash" size={16} color={COLORS.primary} />
           <Text style={styles.tipText}>
-            Abhi <Text style={styles.tipBold}>dummy Razorpay</Text> hai — Pay dabate hi balance credit.
-            Real keys baad me laga lena.
+            Currently using <Text style={styles.tipBold}>dummy Razorpay</Text> — balance is credited as soon as you tap Pay.
+            Connect live payment keys when going to production.
           </Text>
         </View>
 

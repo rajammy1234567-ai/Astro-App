@@ -37,7 +37,7 @@ function isUsableApiUrl(url) {
 
 /**
  * API base URL resolution order:
- * 1) EXPO_PUBLIC_API_URL / app.config extra.apiUrl  (EAS build me bake hota hai → Render)
+ * 1) EXPO_PUBLIC_API_URL / app.config extra.apiUrl  (baked into EAS build → Render)
  * 2) Dev only: Expo Go PC LAN IP :5000
  * 3) Emulator / web fallbacks
  */

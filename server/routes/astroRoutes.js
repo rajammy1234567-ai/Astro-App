@@ -9,6 +9,7 @@ const router = express.Router();
 router.post('/login', ctrl.login);
 router.get('/me', astroProtect, ctrl.getMe);
 router.put('/me', astroProtect, ctrl.updateProfile);
+router.delete('/me', astroProtect, ctrl.deleteAccount);
 router.post('/upload', astroProtect, uploadCtrl.uploadImage);
 router.get('/reviews', astroProtect, reviewCtrl.getMyReviews);
 router.post('/reviews', astroProtect, reviewCtrl.createAstroReview);

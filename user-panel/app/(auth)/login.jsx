@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -46,15 +46,15 @@ export default function LoginScreen() {
     clearError();
 
     if (authMode === 'signup' && name.trim().length < 2) {
-      Alert.alert('Name required', 'Apna full name daalo (min 2 characters)');
+      Alert.alert('Name required', 'Please enter your full name (min 2 characters)');
       return;
     }
     if (!emailValid) {
-      Alert.alert('Invalid email', 'Sahi email address daalo (e.g. you@gmail.com)');
+      Alert.alert('Invalid email', 'Please enter a valid email address (e.g. you@gmail.com)');
       return;
     }
     if (!passwordValid) {
-      Alert.alert('Weak password', 'Password kam se kam 6 characters ka hona chahiye');
+      Alert.alert('Weak password', 'Password must be at least 6 characters');
       return;
     }
 
@@ -73,7 +73,7 @@ export default function LoginScreen() {
       if (result.meta.requestStatus === 'fulfilled') {
         const u = result.payload?.user;
         const goNext = () => {
-          // Pehle zaroori details (name, sex, DOB, TOB, place) — age DOB se auto
+          // Required details first (name, sex, DOB, TOB, place) — age auto from DOB
           if (!hasCompleteProfile(u)) {
             router.replace('/onboarding/profile');
           } else {
@@ -85,8 +85,8 @@ export default function LoginScreen() {
           Alert.alert(
             'Welcome to Astrotalk!',
             result.payload?.isNewUser
-              ? 'Account ban gaya! ₹100 welcome bonus wallet me add ho gaya. Ab apni birth details bhariye.'
-              : 'Account ready. Ab apni details complete kariye.',
+              ? 'Account created! ₹100 welcome bonus has been added to your wallet. Please add your birth details next.'
+              : 'Account ready. Please complete your profile details.',
             [{ text: 'Continue', onPress: goNext }]
           );
         } else {
@@ -99,10 +99,10 @@ export default function LoginScreen() {
       const msg =
         result.payload?.message ||
         result.error?.message ||
-        (authMode === 'signup' ? 'Account create nahi ho saka' : 'Login failed');
+        (authMode === 'signup' ? 'Could not create account' : 'Login failed');
       Alert.alert(authMode === 'signup' ? 'Signup Failed' : 'Login Failed', msg);
     } catch (err) {
-      Alert.alert('Error', err?.message || 'Kuch galat ho gaya. Dobara try karo.');
+      Alert.alert('Error', err?.message || 'Something went wrong. Please try again.');
     }
   };
 
@@ -211,8 +211,8 @@ export default function LoginScreen() {
             {password.length > 0 && password.length < 6
               ? `${6 - password.length} more character${6 - password.length === 1 ? '' : 's'} needed`
               : authMode === 'signup'
-                ? 'Email + password se direct account ban jayega'
-                : 'Apni email aur password se login karo'}
+                ? 'Create an account with email and password'
+                : 'Log in with your email and password'}
           </Text>
 
           {error ? (

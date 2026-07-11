@@ -67,6 +67,24 @@ export default function SettingsScreen() {
           ))}
         </View>
 
+        <Text style={styles.section}>Account</Text>
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={[styles.langRow, styles.border]}
+            onPress={() => router.push('/profile/edit')}
+          >
+            <Text style={styles.rowText}>Edit Profile</Text>
+            <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.langRow}
+            onPress={() => router.push('/profile')}
+          >
+            <Text style={styles.rowText}>My Profile</Text>
+            <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.section}>Support</Text>
         <View style={styles.card}>
           {[

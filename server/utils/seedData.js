@@ -144,10 +144,11 @@ const TESTIMONIALS = [
 ];
 
 const FREE_SERVICES = [
-  { title: 'Free Kundli', description: 'Generate your birth chart instantly', icon: 'planet-outline', route: '/kundli', order: 1 },
-  { title: 'Daily Horoscope', description: "Today's predictions for your rashi", icon: 'sunny-outline', route: '/kundli', order: 2 },
-  { title: 'Panchang', description: 'Today\'s tithi, nakshatra and muhurat', icon: 'calendar-outline', route: '/kundli', order: 3 },
-  { title: 'Numerology', description: 'Lucky numbers and name analysis', icon: 'calculator-outline', route: '/kundli', order: 4 },
+  { title: 'Free Kundli', description: 'Actual birth chart — Sun, Moon, Lagna, planets', icon: 'planet-outline', route: '/kundli', order: 1 },
+  { title: 'Kundli Matching', description: 'Ashtakoot gun milan (36 points)', icon: 'heart-outline', route: '/kundli/match', order: 2 },
+  { title: 'Daily Horoscope', description: "Today's predictions for your rashi", icon: 'sunny-outline', route: '/horoscope', order: 3 },
+  { title: 'Panchang', description: 'Today\'s tithi, nakshatra and muhurat', icon: 'calendar-outline', route: '/panchang', order: 4 },
+  { title: 'Numerology', description: 'Lucky numbers and name analysis', icon: 'calculator-outline', route: '/numerology', order: 5 },
   { title: 'Astrology Blog', description: 'Read free articles and insights', icon: 'newspaper-outline', route: '/blog', order: 5 },
   { title: 'Free Chat (1 min)', description: 'First minute free with select astrologers', icon: 'chatbubbles-outline', route: '/(tabs)/chat', order: 6 },
 ];
@@ -278,8 +279,8 @@ const seedDemoChats = async () => {
       freeSecondsRemaining: 0,
       paidSecondsRemaining: 600,
       messages: [
-        { sender: 'user', content: 'Namaste! Mujhe career guidance chahiye.' },
-        { sender: 'astrologer', content: 'Namaste Riya! Apni date of birth aur time bataiye.' },
+        { sender: 'user', content: 'Hello! I need career guidance.' },
+        { sender: 'astrologer', content: 'Hello Riya! Please share your date of birth and birth time.' },
         { sender: 'user', content: '15 Aug 1995, 10:30 AM, Delhi' },
       ],
     },
@@ -295,8 +296,8 @@ const seedDemoChats = async () => {
       freeSecondsRemaining: 45,
       paidSecondsRemaining: 0,
       messages: [
-        { sender: 'user', content: 'Meri shaadi kab hogi?' },
-        { sender: 'astrologer', content: 'Amit ji, aapka kundli dekh kar batata hoon.' },
+        { sender: 'user', content: 'When will I get married?' },
+        { sender: 'astrologer', content: 'Amit ji, let me check your kundli and guide you.' },
       ],
     },
   ]);

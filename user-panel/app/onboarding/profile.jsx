@@ -35,50 +35,50 @@ const STEPS = [
   {
     key: 'welcome',
     icon: 'sparkles',
-    title: 'Namaste 🙏',
-    subtitle: 'Apni kundli ke liye thodi si pehchaan',
-    hint: 'Astrologer ko sahi reading dene ke liye ye 5 simple steps complete karein.',
+    title: 'Welcome 🙏',
+    subtitle: 'A few details for your kundli',
+    hint: 'Complete these 5 simple steps so the astrologer can give an accurate reading.',
   },
   {
     key: 'name',
     icon: 'person',
-    title: 'Aapka Naam',
-    subtitle: 'Jaise janam patri / certificate pe likha ho',
+    title: 'Your Name',
+    subtitle: 'As written on your birth certificate',
     field: 'name',
   },
   {
     key: 'gender',
     icon: 'male-female',
     title: 'Gender / Sex',
-    subtitle: 'Kundli calculation ke liye zaroori',
+    subtitle: 'Required for kundli calculation',
     field: 'gender',
   },
   {
     key: 'dob',
     icon: 'calendar',
     title: 'Date of Birth',
-    subtitle: 'Age automatically calculate hogi',
+    subtitle: 'Age is calculated automatically',
     field: 'dob',
   },
   {
     key: 'tob',
     icon: 'time',
     title: 'Time of Birth',
-    subtitle: 'Lagbhag sahi time bhi chalega',
+    subtitle: 'An approximate time is fine',
     field: 'tob',
   },
   {
     key: 'pob',
     icon: 'location',
     title: 'Place of Birth',
-    subtitle: 'City, State ya Country',
+    subtitle: 'City, State or Country',
     field: 'pob',
   },
   {
     key: 'review',
     icon: 'checkmark-circle',
     title: 'Confirm Details',
-    subtitle: 'Sahi hain to Save dabayein',
+    subtitle: 'If everything looks correct, tap Save',
     field: 'review',
   },
 ];
@@ -165,14 +165,14 @@ export default function OnboardingProfileScreen() {
 
     if (key === 'name') {
       if (name.trim().length < 2) {
-        Alert.alert('Name', 'Poora naam likhein (min 2 characters)');
+        Alert.alert('Name', 'Please enter your full name (min 2 characters)');
         return false;
       }
       return true;
     }
     if (key === 'gender') {
       if (!['male', 'female', 'other'].includes(gender)) {
-        Alert.alert('Gender', 'Apna gender / sex select karein');
+        Alert.alert('Gender', 'Please select your gender / sex');
         return false;
       }
       return true;
@@ -183,7 +183,7 @@ export default function OnboardingProfileScreen() {
         return false;
       }
       if (age != null && age < 13) {
-        Alert.alert('Age', 'Minimum age 13 years honi chahiye');
+        Alert.alert('Age', 'Minimum age must be 13 years');
         return false;
       }
       return true;
@@ -197,7 +197,7 @@ export default function OnboardingProfileScreen() {
     }
     if (key === 'pob') {
       if (placeOfBirth.trim().length < 2) {
-        Alert.alert('Place of Birth', 'City / State likhein');
+        Alert.alert('Place of Birth', 'Please enter city / state');
         return false;
       }
       return true;
@@ -239,11 +239,11 @@ export default function OnboardingProfileScreen() {
       dispatch(setUser({ ...updated, age: check.age }));
       Alert.alert(
         'Kundli Profile Ready ✨',
-        `Namaste ${check.profile.name}!\nAge: ${check.age} years\n\nAb aap professional consultation le sakte ho.`,
+        `Welcome ${check.profile.name}!\nAge: ${check.age} years\n\nYou can now take professional consultations.`,
         [{ text: 'Enter App', onPress: () => router.replace('/(tabs)/home') }]
       );
     } catch (err) {
-      Alert.alert('Save failed', err.message || 'Dobara try karo');
+      Alert.alert('Save failed', err.message || 'Please try again');
     } finally {
       setSaving(false);
     }
@@ -401,7 +401,7 @@ export default function OnboardingProfileScreen() {
                     <Text style={styles.ageValue}>
                       {age != null
                         ? `${age} years old`
-                        : 'DOB daalte hi auto calculate hoga'}
+                        : 'Auto-calculated when you enter DOB'}
                     </Text>
                   </View>
                 </View>
@@ -420,7 +420,7 @@ export default function OnboardingProfileScreen() {
                   autoFocus
                 />
                 <Text style={styles.tip}>
-                  💡 Exact time na pata ho to mother / hospital record se lagbhag time daalein.
+                  💡 If you do not know the exact time, use an approximate time from mother or hospital records.
                 </Text>
               </View>
             )}
@@ -460,7 +460,7 @@ export default function OnboardingProfileScreen() {
                 <View style={styles.reviewNote}>
                   <Ionicons name="chatbubble-ellipses" size={14} color={COLORS.link} />
                   <Text style={styles.reviewNoteText}>
-                    Ye details chat/call pe astrologer ko pehle message me automatically milengi.
+                    These details are sent automatically as the first message to the astrologer on chat/call.
                   </Text>
                 </View>
               </View>

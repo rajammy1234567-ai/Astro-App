@@ -83,7 +83,7 @@ export default function SessionsHistoryScreen() {
       const dur = formatDuration(item.durationSeconds || item.billing?.durationSeconds || 0);
       Alert.alert(
         'Call Summary',
-        `${item.astrologer?.name || 'Astrologer'} se call ${dur} tak chali thi.\n\nStatus: ${statusMeta(item.status).label}`,
+        `Your call with ${item.astrologer?.name || 'Astrologer'} lasted ${dur}.\n\nStatus: ${statusMeta(item.status).label}`,
         [{ text: 'OK' }]
       );
       return;
@@ -108,7 +108,7 @@ export default function SessionsHistoryScreen() {
       return {
         icon: 'chatbubbles-outline',
         title: 'No chat history',
-        subtitle: 'Jab aap kisi se chat karoge, yahan poori history dikhegi.',
+        subtitle: 'When you chat with someone, your full history will appear here.',
         actionLabel: 'Start Chat',
         route: '/(tabs)/chat',
       };
@@ -117,7 +117,7 @@ export default function SessionsHistoryScreen() {
       return {
         icon: 'call-outline',
         title: 'No call history',
-        subtitle: 'Jab aap call karoge, yahan duration ke saath history dikhegi.',
+        subtitle: 'When you make a call, history with duration will appear here.',
         actionLabel: 'Start Call',
         route: '/(tabs)/call',
       };
@@ -125,7 +125,7 @@ export default function SessionsHistoryScreen() {
     return {
       icon: 'chatbubbles-outline',
       title: 'No sessions yet',
-      subtitle: 'Jab aap chat ya call karoge, history yahan dikhegi.',
+      subtitle: 'When you chat or call, your history will appear here.',
       actionLabel: 'Find Astrologers',
       route: '/(tabs)/chat',
     };
@@ -135,16 +135,16 @@ export default function SessionsHistoryScreen() {
     historyType === 'call'
       ? {
         icon: 'time-outline',
-        text: 'Ended calls me sirf duration dikhti hai — call kitni der chali.',
+        text: 'Ended calls show duration only — how long the call lasted.',
       }
       : historyType === 'chat'
         ? {
           icon: 'sparkles-outline',
-          text: 'Card pe tap karke messages open karo. Ongoing chat resume bhi hogi.',
+          text: 'Tap a card to open messages. Ongoing chats can also be resumed.',
         }
         : {
           icon: 'bulb-outline',
-          text: 'Active/Waiting pe tap karke session resume karo.',
+          text: 'Tap Active/Waiting to resume a session.',
         };
 
   const shell = (children) => (
@@ -163,7 +163,7 @@ export default function SessionsHistoryScreen() {
       <EmptyState
         icon="lock-closed-outline"
         title="Login Required"
-        subtitle="History dekhne ke liye login karo."
+        subtitle="Please log in to view your history."
         actionLabel="Login"
         onAction={() => router.push('/(auth)/login')}
       />
@@ -258,7 +258,7 @@ export default function SessionsHistoryScreen() {
                     </Text>
                     <View style={styles.durationPill}>
                       <Ionicons name="time-outline" size={13} color={COLORS.primaryDark} />
-                      <Text style={styles.durationText}>Call chali: {durationLabel}</Text>
+                      <Text style={styles.durationText}>Duration: {durationLabel}</Text>
                     </View>
                   </>
                 ) : (

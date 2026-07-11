@@ -22,14 +22,14 @@ export default function PoojaScreen() {
       })
       .catch((err) => {
         setServices([]);
-        setError(err.message || 'Pooja list load nahi hui. Server check karo.');
+        setError(err.message || 'Could not load pooja list. Please check your connection.');
       })
       .finally(() => setLoading(false));
   }, []);
 
   const handleBook = async (item) => {
     if (!item?._id || String(item._id).length < 12) {
-      Alert.alert('Unavailable', 'Ye service abhi book nahi ho sakti. Server se list refresh karein.');
+      Alert.alert('Unavailable', 'This service cannot be booked right now. Please refresh the list.');
       return;
     }
     setBookingId(item._id);
@@ -55,7 +55,7 @@ export default function PoojaScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <Text style={{ textAlign: 'center', color: COLORS.textSecondary, marginTop: 24, paddingHorizontal: 20 }}>
-              {error || 'Koi pooja service available nahi hai'}
+              {error || 'No pooja services available'}
             </Text>
           }
           ListHeaderComponent={

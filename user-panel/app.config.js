@@ -50,8 +50,8 @@ export default {
       [
         'expo-image-picker',
         {
-          photosPermission: 'Chat me photo/video bhejne ke liye gallery access chahiye.',
-          cameraPermission: 'Chat me photo lene ke liye camera access chahiye.',
+          photosPermission: 'Gallery access is needed to send photos and videos in chat.',
+          cameraPermission: 'Camera access is needed to take photos for chat.',
         },
       ],
       [

@@ -56,7 +56,7 @@ export default function LiveNowSection() {
       ) : lives.length === 0 ? (
         <TouchableOpacity style={styles.emptyCard} onPress={() => router.push('/live')}>
           <Text style={styles.emptyText}>
-            {error ? '⚠️ Server connect karo — live list load nahi hui' : '📺 Abhi koi astrologer live nahi — yahan dikhega jab live aayenge'}
+            {error ? '⚠️ Could not connect to server — live list failed to load' : '📺 No astrologers are live right now — they will appear here when live'}
           </Text>
         </TouchableOpacity>
       ) : (

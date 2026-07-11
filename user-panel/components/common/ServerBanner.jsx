@@ -7,13 +7,13 @@ export default function ServerBanner({ message }) {
 
   return (
     <View style={styles.banner}>
-      <Text style={styles.title}>Server connect nahi ho raha</Text>
+      <Text style={styles.title}>Could not connect to server</Text>
       <Text style={styles.text}>{message}</Text>
       <Text style={styles.hint}>
-        1. Server chalao: cd server → npm run dev{'\n'}
-        2. Phone + PC same WiFi{'\n'}
-        3. Root se run: npm run setup:env{'\n'}
-        4. Expo restart: npx expo start -c{'\n'}
+        1. Start server: cd server → npm run dev{'\n'}
+        2. Phone and PC on the same WiFi{'\n'}
+        3. From project root: npm run setup:env{'\n'}
+        4. Restart Expo: npx expo start -c{'\n'}
         API: {getApiBaseUrl()}
       </Text>
     </View>

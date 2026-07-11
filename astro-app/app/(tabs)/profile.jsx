@@ -1,4 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView } from 'react-native';
+import { useState } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView,
+  Modal, TextInput, ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -38,9 +42,13 @@ function InfoRow({ icon, label, value, color }) {
 }
 
 export default function Profile() {
-  const { astrologer, logout, setOnline, updateProfile } = useAuth();
+  const { astrologer, logout, deleteAccount, setOnline, updateProfile } = useAuth();
   const router = useRouter();
   const isOnline = !!astrologer?.isOnline;
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -54,6 +62,49 @@ export default function Profile() {
         },
       },
     ]);
+  };
+
+  const openDeleteAccount = () => {
+    setDeletePassword('');
+    setDeleteConfirm('');
+    setDeleteOpen(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm.trim().toUpperCase() !== 'DELETE') {
+      Alert.alert('Confirm', 'Account delete karne ke liye niche DELETE type karo.');
+      return;
+    }
+    if (!deletePassword.trim()) {
+      Alert.alert('Password', 'Apna login password enter karo.');
+      return;
+    }
+
+    Alert.alert(
+      'Delete permanently?',
+      'Yeh action undo nahi hoga. Public listing, login aur open sessions band ho jayenge.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await deleteAccount(deletePassword.trim());
+              setDeleteOpen(false);
+              Alert.alert('Deleted', 'Aapka astrologer account delete ho chuka hai.', [
+                { text: 'OK', onPress: () => router.replace('/(auth)/login') },
+              ]);
+            } catch (e) {
+              Alert.alert('Failed', e.message || 'Account delete nahi ho paya.');
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const toggleChat = async (v) => {
@@ -167,9 +218,86 @@ export default function Profile() {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.deleteBtn} onPress={openDeleteAccount} activeOpacity={0.85}>
+          <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+          <Text style={styles.deleteBtnText}>Delete Account</Text>
+        </TouchableOpacity>
+        <Text style={styles.deleteHint}>
+          Permanent. Public listing aur login band ho jayega. Password required.
+        </Text>
+
         <Text style={styles.version}>AstroTalk Partner · Professional Panel</Text>
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Delete account sheet */}
+      <Modal
+        visible={deleteOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => !deleting && setDeleteOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <View style={styles.dangerIconWrap}>
+              <Ionicons name="warning" size={28} color={COLORS.error} />
+            </View>
+            <Text style={styles.modalTitle}>Delete account?</Text>
+            <Text style={styles.modalSub}>
+              Profile listing, login access aur open chat/call sessions permanently band ho jayenge.
+              History user side pe reh sakti hai.
+            </Text>
+
+            <Text style={styles.fieldLabel}>Login password</Text>
+            <TextInput
+              style={styles.input}
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              placeholder="Enter password"
+              placeholderTextColor={colors.textMuted}
+              secureTextEntry
+              autoCapitalize="none"
+              editable={!deleting}
+            />
+
+            <Text style={styles.fieldLabel}>Type DELETE to confirm</Text>
+            <TextInput
+              style={styles.input}
+              value={deleteConfirm}
+              onChangeText={setDeleteConfirm}
+              placeholder="DELETE"
+              placeholderTextColor={colors.textMuted}
+              autoCapitalize="characters"
+              editable={!deleting}
+            />
+
+            <TouchableOpacity
+              style={[styles.modalDelete, deleting && { opacity: 0.7 }]}
+              onPress={handleDeleteAccount}
+              disabled={deleting}
+              activeOpacity={0.85}
+            >
+              {deleting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="trash" size={18} color="#fff" />
+                  <Text style={styles.modalDeleteText}>Delete my account</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => !deleting && setDeleteOpen(false)}
+              disabled={deleting}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -248,8 +376,56 @@ const styles = StyleSheet.create({
   notifText: { color: COLORS.text, fontWeight: '900', fontSize: 15 },
   logout: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.error, borderRadius: 16, paddingVertical: 15, marginBottom: 12,
+    backgroundColor: COLORS.error, borderRadius: 16, paddingVertical: 15, marginBottom: 10,
   },
   logoutText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  deleteBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#fff', borderRadius: 16, paddingVertical: 15, marginBottom: 8,
+    borderWidth: 1.5, borderColor: COLORS.error,
+  },
+  deleteBtnText: { color: COLORS.error, fontWeight: '900', fontSize: 15 },
+  deleteHint: {
+    textAlign: 'center', color: colors.textMuted, fontSize: 11,
+    lineHeight: 16, marginBottom: 14, paddingHorizontal: 12,
+  },
   version: { textAlign: 'center', color: colors.textMuted, fontSize: 11, fontWeight: '600' },
+
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#fff', borderTopLeftRadius: 22, borderTopRightRadius: 22,
+    paddingHorizontal: 20, paddingBottom: 28, paddingTop: 10,
+  },
+  modalHandle: {
+    alignSelf: 'center', width: 40, height: 4, borderRadius: 2,
+    backgroundColor: COLORS.border, marginBottom: 14,
+  },
+  dangerIconWrap: {
+    width: 56, height: 56, borderRadius: 28, alignSelf: 'center',
+    backgroundColor: `${COLORS.error}15`, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 20, fontWeight: '900', color: COLORS.text, textAlign: 'center', marginBottom: 8,
+  },
+  modalSub: {
+    fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 19, marginBottom: 18,
+  },
+  fieldLabel: {
+    fontSize: 12, fontWeight: '800', color: COLORS.text, marginBottom: 6, marginTop: 4,
+  },
+  input: {
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, paddingHorizontal: 14,
+    paddingVertical: 12, fontSize: 15, color: COLORS.text, marginBottom: 12,
+    backgroundColor: COLORS.background || '#F8F6FC',
+  },
+  modalDelete: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: COLORS.error, borderRadius: 16, paddingVertical: 15, marginTop: 6,
+  },
+  modalDeleteText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  modalCancel: { alignItems: 'center', paddingVertical: 14 },
+  modalCancelText: { color: colors.textMuted, fontWeight: '700', fontSize: 14 },
 });

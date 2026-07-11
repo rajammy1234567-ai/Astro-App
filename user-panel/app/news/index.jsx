@@ -61,7 +61,7 @@ export default function NewsScreen() {
               <EmptyState
                 icon="megaphone-outline"
                 title="No news yet"
-                subtitle="Admin se news add karo — yahan dikhega."
+                subtitle="News posted by admin will appear here."
               />
             ) : null
           }

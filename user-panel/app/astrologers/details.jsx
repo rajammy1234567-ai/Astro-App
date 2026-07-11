@@ -53,7 +53,7 @@ export default function AstrologerDetailsScreen() {
   const handleFollow = async () => {
     if (!astro?._id) return;
     if (!isAuthenticated) {
-      Alert.alert('Login Required', 'Follow karne ke liye pehle login karo.', [
+      Alert.alert('Login Required', 'Please log in to follow this astrologer.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Login', onPress: () => router.push('/(auth)/login') },
       ]);
@@ -67,11 +67,11 @@ export default function AstrologerDetailsScreen() {
       Alert.alert(
         nowFollowing ? 'Following ❤️' : 'Unfollowed',
         nowFollowing
-          ? `Ab aap ${astro.name} ko follow kar rahe ho.`
-          : `Aapne ${astro.name} ko unfollow kar diya.`
+          ? `You are now following ${astro.name}.`
+          : `You have unfollowed ${astro.name}.`
       );
     } catch (err) {
-      Alert.alert('Failed', err.message || 'Follow nahi ho saka');
+      Alert.alert('Failed', err.message || 'Could not update follow status');
     } finally {
       setFollowLoading(false);
     }
@@ -79,7 +79,7 @@ export default function AstrologerDetailsScreen() {
 
   const handleReview = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Login Required', 'Review dene ke liye login karo');
+      Alert.alert('Login Required', 'Please log in to submit a review');
       return;
     }
     if (!reviewComment.trim()) {
@@ -95,7 +95,7 @@ export default function AstrologerDetailsScreen() {
       const updated = await astrologerApi.getById(astro._id);
       setAstro(updated);
       setReviewComment('');
-      Alert.alert('Thanks!', 'Aapka review submit ho gaya');
+      Alert.alert('Thanks!', 'Your review has been submitted');
     } catch (err) {
       Alert.alert('Failed', err.message);
     } finally {
@@ -105,7 +105,7 @@ export default function AstrologerDetailsScreen() {
 
   const openBooking = (bookingType) => {
     if (!astro.isOnline) {
-      Alert.alert('Offline', 'Astrologer abhi offline hain. Baad mein try karo.');
+      Alert.alert('Offline', 'This astrologer is offline. Please try again later.');
       return;
     }
     router.push({
@@ -129,8 +129,8 @@ export default function AstrologerDetailsScreen() {
         <Header title="Astrologer Profile" light />
         <View style={styles.offlineBox}>
           <Ionicons name="moon-outline" size={48} color={COLORS.textLight} />
-          <Text style={styles.offlineTitle}>Astrologer offline hai</Text>
-          <Text style={styles.offlineSub}>Jab online honge tab dikhenge</Text>
+          <Text style={styles.offlineTitle}>Astrologer is offline</Text>
+          <Text style={styles.offlineSub}>They will appear here when online</Text>
         </View>
       </Screen>
     );
@@ -242,7 +242,7 @@ export default function AstrologerDetailsScreen() {
             </View>
           ))}
           {reviews.length === 0 && (
-            <Text style={styles.noReviews}>Abhi koi review nahi</Text>
+            <Text style={styles.noReviews}>No reviews yet</Text>
           )}
         </View>
 
@@ -258,7 +258,7 @@ export default function AstrologerDetailsScreen() {
           />
           <TextInput
             style={[styles.input, { minHeight: 70 }]}
-            placeholder="Apna review likho..."
+            placeholder="Write your review..."
             value={reviewComment}
             onChangeText={setReviewComment}
             multiline

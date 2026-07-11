@@ -11,7 +11,7 @@ export default function LiveListRemoved() {
   }, [router]);
   return (
     <View style={styles.box}>
-      <Text style={styles.txt}>Live feature available nahi hai.</Text>
+      <Text style={styles.txt}>Live streaming is not available yet.</Text>
     </View>
   );
 }

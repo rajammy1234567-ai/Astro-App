@@ -62,7 +62,7 @@ export default function UserCallScreen() {
       const data = await sessionApi.get(id);
       setSession(data);
     } catch {
-      Alert.alert('Error', 'Session load nahi ho saka');
+      Alert.alert('Error', 'Could not load this session');
       router.back();
     } finally {
       setLoading(false);
@@ -157,7 +157,7 @@ export default function UserCallScreen() {
   };
 
   const handleEndCall = () => {
-    Alert.alert('End Call', 'Call end karna chahte ho?', [
+    Alert.alert('End Call', 'Do you want to end this call?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'End', style: 'destructive',
@@ -217,7 +217,7 @@ export default function UserCallScreen() {
           <View style={styles.videoPlaceholder}>
             <Ionicons name="videocam-off" size={48} color="rgba(255,255,255,0.2)" />
             <Text style={styles.videoNote}>Agora video stream</Text>
-            <Text style={styles.videoNoteSub}>(real App ID se activate hoga)</Text>
+            <Text style={styles.videoNoteSub}>(activates with a real App ID)</Text>
           </View>
         )}
 

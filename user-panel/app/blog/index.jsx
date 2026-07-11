@@ -61,7 +61,7 @@ export default function BlogScreen() {
               <EmptyState
                 icon="newspaper-outline"
                 title="No blogs yet"
-                subtitle="Admin se blog add karo — yahan dikhega."
+                subtitle="Blogs posted by admin will appear here."
               />
             ) : null
           }

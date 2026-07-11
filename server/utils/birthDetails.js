@@ -44,7 +44,7 @@ function validateBirthDetails(details) {
   if (missing.length) {
     return {
       ok: false,
-      message: `Consultation ke liye ye details zaroori hain: ${missing.join(', ')}`,
+      message: `These details are required for consultation: ${missing.join(', ')}`,
       missing,
     };
   }
@@ -54,7 +54,7 @@ function validateBirthDetails(details) {
     return { ok: false, message: 'Date of Birth format: DD/MM/YYYY (e.g. 15/08/1995)' };
   }
   if (details.timeOfBirth.length < 3) {
-    return { ok: false, message: 'Time of Birth enter karo (e.g. 10:30 AM)' };
+    return { ok: false, message: 'Please enter Time of Birth (e.g. 10:30 AM)' };
   }
 
   const age = ageFromDob(details.dateOfBirth);

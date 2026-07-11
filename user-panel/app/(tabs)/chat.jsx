@@ -93,7 +93,7 @@ export default function ChatTabScreen() {
             <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 8 }} />
           ) : activeSessions.length === 0 ? (
             <Text style={styles.activeEmpty}>
-              Koi open chat nahi. Neeche se naya chat start karo. Upar chat icon se poori history kholo.
+              No open chats. Start a new chat below. Open full history from the chat icon above.
             </Text>
           ) : (
             activeSessions.map((s) => {
@@ -124,7 +124,7 @@ export default function ChatTabScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.list, { paddingBottom: safe.tabBar + 24 }]}
         ListEmptyComponent={
-          <Text style={styles.empty}>Koi astrologer online nahi. Thodi der baad check karo.</Text>
+          <Text style={styles.empty}>No astrologers are online. Please check again shortly.</Text>
         }
       />
 

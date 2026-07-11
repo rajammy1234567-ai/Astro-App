@@ -11,6 +11,8 @@ export const astroApi = {
     api.post(`/chats/${id}/messages`, { content, ...extra }),
   closeChat: (id) => api.put(`/chats/${id}/close`),
   updateProfile: (data) => api.put('/me', data),
+  deleteAccount: (password) =>
+    api.delete('/me', { data: { password, confirm: 'DELETE' } }),
   setOnline: (isOnline) => api.put('/online', { isOnline }),
   uploadImage: (base64DataUrl) => api.post('/upload', { image: base64DataUrl }),
   getReviews: () => api.get('/reviews'),

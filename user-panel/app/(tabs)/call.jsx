@@ -95,7 +95,7 @@ export default function CallTabScreen() {
             <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 8 }} />
           ) : activeSessions.length === 0 ? (
             <Text style={styles.activeEmpty}>
-              Koi open call nahi. Neeche se call start karo. History me sirf duration dikhegi.
+              No open calls. Start a call below. History shows duration only.
             </Text>
           ) : (
             activeSessions.map((s) => {
@@ -127,7 +127,7 @@ export default function CallTabScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.list, { paddingBottom: safe.tabBar + 24 }]}
         ListEmptyComponent={
-          <Text style={styles.empty}>Koi astrologer online nahi. Thodi der baad check karo.</Text>
+          <Text style={styles.empty}>No astrologers are online. Please check again shortly.</Text>
         }
       />
 
