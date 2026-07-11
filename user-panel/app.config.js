@@ -5,6 +5,7 @@ export default {
   expo: {
     name: 'AstroTalk',
     slug: 'astrotalk-user',
+     "owner": "sunaina0",
     version: '1.0.0',
     platforms: ['ios', 'android', 'web'],
     orientation: 'portrait',
@@ -19,6 +20,8 @@ export default {
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
+        NSMicrophoneUsageDescription: 'Voice call with astrologer ke liye microphone chahiye.',
+        NSCameraUsageDescription: 'Video call ke liye camera chahiye.',
         NSAppTransportSecurity: isHttp
           ? { NSAllowsArbitraryLoads: true }
           : undefined,
@@ -34,7 +37,15 @@ export default {
         backgroundImage: './assets/images/android-icon-background.png',
         monochromeImage: './assets/images/android-icon-monochrome.png',
       },
-      permissions: ['INTERNET', 'ACCESS_NETWORK_STATE'],
+      permissions: [
+        'INTERNET',
+        'ACCESS_NETWORK_STATE',
+        'RECORD_AUDIO',
+        'MODIFY_AUDIO_SETTINGS',
+        'CAMERA',
+        'BLUETOOTH',
+        'BLUETOOTH_CONNECT',
+      ],
       usesCleartextTraffic: isHttp,
       softwareKeyboardLayoutMode: 'pan',
     },
@@ -73,6 +84,12 @@ export default {
             minSdkVersion: 24,
             buildToolsVersion: '36.0.0',
           },
+        },
+      ],
+      [
+        'expo-av',
+        {
+          microphonePermission: 'Voice call ke liye microphone access chahiye.',
         },
       ],
     ],

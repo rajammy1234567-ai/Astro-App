@@ -34,6 +34,7 @@ export default function ChatScreen() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [sendingKundli, setSendingKundli] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -161,6 +162,44 @@ export default function ChatScreen() {
     router.push(`/call/${id}?type=${type === 'video' ? 'video' : 'voice'}&userName=${encodeURIComponent(userName)}`);
   };
 
+  const sendJanamKundli = () => {
+    if (!canReply) {
+      Alert.alert('Session', 'Active session chahiye kundli bhejne ke liye.');
+      return;
+    }
+    const b = chat?.userBirthDetails || {};
+    if (!b.dateOfBirth || !b.timeOfBirth) {
+      Alert.alert(
+        'Birth details missing',
+        'User ne complete janam details share nahi kiye (DOB + time). Pehle details maangein.'
+      );
+      return;
+    }
+    Alert.alert(
+      'Send Janam Kundli',
+      'Client ke birth details se live Janam Kundli generate karke chat mein bhej dein?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Generate & Send',
+          onPress: async () => {
+            setSendingKundli(true);
+            try {
+              const res = await astroApi.sendKundli(id);
+              setChat(res.session || res);
+              setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 150);
+              Alert.alert('Sent ✓', 'Janam Kundli user ko chat mein bhej di gayi hai.');
+            } catch (err) {
+              Alert.alert('Failed', err.message || 'Kundli generate nahi hui');
+            } finally {
+              setSendingKundli(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -278,6 +317,23 @@ export default function ChatScreen() {
           {!!birth.gender && (
             <Text style={styles.kundliLine}>⚧ Sex: {genderMap[birth.gender] || birth.gender}</Text>
           )}
+          {canReply && birth.dateOfBirth && birth.timeOfBirth ? (
+            <TouchableOpacity
+              style={[styles.sendKundliBtn, sendingKundli && styles.sendKundliBtnDisabled]}
+              onPress={sendJanamKundli}
+              disabled={sendingKundli}
+              activeOpacity={0.85}
+            >
+              {sendingKundli ? (
+                <ActivityIndicator color="#1A1A1A" size="small" />
+              ) : (
+                <Ionicons name="document-text" size={16} color="#1A1A1A" />
+              )}
+              <Text style={styles.sendKundliText}>
+                {sendingKundli ? 'Kundli ban rahi hai…' : 'Janam Kundli bana ke bhejein'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : null}
 
@@ -494,6 +550,19 @@ const styles = StyleSheet.create({
   kundliTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   kundliTitle: { fontSize: 13, fontWeight: '800', color: colors.text },
   kundliLine: { fontSize: 12, color: colors.text, lineHeight: 18, marginTop: 1 },
+  sendKundliBtn: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  sendKundliBtnDisabled: { opacity: 0.7 },
+  sendKundliText: { fontSize: 12, fontWeight: '800', color: '#1A1A1A' },
   acceptBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: COLORS.success, paddingHorizontal: 28, paddingVertical: 14,

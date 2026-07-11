@@ -21,6 +21,7 @@ const sessionRoutes = require('./routes/sessionRoutes');
 const agoraRoutes = require('./routes/agoraRoutes');
 const liveRoutes = require('./routes/liveRoutes');
 const astrologerApplicationRoutes = require('./routes/astrologerApplicationRoutes');
+const kundliRoutes = require('./routes/kundliRoutes');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/pooja', poojaRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/free-services', freeServiceRoutes);
+app.use('/api/kundli', kundliRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
 app.use('/api/following', followingRoutes);
 app.use('/api/admin', adminRoutes);

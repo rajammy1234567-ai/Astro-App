@@ -93,7 +93,8 @@ const createSession = async (req, res) => {
       pricePerMin: astrologer.pricePerMin,
       isActive: true,
       userBirthDetails: birthDetails,
-      agoraChannel: `call_${Date.now()}_${req.user._id.toString().slice(-6)}`,
+      // Stable channel so user + astrologer always join the same RTC room
+      agoraChannel: `session_${req.user._id.toString().slice(-4)}_${Date.now().toString(36)}`,
       messages: [
         {
           sender: 'user',

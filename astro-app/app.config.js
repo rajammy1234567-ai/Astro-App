@@ -20,6 +20,8 @@ export default {
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
+        NSMicrophoneUsageDescription: 'User se voice call ke liye microphone chahiye.',
+        NSCameraUsageDescription: 'Video call / live ke liye camera chahiye.',
         NSAppTransportSecurity: isHttp
           ? { NSAllowsArbitraryLoads: true }
           : undefined,
@@ -35,7 +37,17 @@ export default {
         backgroundImage: './assets/images/android-icon-background.png',
         monochromeImage: './assets/images/android-icon-monochrome.png',
       },
-      permissions: ['INTERNET', 'ACCESS_NETWORK_STATE', 'READ_MEDIA_IMAGES', 'READ_EXTERNAL_STORAGE', 'CAMERA', 'RECORD_AUDIO'],
+      permissions: [
+        'INTERNET',
+        'ACCESS_NETWORK_STATE',
+        'READ_MEDIA_IMAGES',
+        'READ_EXTERNAL_STORAGE',
+        'CAMERA',
+        'RECORD_AUDIO',
+        'MODIFY_AUDIO_SETTINGS',
+        'BLUETOOTH',
+        'BLUETOOTH_CONNECT',
+      ],
       usesCleartextTraffic: isHttp,
       softwareKeyboardLayoutMode: 'pan',
     },
@@ -74,6 +86,12 @@ export default {
             minSdkVersion: 24,
             buildToolsVersion: '36.0.0',
           },
+        },
+      ],
+      [
+        'expo-av',
+        {
+          microphonePermission: 'Call ke liye microphone access chahiye.',
         },
       ],
     ],

@@ -1,12 +1,6 @@
 /**
- * User Voice/Video Call Screen
- * ==============================
- * Full-featured call UI with Agora dummy integration.
+ * User Voice/Video Call Screen — real Agora RTC audio
  * Route: /call/[id]?type=voice|video&astroName=...
- *
- * To activate real Agora:
- *   - Replace agoraService stubs with real react-native-agora calls
- *   - Add RtcLocalView / RtcRemoteView for real video streams
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -17,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { sessionApi } from '../../services/sessionApi';
-import agoraService from '../../services/agoraService';
+import agoraService, { isAgoraNativeAvailable } from '../../services/agoraService';
 import { COLORS } from '../../constants/colors';
 
 function formatDuration(s) {
@@ -34,17 +28,18 @@ export default function UserCallScreen() {
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  // waiting = astrologer not accepted yet | connecting | active | ended
+  // waiting | connecting | active | ended | error
   const [callState, setCallState] = useState('waiting');
+  const [statusHint, setStatusHint] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(isVideo);
+  const [remoteJoined, setRemoteJoined] = useState(false);
   const [duration, setDuration] = useState(0);
   const timerRef = useRef(null);
   const joinedRef = useRef(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Pulse animation while waiting / connecting
   useEffect(() => {
     if (callState !== 'waiting' && callState !== 'connecting') return undefined;
     const loop = Animated.loop(
@@ -71,7 +66,7 @@ export default function UserCallScreen() {
 
   useEffect(() => { loadSession(); }, [loadSession]);
 
-  // Poll until astrologer accepts (or session ends)
+  // Poll until astrologer accepts
   useEffect(() => {
     if (!session) return undefined;
     const status = session.status;
@@ -82,26 +77,50 @@ export default function UserCallScreen() {
     if (status === 'active' || status === 'paused') {
       return undefined;
     }
-    // pending / accepted — keep polling
     setCallState('waiting');
     const interval = setInterval(loadSession, 2500);
     return () => clearInterval(interval);
   }, [session?.status, loadSession, session]);
 
-  // Join Agora only after session is active (and keep call resumable if user left screen)
+  // Leave RTC only when leaving this screen
+  useEffect(() => () => {
+    agoraService.leaveChannel();
+    clearInterval(timerRef.current);
+    timerRef.current = null;
+    joinedRef.current = false;
+  }, []);
+
+  // Join Agora once (pending/active) — do not re-join on status change
   useEffect(() => {
-    if (!session) return undefined;
-    if (session.status !== 'active' && session.status !== 'paused') return undefined;
-    if (joinedRef.current) return undefined;
+    if (!session) return;
+    const canJoinRtc =
+      session.callPaidUpfront
+      && ['pending', 'accepted', 'active', 'paused'].includes(session.status);
+    if (!canJoinRtc) return;
+    if (joinedRef.current) {
+      // Already in channel; just refresh UI when accepted
+      if (session.status === 'active' || session.status === 'paused') {
+        if (remoteJoined) {
+          setCallState('active');
+          setStatusHint('Live — dono taraf awaz open');
+        } else if (callState === 'waiting') {
+          setCallState('connecting');
+          setStatusHint('Astrologer accepted — waiting for their audio…');
+        }
+      }
+      return;
+    }
 
+    let cancelled = false;
     joinedRef.current = true;
-    setCallState('connecting');
-    const channelName = session.agoraChannel || `session_${id}`;
+    setCallState(session.status === 'pending' ? 'waiting' : 'connecting');
+    setStatusHint(
+      session.status === 'pending'
+        ? 'Audio ready — waiting for astrologer to accept…'
+        : 'Getting secure call token…'
+    );
 
-    // Immediately mark active for billing/timer UX; agora is dummy until real App ID
-    const goActive = () => {
-      setCallState('active');
-      Vibration.vibrate(120);
+    const startTimer = () => {
       if (!timerRef.current) {
         timerRef.current = setInterval(() => {
           setDuration((prev) => prev + 1);
@@ -109,34 +128,69 @@ export default function UserCallScreen() {
       }
     };
 
-    agoraService.joinChannel({
-      channelName,
-      uid: 0,
-      token: null,
-      onUserJoined: () => goActive(),
-      onUserOffline: () => {
-        setCallState('ended');
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      },
-      onError: (err) => {
-        console.warn('[Agora] error:', err);
-        // Still allow UI call session if media stack fails
-        goActive();
-      },
-    });
+    const goLive = (hint) => {
+      if (cancelled) return;
+      setCallState('active');
+      setStatusHint(hint || '');
+      Vibration.vibrate(120);
+      startTimer();
+    };
 
-    // Safety: if dummy callback delayed, still open call
-    const safety = setTimeout(goActive, 1200);
+    (async () => {
+      try {
+        if (!isAgoraNativeAvailable()) {
+          throw new Error(
+            'Real call ke liye APK / development build chahiye. Expo Go me mic stream nahi chalta.'
+          );
+        }
+
+        const creds = await sessionApi.getCallToken(id);
+        if (cancelled) return;
+        if (!creds?.token || !creds?.appId || !creds?.channelName) {
+          throw new Error(creds?.message || 'Call token incomplete from server');
+        }
+
+        setStatusHint('Connecting your microphone…');
+        await agoraService.joinChannel({
+          appId: creds.appId,
+          token: creds.token,
+          channelName: creds.channelName,
+          uid: creds.uid || 1,
+          video: isVideo,
+          onJoinSuccess: () => {
+            if (cancelled) return;
+            setStatusHint('Mic live — waiting for astrologer…');
+          },
+          onUserJoined: () => {
+            setRemoteJoined(true);
+            goLive('Live — dono taraf awaz open');
+          },
+          onUserOffline: () => {
+            setRemoteJoined(false);
+            setStatusHint('Astrologer left the call');
+          },
+          onError: (err) => {
+            console.warn('[Call] agora error', err);
+            if (!cancelled) setStatusHint(err?.message || 'Audio error');
+          },
+        });
+      } catch (err) {
+        console.warn('[Call] join failed', err);
+        if (cancelled) return;
+        joinedRef.current = false;
+        setCallState('error');
+        setStatusHint(err?.message || 'Call connect nahi hua');
+        Alert.alert(
+          'Call audio failed',
+          err?.message || 'Could not start call audio. APK build + mic permission check karein.'
+        );
+      }
+    })();
 
     return () => {
-      clearTimeout(safety);
-      agoraService.leaveChannel();
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-      joinedRef.current = false;
+      cancelled = true;
     };
-  }, [session?.status, id, session]);
+  }, [session?.status, session?.callPaidUpfront, id, isVideo]);
 
   const handleMute = async () => {
     const next = !isMuted;
@@ -164,7 +218,7 @@ export default function UserCallScreen() {
         onPress: async () => {
           await agoraService.leaveChannel();
           clearInterval(timerRef.current);
-          try { await sessionApi.end(id); } catch {}
+          try { await sessionApi.end(id); } catch { /* ok */ }
           router.replace({ pathname: '/sessions', params: { type: 'call' } });
         },
       },
@@ -172,8 +226,13 @@ export default function UserCallScreen() {
   };
 
   const leaveWithoutEnding = () => {
-    // Session stays open — user can resume from Call tab / Call History
     router.replace({ pathname: '/sessions', params: { type: 'call' } });
+  };
+
+  const retryJoin = () => {
+    joinedRef.current = false;
+    setCallState('connecting');
+    setSession((s) => (s ? { ...s } : s));
   };
 
   if (loading) {
@@ -189,11 +248,9 @@ export default function UserCallScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Background */}
       <View style={styles.bgTop} />
       <View style={styles.bgBottom} />
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={leaveWithoutEnding}>
           <Ionicons name="chevron-down" size={28} color="#fff" />
@@ -211,36 +268,19 @@ export default function UserCallScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      {/* Main */}
       <View style={styles.mainArea}>
-        {isVideo && isCameraOn && (
-          <View style={styles.videoPlaceholder}>
-            <Ionicons name="videocam-off" size={48} color="rgba(255,255,255,0.2)" />
-            <Text style={styles.videoNote}>Agora video stream</Text>
-            <Text style={styles.videoNoteSub}>(activates with a real App ID)</Text>
-          </View>
-        )}
-
-        {/* Avatar */}
         <Animated.View style={[
           styles.avatarWrap,
           (callState === 'connecting' || callState === 'waiting') && { transform: [{ scale: pulseAnim }] },
         ]}>
-          {/* Outer glow ring */}
-          <View style={[
-            styles.outerRing,
-            callState === 'active' && styles.outerRingActive,
-          ]}>
-            <View style={[
-              styles.innerRing,
-              callState === 'active' && styles.innerRingActive,
-            ]}>
+          <View style={[styles.outerRing, callState === 'active' && styles.outerRingActive]}>
+            <View style={[styles.innerRing, callState === 'active' && styles.innerRingActive]}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{nameDisplay.charAt(0).toUpperCase()}</Text>
               </View>
             </View>
           </View>
-          {callState === 'active' && <View style={styles.activeDot} />}
+          {callState === 'active' && remoteJoined && <View style={styles.activeDot} />}
         </Animated.View>
 
         <Text style={styles.callerName}>{nameDisplay}</Text>
@@ -248,15 +288,13 @@ export default function UserCallScreen() {
           {astro?.specialty || 'Astrology Consultation'}
         </Text>
 
-        {/* Rating */}
-        {astro?.rating && (
+        {astro?.rating ? (
           <View style={styles.ratingRow}>
             <Ionicons name="star" size={14} color={COLORS.primary} />
             <Text style={styles.ratingText}>{astro.rating}</Text>
           </View>
-        )}
+        ) : null}
 
-        {/* Status */}
         <View style={styles.statusRow}>
           {callState === 'waiting' ? (
             <>
@@ -266,10 +304,26 @@ export default function UserCallScreen() {
           ) : callState === 'connecting' ? (
             <>
               <ActivityIndicator size="small" color={COLORS.primary} />
-              <Text style={styles.statusText}>Connecting...</Text>
+              <Text style={styles.statusText}>{statusHint || 'Connecting audio…'}</Text>
             </>
           ) : callState === 'active' ? (
-            <Text style={styles.timerText}>{formatDuration(duration)}</Text>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={styles.timerText}>{formatDuration(duration)}</Text>
+              <Text style={styles.liveHint}>
+                {remoteJoined
+                  ? '🟢 Live — dono taraf awaz open'
+                  : '🟡 Aap connected — astrologer join ka wait…'}
+              </Text>
+              {!!statusHint && <Text style={styles.subHint}>{statusHint}</Text>}
+            </View>
+          ) : callState === 'error' ? (
+            <View style={{ alignItems: 'center', gap: 10 }}>
+              <Text style={styles.endedText}>Audio connect fail</Text>
+              <Text style={styles.subHint}>{statusHint}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={retryJoin}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <Text style={styles.endedText}>
               {session?.status === 'rejected' ? 'Call Declined' : 'Call Ended'}
@@ -278,10 +332,8 @@ export default function UserCallScreen() {
         </View>
       </View>
 
-      {/* Controls */}
       <View style={styles.controls}>
         <View style={styles.controlRow}>
-          {/* Mute */}
           <TouchableOpacity
             style={[styles.ctrlBtn, isMuted && styles.ctrlBtnDanger]}
             onPress={handleMute}
@@ -292,7 +344,6 @@ export default function UserCallScreen() {
             <Text style={styles.ctrlLabel}>{isMuted ? 'Unmute' : 'Mute'}</Text>
           </TouchableOpacity>
 
-          {/* Speaker */}
           <TouchableOpacity
             style={[styles.ctrlBtn, isSpeaker && styles.ctrlBtnPrimary]}
             onPress={handleSpeaker}
@@ -303,7 +354,6 @@ export default function UserCallScreen() {
             <Text style={styles.ctrlLabel}>Speaker</Text>
           </TouchableOpacity>
 
-          {/* Camera (video only) */}
           {isVideo ? (
             <TouchableOpacity
               style={[styles.ctrlBtn, !isCameraOn && styles.ctrlBtnDanger]}
@@ -319,7 +369,6 @@ export default function UserCallScreen() {
           )}
         </View>
 
-        {/* End Call */}
         <TouchableOpacity style={styles.endCallBtn} onPress={handleEndCall}>
           <Ionicons name="call" size={34} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
         </TouchableOpacity>
@@ -345,12 +394,6 @@ const styles = StyleSheet.create({
   headerTitle: { color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: '700', textAlign: 'center' },
   headerRateHint: { color: COLORS.primary, fontSize: 11, textAlign: 'center', fontWeight: '600' },
   mainArea: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
-  videoPlaceholder: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#0a0a14', justifyContent: 'center', alignItems: 'center',
-  },
-  videoNote: { color: 'rgba(255,255,255,0.35)', marginTop: 12, fontSize: 14 },
-  videoNoteSub: { color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 4 },
   avatarWrap: { alignItems: 'center', marginBottom: 24 },
   outerRing: {
     width: 156, height: 156, borderRadius: 78,
@@ -380,10 +423,16 @@ const styles = StyleSheet.create({
   callerSub: { fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 6, textAlign: 'center' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
   ratingText: { color: COLORS.primary, fontSize: 13, fontWeight: '700' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20 },
-  statusText: { color: 'rgba(255,255,255,0.55)', fontSize: 15 },
-  timerText: { color: COLORS.primary, fontSize: 24, fontWeight: '800', letterSpacing: 3 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, paddingHorizontal: 12 },
+  statusText: { color: 'rgba(255,255,255,0.55)', fontSize: 14, flexShrink: 1 },
+  timerText: { color: COLORS.primary, fontSize: 24, fontWeight: '800', letterSpacing: 3, textAlign: 'center' },
+  liveHint: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 8, textAlign: 'center', fontWeight: '600' },
+  subHint: { color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 6, textAlign: 'center', lineHeight: 16 },
   endedText: { color: COLORS.error, fontSize: 18, fontWeight: '700' },
+  retryBtn: {
+    marginTop: 4, backgroundColor: COLORS.primary, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20,
+  },
+  retryText: { color: '#1A1A1A', fontWeight: '800', fontSize: 13 },
   controls: { paddingHorizontal: 28, paddingBottom: 40, alignItems: 'center' },
   controlRow: {
     flexDirection: 'row', gap: 14, marginBottom: 36,
@@ -396,7 +445,10 @@ const styles = StyleSheet.create({
   ctrlBtnDanger: { backgroundColor: 'rgba(229,57,53,0.15)' },
   ctrlBtnPrimary: { backgroundColor: 'rgba(253,185,19,0.1)' },
   ctrlBtnEmpty: { flex: 1 },
-  ctrlIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center', alignItems: 'center' },
+  ctrlIcon: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center', alignItems: 'center',
+  },
   ctrlLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '600' },
   endCallBtn: {
     width: 76, height: 76, borderRadius: 38,

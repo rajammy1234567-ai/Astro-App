@@ -9,7 +9,14 @@ export const astroApi = {
   rejectChat: (id) => api.put(`/chats/${id}/reject`),
   sendMessage: (id, content, extra = {}) =>
     api.post(`/chats/${id}/messages`, { content, ...extra }),
+  /** Generate Janam Kundli from client birth details and send in chat */
+  sendKundli: (id, note) =>
+    api.post(`/chats/${id}/send-kundli`, note ? { note } : {}),
+  previewKundli: (id) => api.get(`/chats/${id}/kundli-preview`),
   closeChat: (id) => api.put(`/chats/${id}/close`),
+  /** Agora RTC token for voice/video (user+astro same channel) */
+  getCallToken: (sessionId) => api.get(`/chats/${sessionId}/call-token`),
+  getAgoraStatus: () => api.get('/agora/status'),
   updateProfile: (data) => api.put('/me', data),
   deleteAccount: (password) =>
     api.delete('/me', { data: { password, confirm: 'DELETE' } }),

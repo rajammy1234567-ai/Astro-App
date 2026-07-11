@@ -11,4 +11,7 @@ export const sessionApi = {
   uploadMedia: (dataUrl) => api.post('/sessions/upload', { image: dataUrl }),
   pay: (id, minutes) => api.post(`/sessions/${id}/pay`, { minutes }),
   end: (id) => api.put(`/sessions/${id}/end`),
+  /** Agora RTC token for voice/video call */
+  getCallToken: (sessionId) => api.get(`/agora/token/user/${sessionId}`),
+  getAgoraStatus: () => api.get('/agora/status'),
 };

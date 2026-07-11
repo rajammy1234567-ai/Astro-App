@@ -1,12 +1,6 @@
 /**
- * Astrologer Voice/Video Call Screen
- * ====================================
- * Full-featured call UI with Agora dummy integration.
+ * Astrologer Voice/Video Call Screen — real Agora RTC audio
  * Route: /call/[id]?type=voice|video
- *
- * To activate real Agora:
- *   - Replace agoraService stubs with real react-native-agora calls
- *   - Add RtcLocalView / RtcRemoteView for real video streams
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -17,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { astroApi } from '../../services/astroApi';
-import agoraService from '../../services/agoraService';
+import agoraService, { isAgoraNativeAvailable } from '../../services/agoraService';
 import { safeGoBack } from '../../utils/navigation';
 import { colors, COLORS } from '../../constants/theme';
 
@@ -34,15 +28,17 @@ export default function AstroCallScreen() {
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [callState, setCallState] = useState('connecting'); // connecting | active | ended
+  const [callState, setCallState] = useState('connecting');
+  const [statusHint, setStatusHint] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(isVideo);
+  const [remoteJoined, setRemoteJoined] = useState(false);
   const [duration, setDuration] = useState(0);
   const timerRef = useRef(null);
+  const joinedRef = useRef(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Pulse animation for connecting state
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
@@ -68,18 +64,36 @@ export default function AstroCallScreen() {
 
   useEffect(() => { loadSession(); }, [loadSession]);
 
-  // Join only when call is active/paused (after accept)
-  useEffect(() => {
-    if (!session) return undefined;
-    if (!['active', 'paused'].includes(session.status)) {
-      setCallState(session.status === 'pending' ? 'connecting' : 'ended');
-      return undefined;
-    }
+  // Leave RTC only when leaving this screen
+  useEffect(() => () => {
+    agoraService.leaveChannel();
+    clearInterval(timerRef.current);
+    timerRef.current = null;
+    joinedRef.current = false;
+  }, []);
 
-    const channelName = session.agoraChannel || `session_${id}`;
-    const goActive = () => {
-      setCallState('active');
-      Vibration.vibrate(100);
+  // Join Agora once after accept (active/paused)
+  useEffect(() => {
+    if (!session) return;
+    if (!['active', 'paused'].includes(session.status)) {
+      if (!joinedRef.current) {
+        setCallState(session.status === 'pending' ? 'connecting' : 'ended');
+        setStatusHint(
+          session.status === 'pending'
+            ? 'Pehle request accept karein'
+            : 'Session closed'
+        );
+      }
+      return;
+    }
+    if (joinedRef.current) return;
+
+    let cancelled = false;
+    joinedRef.current = true;
+    setCallState('connecting');
+    setStatusHint('Call token le rahe hain…');
+
+    const startTimer = () => {
       if (!timerRef.current) {
         timerRef.current = setInterval(() => {
           setDuration((prev) => prev + 1);
@@ -87,30 +101,67 @@ export default function AstroCallScreen() {
       }
     };
 
-    agoraService.joinChannel({
-      channelName,
-      uid: 1,
-      token: null,
-      onUserJoined: () => goActive(),
-      onUserOffline: () => {
-        setCallState('ended');
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      },
-      onError: (err) => {
-        console.warn('[Agora] error:', err);
-        goActive();
-      },
-    });
-    const safety = setTimeout(goActive, 1000);
+    const goLive = (hint) => {
+      if (cancelled) return;
+      setCallState('active');
+      setStatusHint(hint || '');
+      Vibration.vibrate(100);
+      startTimer();
+    };
+
+    (async () => {
+      try {
+        if (!isAgoraNativeAvailable()) {
+          throw new Error(
+            'Real call ke liye Partner APK / dev build chahiye. Expo Go me awaz nahi jaati.'
+          );
+        }
+
+        const creds = await astroApi.getCallToken(id);
+        if (cancelled) return;
+        if (!creds?.token || !creds?.appId || !creds?.channelName) {
+          throw new Error(creds?.message || 'Call token incomplete');
+        }
+
+        setStatusHint('Audio channel join…');
+        await agoraService.joinChannel({
+          appId: creds.appId,
+          token: creds.token,
+          channelName: creds.channelName,
+          uid: creds.uid || 2,
+          video: isVideo,
+          onJoinSuccess: () => {
+            goLive('Connected — waiting for user…');
+          },
+          onUserJoined: () => {
+            setRemoteJoined(true);
+            goLive('Live — dono taraf awaz open');
+          },
+          onUserOffline: () => {
+            setRemoteJoined(false);
+            setStatusHint('User left the call');
+          },
+          onError: (err) => {
+            console.warn('[AstroCall] error', err);
+            if (!cancelled) setStatusHint(err?.message || 'Audio error');
+          },
+        });
+
+        if (!cancelled) goLive('Connected — waiting for user…');
+      } catch (err) {
+        console.warn('[AstroCall] join failed', err);
+        if (cancelled) return;
+        joinedRef.current = false;
+        setCallState('error');
+        setStatusHint(err?.message || 'Call connect nahi hua');
+        Alert.alert('Call audio failed', err?.message || 'Mic / APK check karein');
+      }
+    })();
 
     return () => {
-      clearTimeout(safety);
-      agoraService.leaveChannel();
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+      cancelled = true;
     };
-  }, [session, id, router]);
+  }, [session?.status, id, isVideo]);
 
   const handleMute = async () => {
     const next = !isMuted;
@@ -142,11 +193,17 @@ export default function AstroCallScreen() {
         onPress: async () => {
           await agoraService.leaveChannel();
           clearInterval(timerRef.current);
-          try { await astroApi.closeChat(id); } catch {}
+          try { await astroApi.closeChat(id); } catch { /* ok */ }
           safeGoBack(router, '/(tabs)/calls');
         },
       },
     ]);
+  };
+
+  const retryJoin = () => {
+    joinedRef.current = false;
+    setCallState('connecting');
+    setSession((s) => (s ? { ...s } : s));
   };
 
   if (loading) {
@@ -157,17 +214,15 @@ export default function AstroCallScreen() {
     );
   }
 
-  const userName = session?.user?.name || 'User';
+  const userName = session?.user?.name || session?.userBirthDetails?.name || 'User';
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Background */}
       <View style={styles.bg}>
         <View style={styles.bgGradientTop} />
         <View style={styles.bgGradientBottom} />
       </View>
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => safeGoBack(router, '/(tabs)/calls')}>
           <Ionicons name="chevron-down" size={28} color="#fff" />
@@ -178,35 +233,17 @@ export default function AstroCallScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      {/* Main Area */}
       <View style={styles.mainArea}>
-        {isVideo && isCameraOn ? (
-          <View style={styles.videoPlaceholder}>
-            {/* TODO: Replace with <RtcRemoteView.SurfaceView /> when Agora SDK added */}
-            <View style={styles.videoOverlay}>
-              <Ionicons name="videocam-off" size={48} color="rgba(255,255,255,0.3)" />
-              <Text style={styles.videoNote}>Agora video stream</Text>
-              <Text style={styles.videoNoteSub}>(real App ID se activate hoga)</Text>
-            </View>
-          </View>
-        ) : null}
-
-        {/* Caller Avatar */}
         <Animated.View style={[
           styles.avatarWrap,
           callState === 'connecting' && { transform: [{ scale: pulseAnim }] },
         ]}>
-          <View style={[
-            styles.avatarRing,
-            callState === 'active' && styles.avatarRingActive,
-          ]}>
+          <View style={[styles.avatarRing, callState === 'active' && styles.avatarRingActive]}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
             </View>
           </View>
-          {callState === 'active' && (
-            <View style={styles.activeDot} />
-          )}
+          {callState === 'active' && remoteJoined && <View style={styles.activeDot} />}
         </Animated.View>
 
         <Text style={styles.callerName}>{userName}</Text>
@@ -214,26 +251,38 @@ export default function AstroCallScreen() {
           {session?.user?.phone || 'Consultation'}
         </Text>
 
-        {/* Status */}
         <View style={styles.statusRow}>
           {callState === 'connecting' ? (
             <>
               <ActivityIndicator size="small" color={COLORS.primary} />
-              <Text style={styles.statusText}>Connecting...</Text>
+              <Text style={styles.statusText}>{statusHint || 'Connecting…'}</Text>
             </>
           ) : callState === 'active' ? (
-            <Text style={styles.timerText}>{formatDuration(duration)}</Text>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={styles.timerText}>{formatDuration(duration)}</Text>
+              <Text style={styles.liveHint}>
+                {remoteJoined
+                  ? '🟢 Live — user ki awaz sunni chahiye'
+                  : '🟡 Aap live — user channel join kare to awaz aayegi'}
+              </Text>
+              {!!statusHint && <Text style={styles.subHint}>{statusHint}</Text>}
+            </View>
+          ) : callState === 'error' ? (
+            <View style={{ alignItems: 'center', gap: 10 }}>
+              <Text style={styles.endedText}>Audio fail</Text>
+              <Text style={styles.subHint}>{statusHint}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={retryJoin}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <Text style={styles.endedText}>Call Ended</Text>
           )}
         </View>
       </View>
 
-      {/* Controls */}
       <View style={styles.controls}>
-        {/* Row 1 */}
         <View style={styles.controlRow}>
-          {/* Mute */}
           <TouchableOpacity
             style={[styles.ctrlBtn, isMuted && styles.ctrlBtnActive]}
             onPress={handleMute}
@@ -246,7 +295,6 @@ export default function AstroCallScreen() {
             <Text style={styles.ctrlLabel}>{isMuted ? 'Unmute' : 'Mute'}</Text>
           </TouchableOpacity>
 
-          {/* Speaker */}
           <TouchableOpacity
             style={[styles.ctrlBtn, isSpeaker && styles.ctrlBtnActive]}
             onPress={handleSpeaker}
@@ -259,7 +307,6 @@ export default function AstroCallScreen() {
             <Text style={styles.ctrlLabel}>Speaker</Text>
           </TouchableOpacity>
 
-          {/* Camera (video only) */}
           {isVideo ? (
             <TouchableOpacity
               style={[styles.ctrlBtn, !isCameraOn && styles.ctrlBtnActive]}
@@ -276,7 +323,6 @@ export default function AstroCallScreen() {
             <View style={styles.ctrlBtn} />
           )}
 
-          {/* Flip Camera (video only) */}
           {isVideo ? (
             <TouchableOpacity style={styles.ctrlBtn} onPress={handleFlip}>
               <Ionicons name="camera-reverse" size={26} color="#fff" />
@@ -287,11 +333,9 @@ export default function AstroCallScreen() {
           )}
         </View>
 
-        {/* End Call Button */}
         <TouchableOpacity style={styles.endCallBtn} onPress={handleEndCall}>
           <Ionicons name="call" size={32} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
         </TouchableOpacity>
-
         <Text style={styles.endLabel}>End Call</Text>
       </View>
     </SafeAreaView>
@@ -320,13 +364,6 @@ const styles = StyleSheet.create({
   },
   callTypeLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '600' },
   mainArea: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
-  videoPlaceholder: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#111', justifyContent: 'center', alignItems: 'center',
-  },
-  videoOverlay: { alignItems: 'center' },
-  videoNote: { color: 'rgba(255,255,255,0.4)', marginTop: 12, fontSize: 14 },
-  videoNoteSub: { color: 'rgba(255,255,255,0.25)', fontSize: 11, marginTop: 4 },
   avatarWrap: { alignItems: 'center', marginBottom: 24 },
   avatarRing: {
     width: 140, height: 140, borderRadius: 70,
@@ -348,10 +385,16 @@ const styles = StyleSheet.create({
   },
   callerName: { fontSize: 28, fontWeight: '800', color: '#fff', textAlign: 'center' },
   callerSub: { fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 4, textAlign: 'center' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
-  statusText: { color: 'rgba(255,255,255,0.6)', fontSize: 15 },
-  timerText: { color: COLORS.primary, fontSize: 22, fontWeight: '700', letterSpacing: 2 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16, paddingHorizontal: 10 },
+  statusText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, flexShrink: 1 },
+  timerText: { color: COLORS.primary, fontSize: 22, fontWeight: '700', letterSpacing: 2, textAlign: 'center' },
+  liveHint: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 8, textAlign: 'center', fontWeight: '600' },
+  subHint: { color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 6, textAlign: 'center', lineHeight: 16 },
   endedText: { color: COLORS.error, fontSize: 18, fontWeight: '700' },
+  retryBtn: {
+    backgroundColor: COLORS.primary, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20,
+  },
+  retryText: { color: '#1A1A1A', fontWeight: '800', fontSize: 13 },
   controls: { paddingHorizontal: 24, paddingBottom: 32, alignItems: 'center' },
   controlRow: {
     flexDirection: 'row', gap: 12, marginBottom: 32,
