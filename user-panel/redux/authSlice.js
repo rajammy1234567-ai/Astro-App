@@ -67,14 +67,31 @@ export const restoreSession = createAsyncThunk('auth/restoreSession', async (_, 
       return { user: null, token: null };
     }
 
+    // Instant paint from cache while network confirms
+    const cachedUser = await storage.get('user');
+
     try {
-      const user = await authApi.getMe();
+      // Bound network so splash never hangs on dead server
+      const user = await Promise.race([
+        authApi.getMe(),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(Object.assign(new Error('timeout'), { code: 'TIMEOUT' })), 2800);
+        }),
+      ]);
       await storage.set('user', user);
       return { user, token };
-    } catch {
-      await storage.remove('token');
-      await storage.remove('user');
-      return { user: null, token: null };
+    } catch (err) {
+      // Invalid session
+      if (err?.status === 401 || err?.status === 403) {
+        await storage.remove('token');
+        await storage.remove('user');
+        return { user: null, token: null };
+      }
+      // Network / timeout — keep cached user so app opens offline-friendly
+      if (cachedUser) {
+        return { user: cachedUser, token };
+      }
+      return { user: null, token };
     }
   } catch (err) {
     return rejectWithValue(err);

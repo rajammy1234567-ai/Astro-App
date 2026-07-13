@@ -298,23 +298,38 @@ const crud = (Model, opts = {}) => ({
 
 const listAstrologers = async (req, res) => {
   try {
+    const { computeAstrologerStats, getOnlineSeconds, formatDuration } = require('../utils/astroStats');
     const astrologers = await Astrologer.find().select('-password').sort({ createdAt: -1 });
     const liveSessions = await LiveSession.find({ status: 'live' });
     const liveMap = Object.fromEntries(liveSessions.map((s) => [s.astrologer.toString(), s]));
 
-    const enriched = await Promise.all(astrologers.map(async (a) => {
-      const earn = await astroEarningsAgg(a._id);
-      const live = liveMap[a._id.toString()];
-      return {
-        ...a.toObject(),
-        totalEarnings: earn.totalEarnings,
-        paidSessions: earn.paidSessions,
-        isLiveNow: !!live,
-        liveTitle: live?.title || '',
-        liveViewers: live?.viewerCount || 0,
-        liveSessionId: live?._id || null,
-      };
-    }));
+    const enriched = await Promise.all(
+      astrologers.map(async (a) => {
+        const stats = await computeAstrologerStats(a._id);
+        const onlineSec = getOnlineSeconds(a);
+        const live = liveMap[a._id.toString()];
+        return {
+          ...a.toObject(),
+          chatOnline: !!(a.chatOnline ?? a.isOnline),
+          callOnline: !!(a.callOnline ?? a.isOnline),
+          totalEarnings: stats.consultationEarnings,
+          paidSessions: stats.completedSessions,
+          uniqueUsers: stats.uniqueUsers,
+          totalSessionSeconds: stats.totalSessionSeconds,
+          totalSessionTimeLabel: stats.totalSessionTimeLabel,
+          chatSeconds: stats.chatSeconds,
+          callSeconds: stats.callSeconds,
+          totalOnlineSeconds: onlineSec,
+          onlineTimeLabel: formatDuration(onlineSec),
+          serviceSales: stats.serviceSales,
+          totalSales: stats.totalSales,
+          isLiveNow: !!live,
+          liveTitle: live?.title || '',
+          liveViewers: live?.viewerCount || 0,
+          liveSessionId: live?._id || null,
+        };
+      })
+    );
 
     res.json(enriched);
   } catch (error) {
@@ -343,30 +358,181 @@ const updateAstrologer = async (req, res) => {
 
 const getAstrologerDetails = async (req, res) => {
   try {
+    const { computeAstrologerStats, getOnlineSeconds, formatDuration } = require('../utils/astroStats');
+    const { formatSession } = require('../utils/sessionBilling');
     const astrologer = await Astrologer.findById(req.params.id).select('-password');
     if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
 
-    const [earn, sessions, liveSession, liveHistory] = await Promise.all([
-      astroEarningsAgg(astrologer._id),
+    const [stats, sessions, serviceOrders, liveSession, liveHistory] = await Promise.all([
+      computeAstrologerStats(astrologer._id),
       Chat.find({ astrologer: astrologer._id })
         .populate('user', 'name phone email avatar')
         .sort({ createdAt: -1 })
-        .limit(30),
+        .limit(50),
+      Order.find({
+        astrologer: astrologer._id,
+        orderType: { $in: ['pooja', 'remedy'] },
+      })
+        .populate('user', 'name phone email')
+        .sort({ createdAt: -1 })
+        .limit(40),
       LiveSession.findOne({ astrologer: astrologer._id, status: 'live' }),
       LiveSession.find({ astrologer: astrologer._id }).sort({ startedAt: -1 }).limit(10),
     ]);
 
+    const onlineSec = getOnlineSeconds(astrologer);
+    const a = astrologer.toObject();
+
     res.json({
-      astrologer: astrologer.toObject(),
-      totalEarnings: earn.totalEarnings,
-      paidSessions: earn.paidSessions,
-      totalSessions: sessions.length,
+      astrologer: {
+        ...a,
+        chatOnline: !!(a.chatOnline ?? a.isOnline),
+        callOnline: !!(a.callOnline ?? a.isOnline),
+      },
+      stats: {
+        ...stats,
+        totalOnlineSeconds: onlineSec,
+        onlineTimeLabel: formatDuration(onlineSec),
+        availableBalance: a.availableBalance || 0,
+        pendingHeld: a.pendingHeld || 0,
+        totalReleased: a.totalReleased || 0,
+      },
+      totalEarnings: stats.consultationEarnings,
+      paidSessions: stats.completedSessions,
+      totalSessions: stats.totalSessions,
+      uniqueUsers: stats.uniqueUsers,
       isLiveNow: !!liveSession,
       liveSession,
       liveHistory,
-      sessions,
+      sessions: sessions.map((s) => formatSession(s)),
+      serviceOrders,
     });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/** Platform-wide analytics for admin dashboard */
+const getAnalytics = async (req, res) => {
+  try {
+    const { computeAstrologerStats, getOnlineSeconds, formatDuration } = require('../utils/astroStats');
+
+    const [
+      totalUsers,
+      totalAstrologers,
+      onlineNow,
+      chatOnlineNow,
+      callOnlineNow,
+      allChats,
+      walletCredits,
+      storeOrders,
+      serviceOrders,
+      recentUsers,
+      recentSessions,
+    ] = await Promise.all([
+      User.countDocuments(),
+      Astrologer.countDocuments(),
+      Astrologer.countDocuments({ isOnline: true }),
+      Astrologer.countDocuments({ chatOnline: true }),
+      Astrologer.countDocuments({ callOnline: true }),
+      Chat.find().select('type status totalCharged startedAt acceptedAt endedAt user astrologer').lean(),
+      Transaction.aggregate([
+        { $match: { type: 'credit', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
+      ]),
+      Order.find({ orderType: 'store' }).select('totalAmount status').lean(),
+      Order.find({ orderType: { $in: ['pooja', 'remedy'] } })
+        .select('totalAmount heldAmount releasedToAstrologer orderType')
+        .lean(),
+      User.find().sort({ createdAt: -1 }).limit(8).select('name phone email createdAt'),
+      Chat.find()
+        .sort({ createdAt: -1 })
+        .limit(15)
+        .populate('user', 'name phone')
+        .populate('astrologer', 'name phone')
+        .select('type status totalCharged startedAt acceptedAt endedAt createdAt user astrologer'),
+    ]);
+
+    let chatSessions = 0;
+    let callSessions = 0;
+    let consultationRevenue = 0;
+    let totalSessionSeconds = 0;
+    const usersTalked = new Set();
+
+    for (const c of allChats) {
+      if (c.type === 'call') callSessions += 1;
+      else chatSessions += 1;
+      consultationRevenue += Number(c.totalCharged || 0);
+      if (c.user) usersTalked.add(String(c.user));
+      totalSessionSeconds += require('../utils/sessionBilling').getDurationSeconds(c);
+    }
+
+    let storeSales = 0;
+    for (const o of storeOrders) storeSales += Number(o.totalAmount || 0);
+
+    let serviceSales = 0;
+    let serviceReleased = 0;
+    for (const o of serviceOrders) {
+      serviceSales += Number(o.heldAmount || o.totalAmount || 0);
+      serviceReleased += Number(o.releasedToAstrologer || 0);
+    }
+
+    const astros = await Astrologer.find().select('-password').lean();
+    const topAstros = [];
+    for (const a of astros) {
+      const st = await computeAstrologerStats(a._id);
+      const onlineSec = getOnlineSeconds(a);
+      topAstros.push({
+        _id: a._id,
+        name: a.name,
+        phone: a.phone,
+        isOnline: a.isOnline,
+        chatOnline: !!(a.chatOnline ?? a.isOnline),
+        callOnline: !!(a.callOnline ?? a.isOnline),
+        ...st,
+        totalOnlineSeconds: onlineSec,
+        onlineTimeLabel: formatDuration(onlineSec),
+      });
+    }
+    topAstros.sort((x, y) => (y.totalSales || 0) - (x.totalSales || 0));
+
+    res.json({
+      overview: {
+        totalUsers,
+        totalAstrologers,
+        onlineNow,
+        chatOnlineNow,
+        callOnlineNow,
+        totalSessions: allChats.length,
+        chatSessions,
+        callSessions,
+        uniqueUsersInConsultations: usersTalked.size,
+        totalSessionSeconds,
+        totalSessionTimeLabel: formatDuration(totalSessionSeconds),
+        consultationRevenue,
+        walletTopups: walletCredits[0]?.total || 0,
+        storeSales,
+        serviceSales,
+        serviceReleasedToAstro: serviceReleased,
+        serviceHeldByAdmin: Math.max(0, serviceSales - serviceReleased),
+        totalPlatformSales: consultationRevenue + storeSales + serviceSales,
+      },
+      topAstrologers: topAstros.slice(0, 20),
+      allAstrologers: topAstros,
+      recentUsers,
+      recentSessions: recentSessions.map((s) => ({
+        _id: s._id,
+        type: s.type,
+        status: s.status,
+        totalCharged: s.totalCharged,
+        user: s.user,
+        astrologer: s.astrologer,
+        createdAt: s.createdAt,
+        durationSeconds: require('../utils/sessionBilling').getDurationSeconds(s),
+      })),
+    });
+  } catch (error) {
+    console.error('getAnalytics', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -485,6 +651,7 @@ module.exports = {
   login,
   getMe,
   getDashboard,
+  getAnalytics,
   listUsers,
   getUserDetails,
   blockUser,

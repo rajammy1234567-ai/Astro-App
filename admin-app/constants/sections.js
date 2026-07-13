@@ -2,6 +2,13 @@ export const SECTION_GROUPS = [
   {
     title: 'Management',
     items: [
+      {
+        id: 'analytics',
+        title: 'Full Analytics',
+        icon: '📊',
+        endpoint: '/analytics',
+        mode: 'analytics',
+      },
       { id: 'users', title: 'Users', icon: '👥', endpoint: '/users', mode: 'users' },
       { id: 'astrologers', title: 'Astrologers', icon: '🔮', endpoint: '/astrologers', mode: 'crud', allowCreate: false },
       { id: 'astrologer-applications', title: 'Applications', icon: '📋', endpoint: '/astrologer-applications', mode: 'applications' },
@@ -10,7 +17,7 @@ export const SECTION_GROUPS = [
       { id: 'transactions', title: 'Transactions', icon: '💳', endpoint: '/transactions', mode: 'readonly' },
       {
         id: 'payouts',
-        title: 'Payouts Hold',
+        title: 'Pooja Money',
         icon: '💰',
         endpoint: '/payouts',
         mode: 'payouts',

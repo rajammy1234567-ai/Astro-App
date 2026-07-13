@@ -31,10 +31,13 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
   };
 
   const openBooking = () => {
-    if (!astrologer.isOnline) {
+    const chatOk = astrologer.chatOnline ?? astrologer.isOnline;
+    const callOk = astrologer.callOnline ?? astrologer.isOnline;
+    const ok = isCall ? callOk : chatOk;
+    if (!ok) {
       Alert.alert(
-        'Offline',
-        `${astrologer.name || 'Astrologer'} abhi offline hai. Jab woh Online ON karega tab ${isCall ? 'call' : 'chat'} request bhej sakte ho.`
+        isCall ? 'Call Offline' : 'Chat Offline',
+        `${astrologer.name || 'Astrologer'} ne ${isCall ? 'Call' : 'Chat'} Online band rakha hai. Jab woh yeh mode ON kare tab request bhejo.`
       );
       return;
     }
@@ -43,6 +46,10 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
       params: { id: astrologer._id, type: mode },
     });
   };
+
+  const modeOnline = isCall
+    ? (astrologer.callOnline ?? astrologer.isOnline)
+    : (astrologer.chatOnline ?? astrologer.isOnline);
 
   return (
     <View style={styles.wrap}>
@@ -70,10 +77,10 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
             <Text style={styles.name} numberOfLines={1}>
               {astrologer.name}
             </Text>
-            {astrologer.isOnline ? (
+            {modeOnline ? (
               <View style={styles.onlineBadge}>
                 <View style={styles.onlineDot} />
-                <Text style={styles.onlineText}>Online</Text>
+                <Text style={styles.onlineText}>{isCall ? 'Call ON' : 'Chat ON'}</Text>
               </View>
             ) : (
               <View style={styles.offlineBadge}>
@@ -109,7 +116,7 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
             style={[
               styles.actionBtn,
               isCall ? styles.callBtn : styles.chatBtn,
-              !astrologer.isOnline && styles.actionDisabled,
+              !modeOnline && styles.actionDisabled,
             ]}
             onPress={openBooking}
             activeOpacity={0.85}
@@ -117,16 +124,16 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
             <Ionicons
               name={isCall ? 'call' : 'chatbubble-ellipses'}
               size={13}
-              color={!astrologer.isOnline ? COLORS.textLight : isCall ? COLORS.bannerDark : '#fff'}
+              color={!modeOnline ? COLORS.textLight : isCall ? COLORS.bannerDark : '#fff'}
             />
             <Text
               style={[
                 styles.actionText,
                 isCall && styles.callText,
-                !astrologer.isOnline && styles.actionDisabledText,
+                !modeOnline && styles.actionDisabledText,
               ]}
             >
-              {astrologer.isOnline ? btnLabel : 'Offline'}
+              {modeOnline ? btnLabel : 'Offline'}
             </Text>
           </TouchableOpacity>
         </View>

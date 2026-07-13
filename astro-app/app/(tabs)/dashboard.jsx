@@ -59,10 +59,10 @@ export default function Dashboard() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = async (value) => {
+  const handleToggle = async (payload) => {
     setToggling(true);
     try {
-      await setOnline(value);
+      await setOnline(payload);
       await load();
     } finally {
       setToggling(false);
@@ -82,7 +82,9 @@ export default function Dashboard() {
   }
 
   const stats = data?.stats;
-  const isOnline = !!astrologer?.isOnline;
+  const chatOnline = !!(astrologer?.chatOnline ?? astrologer?.isOnline);
+  const callOnline = !!(astrologer?.callOnline ?? astrologer?.isOnline);
+  const isOnline = chatOnline || callOnline;
   const earnings = (stats?.earnings ?? 0).toLocaleString('en-IN');
 
   return (
@@ -134,28 +136,61 @@ export default function Dashboard() {
           />
         }
       >
-        {/* Online control */}
+        {/* Separate Chat / Call online — user list me sirf wahi mode dikhega */}
         <View style={[styles.onlineCard, isOnline && styles.onlineCardOn]}>
-          <View style={styles.onlineLeft}>
-            <View style={[styles.statusPill, isOnline ? styles.statusOn : styles.statusOff]}>
-              <View style={[styles.dot, { backgroundColor: isOnline ? COLORS.success : colors.textLight }]} />
-              <Text style={[styles.statusTxt, isOnline && { color: COLORS.success }]}>
-                {isOnline ? 'Online now' : 'Offline'}
-              </Text>
-            </View>
-            <Text style={styles.onlineHint}>
-              {isOnline
-                ? 'Users aapko chat & call request bhej sakte hain'
-                : 'Toggle on karke consultations receive karein'}
+          <View style={[styles.statusPill, isOnline ? styles.statusOn : styles.statusOff, { marginBottom: 10 }]}>
+            <View style={[styles.dot, { backgroundColor: isOnline ? COLORS.success : colors.textLight }]} />
+            <Text style={[styles.statusTxt, isOnline && { color: COLORS.success }]}>
+              {isOnline ? 'Receiving requests' : 'Fully offline'}
             </Text>
           </View>
-          <Switch
-            value={isOnline}
-            onValueChange={handleToggle}
+          <Text style={styles.onlineHint}>
+            Jis mode ka toggle ON hoga, user app me sirf usi list me aap dikhoge.
+          </Text>
+
+          <View style={styles.modeRow}>
+            <View style={styles.modeLeft}>
+              <Ionicons name="chatbubbles" size={18} color={COLORS.link} />
+              <View>
+                <Text style={styles.modeTitle}>Chat Online</Text>
+                <Text style={styles.modeSub}>User Chat tab me dikho</Text>
+              </View>
+            </View>
+            <Switch
+              value={chatOnline}
+              onValueChange={(v) => handleToggle({ chatOnline: v })}
+              disabled={toggling || astrologer?.chatEnabled === false}
+              trackColor={{ true: COLORS.success, false: '#D5D0E0' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.modeRow}>
+            <View style={styles.modeLeft}>
+              <Ionicons name="call" size={18} color={COLORS.success} />
+              <View>
+                <Text style={styles.modeTitle}>Call Online</Text>
+                <Text style={styles.modeSub}>User Call tab me dikho</Text>
+              </View>
+            </View>
+            <Switch
+              value={callOnline}
+              onValueChange={(v) => handleToggle({ callOnline: v })}
+              disabled={toggling || astrologer?.callEnabled === false}
+              trackColor={{ true: COLORS.success, false: '#D5D0E0' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.bothBtn}
+            onPress={() => handleToggle({ isOnline: !isOnline })}
             disabled={toggling}
-            trackColor={{ true: COLORS.success, false: '#D5D0E0' }}
-            thumbColor="#fff"
-          />
+          >
+            <Text style={styles.bothBtnText}>
+              {isOnline ? 'Dono OFF (full offline)' : 'Dono ON (chat + call)'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Earnings highlight — available from admin release */}
@@ -362,24 +397,34 @@ const styles = StyleSheet.create({
   body: { padding: 16 },
 
   onlineCard: {
-    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#fff', borderRadius: RADIUS.lg, padding: 16, marginBottom: 14,
     borderWidth: 1, borderColor: COLORS.border, ...SHADOW_SM,
   },
   onlineCardOn: {
     borderColor: 'rgba(22,163,74,0.35)', backgroundColor: '#F3FCF6',
   },
-  onlineLeft: { flex: 1, paddingRight: 10 },
   statusPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, marginBottom: 6,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
     backgroundColor: COLORS.soft,
   },
   statusOn: { backgroundColor: 'rgba(22,163,74,0.12)' },
   statusOff: { backgroundColor: COLORS.soft },
   statusTxt: { fontSize: 12, fontWeight: '800', color: colors.textMuted },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  onlineHint: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+  onlineHint: { fontSize: 12, color: colors.textMuted, lineHeight: 17, marginBottom: 12 },
+  modeRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: COLORS.border,
+  },
+  modeLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, paddingRight: 8 },
+  modeTitle: { fontSize: 14, fontWeight: '800', color: COLORS.text },
+  modeSub: { fontSize: 11, color: colors.textMuted, marginTop: 2, fontWeight: '500' },
+  bothBtn: {
+    marginTop: 8, alignItems: 'center', paddingVertical: 10,
+    backgroundColor: COLORS.bannerDark, borderRadius: 12,
+  },
+  bothBtnText: { color: COLORS.primary, fontWeight: '800', fontSize: 12 },
 
   earnCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

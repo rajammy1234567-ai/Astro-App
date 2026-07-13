@@ -206,4 +206,5 @@ module.exports = {
   deductWallet,
   creditWallet,
   formatSession,
+  getDurationSeconds,
 };

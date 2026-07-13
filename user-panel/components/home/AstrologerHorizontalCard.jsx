@@ -14,10 +14,11 @@ export default function AstrologerHorizontalCard({ astrologer }) {
   };
 
   const openChat = () => {
-    if (!astrologer.isOnline) {
+    const chatOk = astrologer.chatOnline ?? astrologer.isOnline;
+    if (!chatOk) {
       Alert.alert(
-        'Offline',
-        `${astrologer.name || 'Astrologer'} offline hai. Online hone par chat request bhejo.`
+        'Chat Offline',
+        `${astrologer.name || 'Astrologer'} ne Chat Online band rakha hai.`
       );
       return;
     }

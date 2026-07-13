@@ -126,6 +126,8 @@ export const NEWS = [
 
 export const DRAWER_MENU = [
   { label: 'Home', icon: 'home-outline', route: '/(tabs)/home' },
+  { label: 'Search', icon: 'search-outline', route: '/search' },
+  { label: 'My Following', icon: 'heart-outline', route: '/following', badge: '★' },
   { label: 'Become an Astrologer', icon: 'star-outline', route: '/become-astrologer', badge: 'New' },
   { label: 'Book a Pooja', icon: 'flame-outline', route: '/pooja', badge: 'New' },
   { label: 'Customer Support Chat', icon: 'headset-outline', route: '/support' },
@@ -140,7 +142,6 @@ export const DRAWER_MENU = [
   { label: 'Chat with Astrologers', icon: 'chatbubbles-outline', route: '/(tabs)/chat' },
   { label: 'My Active Chats', icon: 'chatbubble-ellipses-outline', route: '/sessions?type=chat' },
   { label: 'Video Testimonials', icon: 'play-circle-outline', route: '/testimonials' },
-  { label: 'My Following', icon: 'people-outline', route: '/following' },
   { label: 'My Kundli', icon: 'planet-outline', route: '/kundli' },
   { label: 'Free Services', icon: 'sparkles-outline', route: '/free-services' },
   { label: 'About Us', icon: 'information-circle-outline', route: '/about' },

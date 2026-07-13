@@ -75,7 +75,19 @@ export default function Dashboard() {
         }
       >
         <Text style={styles.heading}>Admin Control</Text>
-        <Text style={styles.sub}>Users · Astrologers · Pooja/Remedies · Payouts</Text>
+        <Text style={styles.sub}>Users · Sales · Time · Astrologer details — sab yahan</Text>
+
+        <TouchableOpacity
+          style={styles.analyticsBanner}
+          onPress={() => router.push('/section/analytics')}
+          activeOpacity={0.9}
+        >
+          <Text style={styles.analyticsTitle}>📊 Full Analytics</Text>
+          <Text style={styles.analyticsSub}>
+            Har astrologer ki earning, session time, online time, users baat, sales — open karo
+          </Text>
+          <Text style={styles.analyticsCta}>Open details →</Text>
+        </TouchableOpacity>
 
         <View style={styles.grid}>
           {cards.map((c) => (
@@ -184,6 +196,17 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingBottom: 40 },
   heading: { fontSize: 26, fontWeight: '800', color: colors.text },
   sub: { fontSize: 13, color: colors.textMuted, marginBottom: 16, marginTop: 4 },
+  analyticsBanner: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(253,185,19,0.4)',
+  },
+  analyticsTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
+  analyticsSub: { fontSize: 12, color: colors.textMuted, marginTop: 6, lineHeight: 17 },
+  analyticsCta: { marginTop: 10, fontSize: 13, fontWeight: '800', color: colors.primary, textAlign: 'right' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
   card: {
     width: '47%',

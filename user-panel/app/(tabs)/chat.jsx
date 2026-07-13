@@ -21,7 +21,6 @@ export default function ChatTabScreen() {
   const { isAuthenticated } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState('all');
-  const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeSessions, setActiveSessions] = useState([]);
   const [loadingActive, setLoadingActive] = useState(false);
@@ -73,11 +72,13 @@ export default function ChatTabScreen() {
         showSearch
         showChat
         onMenuPress={() => setDrawerOpen(true)}
-        onSearchPress={() => setSearchOpen((v) => !v)}
+        onSearchPress={() => router.push('/search')}
       />
-      {searchOpen && (
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search astrologers..." />
-      )}
+      <SearchBar
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Search chat astrologers…"
+      />
       <CashbackBanner variant="light" />
 
       {/* Ongoing chats only (calls have separate history) */}

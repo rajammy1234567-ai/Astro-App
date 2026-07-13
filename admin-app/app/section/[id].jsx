@@ -65,6 +65,9 @@ export default function SectionScreen() {
     if (section?.mode === 'payouts' || id === 'payouts') {
       router.replace('/section/payouts');
     }
+    if (section?.mode === 'analytics' || id === 'analytics') {
+      router.replace('/section/analytics');
+    }
   }, [section, router, id]);
 
   if (!section) {
@@ -75,7 +78,7 @@ export default function SectionScreen() {
     );
   }
 
-  if (section.mode === 'applications' || section.mode === 'payouts') {
+  if (section.mode === 'applications' || section.mode === 'payouts' || section.mode === 'analytics') {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />

@@ -2,25 +2,44 @@ const Astrologer = require('../models/Astrologer');
 const AstrologerReview = require('../models/AstrologerReview');
 const { formatPublicAstrologer } = require('../utils/astrologerHelpers');
 
-// List: all published (not blocked). Online first is done client-side / sort.
-// Previously only isOnline:true — empty list jab koi online na ho.
+// Published + not blocked
 const listFilter = { isPublished: true, isBlocked: { $ne: true } };
 const profileFilter = { isPublished: true, isBlocked: { $ne: true } };
 
 const sortOnlineFirst = { isOnline: -1, rating: -1 };
 
+/**
+ * Chat list: only those who turned Chat Online ON (and capability chatEnabled).
+ * Call list: only those who turned Call Online ON.
+ * Master isOnline = chatOnline || callOnline.
+ */
 const getAstrologers = async (req, res) => {
   try {
     const filter = { ...listFilter };
-    if (req.query.type === 'chat') filter.chatEnabled = true;
-    if (req.query.type === 'call') filter.callEnabled = true;
+    // type filter applied after base query via $and when needed
     if (req.query.filter === 'new') filter.isNew = true;
-    // Optional: only online when client asks
     if (req.query.online === '1' || req.query.online === 'true') {
       filter.isOnline = true;
     }
     if (req.query.search) {
       filter.name = { $regex: req.query.search, $options: 'i' };
+    }
+
+    if (req.query.type === 'chat') {
+      filter.chatEnabled = { $ne: false };
+      filter.$or = [
+        { chatOnline: true },
+        { chatOnline: { $exists: false }, isOnline: true },
+        { chatOnline: null, isOnline: true },
+      ];
+    }
+    if (req.query.type === 'call') {
+      filter.callEnabled = { $ne: false };
+      filter.$or = [
+        { callOnline: true },
+        { callOnline: { $exists: false }, isOnline: true },
+        { callOnline: null, isOnline: true },
+      ];
     }
 
     const astrologers = await Astrologer.find(filter)
@@ -34,9 +53,15 @@ const getAstrologers = async (req, res) => {
 
 const getChatList = async (req, res) => {
   try {
+    // Chat Online ON — or legacy isOnline if chatOnline not set yet
     const astrologers = await Astrologer.find({
       ...listFilter,
-      chatEnabled: true,
+      chatEnabled: { $ne: false },
+      $or: [
+        { chatOnline: true },
+        { chatOnline: { $exists: false }, isOnline: true },
+        { chatOnline: null, isOnline: true },
+      ],
     })
       .select('-password')
       .sort(sortOnlineFirst);
@@ -48,9 +73,15 @@ const getChatList = async (req, res) => {
 
 const getCallList = async (req, res) => {
   try {
+    // Call Online ON — or legacy isOnline if callOnline not set yet
     const astrologers = await Astrologer.find({
       ...listFilter,
-      callEnabled: true,
+      callEnabled: { $ne: false },
+      $or: [
+        { callOnline: true },
+        { callOnline: { $exists: false }, isOnline: true },
+        { callOnline: null, isOnline: true },
+      ],
     })
       .select('-password')
       .sort(sortOnlineFirst);

@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAstrologers } from '../redux/astrologerSlice';
 import { fetchBlogs } from '../redux/blogSlice';
 import { fetchProducts } from '../redux/storeSlice';
 import { newsApi } from '../services/newsApi';
+
+const STALE_MS = 45000; // don't refetch home every focus within 45s
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -15,7 +17,6 @@ const formatDate = (dateStr) => {
   });
 };
 
-/** Online first, then rating, then name — never hide offline on home */
 function sortAstrologers(list = []) {
   return [...list].sort((a, b) => {
     if (!!b.isOnline !== !!a.isOnline) return b.isOnline ? 1 : -1;
@@ -33,6 +34,7 @@ export function useHomeData() {
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsError, setNewsError] = useState(null);
+  const lastFetch = useRef(0);
 
   const loadNews = useCallback(() => {
     setNewsLoading(true);
@@ -55,16 +57,26 @@ export function useHomeData() {
       .finally(() => setNewsLoading(false));
   }, []);
 
-  const refresh = useCallback(() => {
-    dispatch(fetchAstrologers());
-    dispatch(fetchBlogs());
-    dispatch(fetchProducts());
-    loadNews();
-  }, [dispatch, loadNews]);
+  const refresh = useCallback(
+    (force = false) => {
+      const now = Date.now();
+      if (!force && lastFetch.current && now - lastFetch.current < STALE_MS) {
+        // Still refresh news lightly only if empty
+        if (!news.length) loadNews();
+        return;
+      }
+      lastFetch.current = now;
+      dispatch(fetchAstrologers());
+      dispatch(fetchBlogs());
+      dispatch(fetchProducts());
+      loadNews();
+    },
+    [dispatch, loadNews, news.length]
+  );
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
+      refresh(false);
     }, [refresh])
   );
 
@@ -78,24 +90,29 @@ export function useHomeData() {
   const connectionError = storeError || blogError || newsError || astroError;
 
   return {
-    // Show all published astrologers (online first) so home never looks empty
     astrologers: sortAstrologers(astrologers || []),
     blogs: mappedBlogs,
     products: products || [],
     news,
     loading: astroLoading || blogLoading || storeLoading || newsLoading,
     connectionError,
-    refresh,
+    refresh: () => refresh(true),
   };
 }
 
 export function useAstrologers(type) {
   const dispatch = useDispatch();
   const { list, loading, error } = useSelector((s) => s.astrologer);
+  const last = useRef({ type: null, at: 0 });
 
-  useEffect(() => {
-    dispatch(fetchAstrologers(type ? { type } : {}));
-  }, [dispatch, type]);
+  useFocusEffect(
+    useCallback(() => {
+      const now = Date.now();
+      if (last.current.type === type && now - last.current.at < STALE_MS) return;
+      last.current = { type, at: now };
+      dispatch(fetchAstrologers(type ? { type } : {}));
+    }, [dispatch, type])
+  );
 
   const filtered = (list || []).filter((a) => {
     if (type === 'chat') return a.chatEnabled !== false;
@@ -104,7 +121,6 @@ export function useAstrologers(type) {
   });
 
   return {
-    // Prefer online but still show offline (with wait) so lists work offline too
     astrologers: sortAstrologers(filtered),
     loading,
     error,

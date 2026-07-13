@@ -3,8 +3,14 @@ const Astrologer = require('../models/Astrologer');
 
 const getFollowing = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('following');
-    res.json(user?.following || []);
+    const user = await User.findById(req.user._id).populate({
+      path: 'following',
+      select: '-password',
+      match: { isBlocked: { $ne: true } },
+    });
+    // Filter nulls (deleted/blocked) and return clean list
+    const list = (user?.following || []).filter(Boolean);
+    res.json(list);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

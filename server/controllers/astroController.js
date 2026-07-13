@@ -25,18 +25,22 @@ const toPublicProfile = (astro) => ({
   pricePerMin: astro.pricePerMin,
   pricingPackages: normalizePackages(astro.pricingPackages, astro.pricePerMin),
   gallery: astro.gallery || [],
-  isOnline: astro.isOnline,
+  isOnline: !!astro.isOnline,
+  chatOnline: !!(astro.chatOnline ?? astro.isOnline),
+  callOnline: !!(astro.callOnline ?? astro.isOnline),
   isVerified: astro.isVerified,
   isPublished: astro.isPublished,
   approvedViaApplication: astro.approvedViaApplication,
   experience: astro.experience,
   orders: astro.orders,
   languages: astro.languages,
-  chatEnabled: astro.chatEnabled,
-  callEnabled: astro.callEnabled,
+  chatEnabled: astro.chatEnabled !== false,
+  callEnabled: astro.callEnabled !== false,
   pendingHeld: astro.pendingHeld || 0,
   availableBalance: astro.availableBalance || 0,
   totalReleased: astro.totalReleased || 0,
+  totalOnlineSeconds: astro.totalOnlineSeconds || 0,
+  onlineSince: astro.onlineSince || null,
 });
 
 const login = async (req, res) => {
@@ -189,12 +193,71 @@ const updateProfile = async (req, res) => {
   }
 };
 
+/**
+ * Toggle availability.
+ * Body can be:
+ *  { isOnline: true/false }  — both chat+call
+ *  { chatOnline: true/false }
+ *  { callOnline: true/false }
+ * User list only shows chatOnline on chat tab and callOnline on call tab.
+ */
 const toggleOnline = async (req, res) => {
   try {
     const astrologer = await Astrologer.findById(req.astrologer._id);
-    astrologer.isOnline = req.body.isOnline ?? !astrologer.isOnline;
+    if (!astrologer) return res.status(404).json({ message: 'Not found' });
+
+    const prevOnline = !!(astrologer.chatOnline || astrologer.callOnline || astrologer.isOnline);
+    const now = new Date();
+
+    // Accumulate online time when going fully offline
+    const flushOnlineTime = () => {
+      if (astrologer.onlineSince) {
+        const add = Math.max(
+          0,
+          Math.floor((now.getTime() - new Date(astrologer.onlineSince).getTime()) / 1000)
+        );
+        astrologer.totalOnlineSeconds = (astrologer.totalOnlineSeconds || 0) + add;
+        astrologer.onlineSince = null;
+      }
+    };
+
+    if (req.body.chatOnline !== undefined || req.body.callOnline !== undefined) {
+      if (req.body.chatOnline !== undefined) {
+        astrologer.chatOnline = !!req.body.chatOnline && astrologer.chatEnabled !== false;
+      }
+      if (req.body.callOnline !== undefined) {
+        astrologer.callOnline = !!req.body.callOnline && astrologer.callEnabled !== false;
+      }
+    } else if (req.body.isOnline !== undefined) {
+      const on = !!req.body.isOnline;
+      astrologer.chatOnline = on && astrologer.chatEnabled !== false;
+      astrologer.callOnline = on && astrologer.callEnabled !== false;
+    } else {
+      // toggle master
+      const on = !prevOnline;
+      astrologer.chatOnline = on && astrologer.chatEnabled !== false;
+      astrologer.callOnline = on && astrologer.callEnabled !== false;
+    }
+
+    const nextOnline = !!(astrologer.chatOnline || astrologer.callOnline);
+    astrologer.isOnline = nextOnline;
+
+    if (prevOnline && !nextOnline) {
+      flushOnlineTime();
+    } else if (!prevOnline && nextOnline) {
+      astrologer.onlineSince = now;
+    } else if (nextOnline && !astrologer.onlineSince) {
+      astrologer.onlineSince = now;
+    }
+
     await astrologer.save();
-    res.json({ isOnline: astrologer.isOnline });
+    res.json({
+      isOnline: astrologer.isOnline,
+      chatOnline: astrologer.chatOnline,
+      callOnline: astrologer.callOnline,
+      totalOnlineSeconds: astrologer.totalOnlineSeconds,
+      onlineSince: astrologer.onlineSince,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

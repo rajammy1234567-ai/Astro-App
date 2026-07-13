@@ -1,4 +1,4 @@
-import { View, TextInput, StyleSheet, Platform } from 'react-native';
+import { View, TextInput, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 
@@ -7,6 +7,9 @@ export default function SearchBar({
   onChangeText,
   placeholder = 'Search astrologers…',
   style,
+  onSubmitEditing,
+  onFocus,
+  autoFocus = false,
 }) {
   return (
     <View style={[styles.container, style]}>
@@ -19,7 +22,17 @@ export default function SearchBar({
         placeholderTextColor={COLORS.textLight}
         returnKeyType="search"
         clearButtonMode="while-editing"
+        onSubmitEditing={onSubmitEditing}
+        onFocus={onFocus}
+        autoFocus={autoFocus}
+        autoCorrect={false}
+        autoCapitalize="none"
       />
+      {value ? (
+        <TouchableOpacity onPress={() => onChangeText?.('')} hitSlop={8}>
+          <Ionicons name="close-circle" size={18} color={COLORS.textLight} />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -44,6 +57,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
       },
       android: { elevation: 1 },
+      default: {},
     }),
   },
   icon: { marginRight: 8 },

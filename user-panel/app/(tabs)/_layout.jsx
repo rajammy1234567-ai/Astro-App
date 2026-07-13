@@ -8,7 +8,8 @@ import { TAB_BAR_BASE, tabBarBottomInset } from '../../utils/layout';
 function TabIcon({ name, color, focused }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconFocused]}>
-      <Ionicons name={name} size={focused ? 22 : 21} color={color} />
+      <Ionicons name={name} size={focused ? 22 : 20} color={color} />
+      {focused ? <View style={styles.focusDot} /> : null}
     </View>
   );
 }
@@ -16,7 +17,8 @@ function TabIcon({ name, color, focused }) {
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const bottomPad = tabBarBottomInset(insets);
-  const barHeight = TAB_BAR_BASE + bottomPad;
+  // Slightly roomier for labels + icons without clipping on Android 3-btn nav
+  const barHeight = TAB_BAR_BASE + bottomPad + (Platform.OS === 'android' ? 2 : 0);
 
   return (
     <Tabs
@@ -28,33 +30,37 @@ export default function TabsLayout() {
           borderTopWidth: StyleSheet.hairlineWidth,
           height: barHeight,
           paddingBottom: bottomPad,
-          paddingTop: 6,
-          // Keep bar above system gestures / 3-button nav
+          paddingTop: Platform.OS === 'ios' ? 6 : 8,
           position: 'absolute',
           left: 0,
           right: 0,
           bottom: 0,
-          elevation: 12,
-          shadowColor: '#000',
-          shadowOpacity: Platform.OS === 'ios' ? 0.08 : 0.15,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: -2 },
+          elevation: 14,
+          shadowColor: '#1E1033',
+          shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0.18,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: -3 },
         },
         tabBarItemStyle: {
           paddingVertical: 2,
+          minHeight: 48,
         },
         tabBarActiveTintColor: COLORS.bannerDark,
         tabBarInactiveTintColor: COLORS.textLight,
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '700',
+          fontWeight: '800',
+          marginTop: 1,
           marginBottom: Platform.OS === 'ios' ? 0 : 2,
+          letterSpacing: 0.2,
         },
         tabBarHideOnKeyboard: true,
-        // Space so list content is not hidden under absolute tab bar
+        // Keep content background consistent under absolute tab bar
         sceneStyle: {
           backgroundColor: COLORS.cream,
         },
+        // Avoid jumpy transitions on web
+        animation: Platform.OS === 'web' ? 'none' : undefined,
       }}
     >
       <Tabs.Screen
@@ -105,11 +111,18 @@ const styles = StyleSheet.create({
   iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 36,
-    height: 28,
-    borderRadius: 10,
+    width: 40,
+    height: 30,
+    borderRadius: 12,
   },
   iconFocused: {
-    backgroundColor: 'rgba(30,16,51,0.08)',
+    backgroundColor: 'rgba(253,185,19,0.18)',
+  },
+  focusDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
+    marginTop: 2,
   },
 });

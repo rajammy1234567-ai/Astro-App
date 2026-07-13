@@ -59,11 +59,18 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <AppHeader showLang onMenuPress={() => setDrawerOpen(true)} />
+      <AppHeader
+        showLang
+        showSearch
+        onMenuPress={() => setDrawerOpen(true)}
+        onSearchPress={() => router.push('/search')}
+      />
       <SearchBar
         value={search}
         onChangeText={setSearch}
         placeholder="Search astrologers, kundli, remedies…"
+        onFocus={() => router.push({ pathname: '/search', params: { q: search } })}
+        onSubmitEditing={() => router.push({ pathname: '/search', params: { q: search } })}
       />
 
       <ScrollView
@@ -95,14 +102,24 @@ export default function HomeScreen() {
                   : 'Verified experts ready to guide you'}
               </Text>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push('/(tabs)/chat')}
-              style={styles.seeAllBtn}
-            >
-              <Text style={styles.seeAll}>View All</Text>
-              <Ionicons name="chevron-forward" size={14} color={COLORS.link} />
-            </TouchableOpacity>
+            <View style={styles.seeAllRow}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push('/following')}
+                style={styles.followLink}
+              >
+                <Ionicons name="heart" size={14} color={COLORS.error} />
+                <Text style={styles.followLinkText}>Following</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push('/(tabs)/chat')}
+                style={styles.seeAllBtn}
+              >
+                <Text style={styles.seeAll}>View All</Text>
+                <Ionicons name="chevron-forward" size={14} color={COLORS.link} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {loading && !featured.length ? (
@@ -172,6 +189,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontWeight: '500',
   },
+  seeAllRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  followLink: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  followLinkText: { fontSize: 12, fontWeight: '700', color: COLORS.error },
   seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   seeAll: { fontSize: 13, fontWeight: '700', color: COLORS.link },
   astroScroll: {

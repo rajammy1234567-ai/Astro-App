@@ -75,8 +75,11 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const setOnline = async (isOnline) => {
-    await api.put('/online', { isOnline });
+  /** @param {boolean|{isOnline?:boolean,chatOnline?:boolean,callOnline?:boolean}} payload */
+  const setOnline = async (payload) => {
+    const body =
+      typeof payload === 'boolean' ? { isOnline: payload } : payload || {};
+    await api.put('/online', body);
     await refreshProfile();
   };
 

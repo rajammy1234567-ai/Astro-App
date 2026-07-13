@@ -104,10 +104,13 @@ export default function AstrologerDetailsScreen() {
   };
 
   const openBooking = (bookingType) => {
-    if (!astro.isOnline) {
+    const chatOk = astro.chatOnline ?? astro.isOnline;
+    const callOk = astro.callOnline ?? astro.isOnline;
+    const ok = bookingType === 'call' ? callOk : chatOk;
+    if (!ok) {
       Alert.alert(
-        'Astrologer Offline',
-        'Chat/Call tabhi hoga jab yeh astrologer apne partner app me Online ON karega.'
+        bookingType === 'call' ? 'Call Offline' : 'Chat Offline',
+        `Yeh astrologer ne ${bookingType === 'call' ? 'Call' : 'Chat'} Online band rakha hai.`
       );
       return;
     }
@@ -151,9 +154,25 @@ export default function AstrologerDetailsScreen() {
         <View style={styles.card}>
           <RemoteImage uri={astro.image} type="astrologer" style={styles.avatar} fallbackIcon="person" iconSize={40} />
           <View style={styles.onlineRow}>
-            <View style={[styles.onlineDot, !astro.isOnline && { backgroundColor: COLORS.textLight }]} />
-            <Text style={[styles.onlineText, !astro.isOnline && { color: COLORS.textLight }]}>
-              {astro.isOnline ? 'Online Now' : 'Offline'}
+            <View
+              style={[
+                styles.onlineDot,
+                !(astro.chatOnline || astro.callOnline || astro.isOnline) && {
+                  backgroundColor: COLORS.textLight,
+                },
+              ]}
+            />
+            <Text
+              style={[
+                styles.onlineText,
+                !(astro.chatOnline || astro.callOnline || astro.isOnline) && {
+                  color: COLORS.textLight,
+                },
+              ]}
+            >
+              {astro.chatOnline || astro.callOnline || astro.isOnline
+                ? `Online${astro.chatOnline ? ' · Chat' : ''}${astro.callOnline ? ' · Call' : ''}`
+                : 'Offline'}
             </Text>
           </View>
           <View style={styles.nameRow}>

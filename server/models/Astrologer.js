@@ -18,7 +18,16 @@ const astrologerSchema = new mongoose.Schema(
     }],
     gallery: [{ type: String }],
     originalPrice: { type: Number },
+    /** Master online (true if chatOnline OR callOnline) */
     isOnline: { type: Boolean, default: false },
+    /** Available specifically for chat requests (user chat list) */
+    chatOnline: { type: Boolean, default: false },
+    /** Available specifically for call requests (user call list) */
+    callOnline: { type: Boolean, default: false },
+    /** When last went online (any mode) — for online-time tracking */
+    onlineSince: { type: Date, default: null },
+    /** Cumulative seconds spent Online on the app */
+    totalOnlineSeconds: { type: Number, default: 0 },
     isLive: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: true },
     isNew: { type: Boolean, default: false },
@@ -28,6 +37,7 @@ const astrologerSchema = new mongoose.Schema(
     badge: { type: String },
     waitTime: { type: String },
     specialOffer: { type: Boolean, default: false },
+    /** Capability flags (admin can disable service type permanently) */
     chatEnabled: { type: Boolean, default: true },
     callEnabled: { type: Boolean, default: true },
     isPublished: { type: Boolean, default: false },

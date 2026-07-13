@@ -19,23 +19,47 @@ const createSession = async (req, res) => {
     const { astrologerId, type = 'chat', minutes = 1, birthDetails: bodyBirth } = req.body;
     const sessionType = type === 'call' ? 'call' : 'chat';
 
-    // Fresh read — must be published, not blocked, and self-signed Online
+    // Fresh read — published, not blocked, and online for THIS mode only
     const astrologer = await Astrologer.findById(astrologerId);
     if (!astrologer || astrologer.isBlocked || !astrologer.isPublished) {
       return res.status(404).json({ message: 'Astrologer not found or not available' });
     }
-    if (!astrologer.isOnline) {
-      return res.status(400).json({
-        message: 'Astrologer is offline. Chat/Call only when they switch Online.',
-        code: 'ASTRO_OFFLINE',
-      });
+
+    if (sessionType === 'chat') {
+      if (astrologer.chatEnabled === false) {
+        return res.status(400).json({ message: 'Astrologer not available for chat' });
+      }
+      if (!astrologer.chatOnline && !astrologer.isOnline) {
+        return res.status(400).json({
+          message: 'Astrologer is offline for chat. Jab woh Chat Online kare tab request bhejo.',
+          code: 'ASTRO_CHAT_OFFLINE',
+        });
+      }
+      // Prefer explicit chatOnline; legacy: isOnline alone allowed only if chatOnline not false
+      if (astrologer.chatOnline === false) {
+        return res.status(400).json({
+          message: 'Astrologer ne Chat Online band rakha hai. Sirf call available ho sakti hai.',
+          code: 'ASTRO_CHAT_OFFLINE',
+        });
+      }
     }
 
-    if (sessionType === 'chat' && !astrologer.chatEnabled) {
-      return res.status(400).json({ message: 'Astrologer not available for chat' });
-    }
-    if (sessionType === 'call' && !astrologer.callEnabled) {
-      return res.status(400).json({ message: 'Astrologer not available for call' });
+    if (sessionType === 'call') {
+      if (astrologer.callEnabled === false) {
+        return res.status(400).json({ message: 'Astrologer not available for call' });
+      }
+      if (astrologer.callOnline === false) {
+        return res.status(400).json({
+          message: 'Astrologer ne Call Online band rakha hai. Sirf chat available ho sakti hai.',
+          code: 'ASTRO_CALL_OFFLINE',
+        });
+      }
+      if (!astrologer.callOnline && !astrologer.isOnline) {
+        return res.status(400).json({
+          message: 'Astrologer is offline for call.',
+          code: 'ASTRO_CALL_OFFLINE',
+        });
+      }
     }
 
     // Birth chart details — required for every consultation

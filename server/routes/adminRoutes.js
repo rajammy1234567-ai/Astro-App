@@ -9,6 +9,7 @@ router.post('/login', ctrl.login);
 router.post('/upload', adminProtect, uploadCtrl.uploadImage);
 router.get('/me', adminProtect, ctrl.getMe);
 router.get('/dashboard', adminProtect, ctrl.getDashboard);
+router.get('/analytics', adminProtect, ctrl.getAnalytics);
 
 router.get('/users', adminProtect, ctrl.listUsers);
 router.get('/users/:id/details', adminProtect, ctrl.getUserDetails);

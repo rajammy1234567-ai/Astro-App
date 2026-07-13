@@ -3,8 +3,8 @@ import { getApiBaseUrl } from '../utils/platform';
 import { storage } from '../utils/storage';
 
 const api = axios.create({
-  // Render free tier cold-start can take 30–60s
-  timeout: 45000,
+  // Keep snappy for mobile UX; long ops can override per-request
+  timeout: 18000,
   headers: { 'Content-Type': 'application/json' },
 });
 

@@ -111,10 +111,12 @@ export default function BookingScreen() {
       return;
     }
 
-    if (!astro.isOnline) {
+    const chatOk = astro.chatOnline ?? astro.isOnline;
+    const callOk = astro.callOnline ?? astro.isOnline;
+    if (isCall ? !callOk : !chatOk) {
       Alert.alert(
-        'Astrologer Offline',
-        'Chat/Call tabhi start hota hai jab astrologer apne app me Online ON kare. Baad me try karo.'
+        isCall ? 'Call Offline' : 'Chat Offline',
+        `Yeh astrologer ne ${isCall ? 'Call' : 'Chat'} Online band rakha hai. Sirf jis mode ka toggle ON ho wahi dikhega / book hoga.`
       );
       return;
     }
