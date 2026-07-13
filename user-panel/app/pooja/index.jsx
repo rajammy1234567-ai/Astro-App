@@ -62,8 +62,8 @@ export default function PoojaScreen() {
     Alert.alert(
       `Book ${item.serviceType === 'remedy' ? 'Remedy' : 'Pooja'}?`,
       `${item.name}\n${formatCurrency(item.price)}${
-        astroName ? `\nBy: ${astroName}` : ''
-      }\n\nPayment wallet se cut hoga aur platform (admin) ke paas securely hold hoga.`,
+        astroName ? `\nBy astrologer: ${astroName}` : ''
+      }\n\nPayment wallet se cut hoga. Amount platform (Admin) ke paas jata hai — service astrologer provide karega.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {

@@ -115,7 +115,8 @@ const myEarnings = async (req, res) => {
       totalReleased: astro?.totalReleased || 0,
       holdMonths: HOLD_MONTHS,
       defaultSharePercent: DEFAULT_ASTRO_SHARE,
-      note: 'Pooja/remedy payments go to admin first. Your share is released by admin after the hold period.',
+      note:
+        'Aap pooja/remedy post karte ho. User ka full payment pehle ADMIN ke paas jata hai. Admin apne hisaab se aapko amount dega — jab chahe jitna chahe.',
       heldOrders,
       recentPayouts: payouts,
     });
@@ -172,10 +173,11 @@ const adminListHeldOrders = async (req, res) => {
 };
 
 /**
- * Admin releases (part of) the astrologer's share from a held order.
- * Body: { amount?, percent?, force?, note? }
- * - percent: 0-100 of remaining share (default 100)
- * - force: allow before payoutEligibleAt
+ * Admin pays astrologer from held pooja/remedy money — full control.
+ * Body: { amount?, percent?, note? }
+ * - Default max = full order held amount still not released
+ * - percent is of remaining held (0–100)
+ * - Admin decides amount anytime (no forced wait)
  */
 const adminReleasePayout = async (req, res) => {
   try {
@@ -188,38 +190,33 @@ const adminReleasePayout = async (req, res) => {
       return res.status(400).json({ message: 'No astrologer linked to this order' });
     }
     if (order.payoutStatus === 'released') {
-      return res.status(400).json({ message: 'Already fully released' });
+      return res.status(400).json({ message: 'Already fully paid out from this order' });
     }
 
-    const remaining = Math.max(0, (order.astrologerShareAmount || 0) - (order.releasedToAstrologer || 0));
+    // Admin can pay any amount up to what user paid (held), not only "share %"
+    const held = Number(order.heldAmount || order.totalAmount || 0);
+    const already = Number(order.releasedToAstrologer || 0);
+    const remaining = Math.max(0, held - already);
     if (remaining <= 0) {
-      return res.status(400).json({ message: 'Nothing left to release' });
+      return res.status(400).json({ message: 'Nothing left to pay from this order' });
     }
 
     const now = new Date();
     const eligible = !order.payoutEligibleAt || now >= new Date(order.payoutEligibleAt);
-    const force = !!req.body.force;
-    if (!eligible && !force) {
-      return res.status(400).json({
-        message: `Payout eligible after ${order.payoutEligibleAt?.toISOString?.() || order.payoutEligibleAt}. Use force:true to release early.`,
-        payoutEligibleAt: order.payoutEligibleAt,
-        code: 'NOT_YET_ELIGIBLE',
-      });
-    }
 
     let amount = remaining;
-    if (req.body.amount != null) {
+    if (req.body.amount != null && req.body.amount !== '') {
       amount = Math.min(remaining, Math.max(0, Number(req.body.amount)));
-    } else if (req.body.percent != null) {
+    } else if (req.body.percent != null && req.body.percent !== '') {
       const pct = Math.min(100, Math.max(0, Number(req.body.percent)));
       amount = Math.round((remaining * pct) / 100);
     }
     if (amount <= 0) {
-      return res.status(400).json({ message: 'Release amount must be > 0' });
+      return res.status(400).json({ message: 'Pay amount must be > 0' });
     }
 
-    order.releasedToAstrologer = (order.releasedToAstrologer || 0) + amount;
-    if (order.releasedToAstrologer >= order.astrologerShareAmount) {
+    order.releasedToAstrologer = already + amount;
+    if (order.releasedToAstrologer >= held) {
       order.payoutStatus = 'released';
     } else {
       order.payoutStatus = 'partial';
@@ -227,9 +224,13 @@ const adminReleasePayout = async (req, res) => {
     if (req.body.note) order.payoutNote = String(req.body.note);
     await order.save();
 
+    // pendingHeld is a display estimate — never go negative
+    const astroDoc = await Astrologer.findById(order.astrologer).select('pendingHeld');
+    const pendingCut = Math.min(amount, Math.max(0, Number(astroDoc?.pendingHeld || 0)));
+
     await Astrologer.findByIdAndUpdate(order.astrologer, {
       $inc: {
-        pendingHeld: -amount,
+        pendingHeld: -pendingCut,
         availableBalance: amount,
         totalReleased: amount,
       },
@@ -239,8 +240,8 @@ const adminReleasePayout = async (req, res) => {
       order: order._id,
       astrologer: order.astrologer,
       amount,
-      percentOfShare: Math.round((amount / (order.astrologerShareAmount || amount)) * 100),
-      note: req.body.note || '',
+      percentOfShare: Math.round((amount / held) * 100),
+      note: req.body.note || 'Admin payout',
       earlyRelease: !eligible,
     });
 
@@ -249,7 +250,7 @@ const adminReleasePayout = async (req, res) => {
     );
 
     res.json({
-      message: `Released ₹${amount} to ${astro?.name || 'astrologer'}`,
+      message: `Admin ne ₹${amount} bhej diya ${astro?.name || 'astrologer'} ko`,
       order,
       payout,
       astrologer: astro,

@@ -1,12 +1,13 @@
 /**
  * Pooja / Remedy money flow:
- * 1. User pays full amount (wallet etc.)
- * 2. Full amount is held by admin/platform (fundsHeldByAdmin)
- * 3. Astrologer sees "pending" share (their %)
- * 4. After hold months (default 3), admin can release % to astrologer
+ * 1. Astrologer posts pooja/remedy from partner panel
+ * 2. User books & pays full amount
+ * 3. Full amount is held by ADMIN (fundsHeldByAdmin)
+ * 4. Admin decides how much / when to pay the astrologer (any amount/percent)
  */
 
 const HOLD_MONTHS = Number(process.env.PAYOUT_HOLD_MONTHS || 3);
+/** Suggested share for display only — admin can pay more or less */
 const DEFAULT_ASTRO_SHARE = Number(process.env.ASTRO_SERVICE_SHARE_PERCENT || 70);
 
 function addMonths(date, months) {

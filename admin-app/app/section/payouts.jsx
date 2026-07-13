@@ -26,8 +26,8 @@ export default function PayoutsScreen() {
   const [filter, setFilter] = useState('held');
   const [selected, setSelected] = useState(null);
   const [percent, setPercent] = useState('100');
+  const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [force, setForce] = useState(false);
   const [releasing, setReleasing] = useState(false);
 
   const load = useCallback(async () => {
@@ -51,25 +51,26 @@ export default function PayoutsScreen() {
   const openRelease = (order) => {
     setSelected(order);
     setPercent('100');
+    setAmount('');
     setNote('');
-    const eligible = !order.payoutEligibleAt || new Date() >= new Date(order.payoutEligibleAt);
-    setForce(!eligible);
   };
 
   const doRelease = async () => {
     if (!selected?._id) return;
     setReleasing(true);
     try {
-      const res = await api.post(`/payouts/${selected._id}/release`, {
-        percent: Number(percent) || 100,
-        note,
-        force,
-      });
-      Alert.alert('Released', res.message || 'Payout released to astrologer');
+      const body = { note: note || 'Admin payout', force: true };
+      if (amount && Number(amount) > 0) {
+        body.amount = Number(amount);
+      } else {
+        body.percent = Number(percent) || 100;
+      }
+      const res = await api.post(`/payouts/${selected._id}/release`, body);
+      Alert.alert('Paid', res.message || 'Amount sent to astrologer');
       setSelected(null);
       load();
     } catch (err) {
-      Alert.alert('Release failed', err.message || 'Could not release');
+      Alert.alert('Pay failed', err.message || 'Could not pay');
     } finally {
       setReleasing(false);
     }
@@ -86,10 +87,10 @@ export default function PayoutsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
           <Text style={styles.backText}>‹ Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>💰 Payouts Hold</Text>
+        <Text style={styles.title}>💰 Pooja / Remedy Money</Text>
         <Text style={styles.sub}>
-          Pooja & remedy money stays with admin first. After ~{data?.holdMonths || 3} months,
-          release the astrologer&apos;s share (%).
+          User ka full payment pehle ADMIN ke paas aata hai. Aap (admin) apne hisaab se
+          astrologer ko kitna / kab dena hai — yahan se pay karo (amount ya %).
         </Text>
       </View>
 
@@ -147,12 +148,8 @@ export default function PayoutsScreen() {
             <Text style={styles.empty}>No held pooja/remedy bookings in this filter.</Text>
           }
           renderItem={({ item }) => {
-            const remaining = Math.max(
-              0,
-              (item.astrologerShareAmount || 0) - (item.releasedToAstrologer || 0)
-            );
-            const eligible =
-              !item.payoutEligibleAt || new Date() >= new Date(item.payoutEligibleAt);
+            const held = item.heldAmount || item.totalAmount || 0;
+            const remaining = Math.max(0, held - (item.releasedToAstrologer || 0));
             return (
               <View style={styles.card}>
                 <View style={styles.cardTop}>
@@ -169,23 +166,19 @@ export default function PayoutsScreen() {
                 </View>
                 <Text style={styles.meta}>
                   {item.orderType?.toUpperCase()} · {item.user?.name || 'User'} ·{' '}
-                  {item.astrologer?.name || 'No astrologer'}
+                  {item.astrologer?.name || 'Platform'}
                 </Text>
                 <Text style={styles.meta}>
-                  Paid {fmt(item.totalAmount)} · Astro share {item.astrologerSharePercent}% ={' '}
-                  {fmt(item.astrologerShareAmount)} · Released {fmt(item.releasedToAstrologer)}
+                  User paid {fmt(held)} · Admin pe hold · Already paid to astro{' '}
+                  {fmt(item.releasedToAstrologer)}
                 </Text>
                 <Text style={styles.meta}>
-                  Eligible:{' '}
-                  {item.payoutEligibleAt
-                    ? new Date(item.payoutEligibleAt).toLocaleDateString()
-                    : '—'}{' '}
-                  {eligible ? '✓' : '(waiting)'}
+                  Left with admin to distribute: {fmt(remaining)}
                 </Text>
                 {remaining > 0 && item.astrologer ? (
                   <TouchableOpacity style={styles.releaseBtn} onPress={() => openRelease(item)}>
                     <Text style={styles.releaseBtnText}>
-                      Release to {item.astrologer?.name} · left {fmt(remaining)}
+                      Pay {item.astrologer?.name} · up to {fmt(remaining)}
                     </Text>
                   </TouchableOpacity>
                 ) : null}
@@ -198,11 +191,22 @@ export default function PayoutsScreen() {
       <Modal visible={!!selected} transparent animationType="slide">
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Release payout</Text>
+            <Text style={styles.modalTitle}>Pay astrologer</Text>
             <Text style={styles.modalSub}>
               {selected?.poojaName} → {selected?.astrologer?.name}
+              {'\n'}User paid {fmt(selected?.heldAmount || selected?.totalAmount)} · Already paid out{' '}
+              {fmt(selected?.releasedToAstrologer)}
             </Text>
-            <Text style={styles.label}>% of remaining share</Text>
+            <Text style={styles.label}>Exact amount (₹) — optional</Text>
+            <TextInput
+              style={styles.input}
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="numeric"
+              placeholder="e.g. 500 (khali chhodo to % use hoga)"
+              placeholderTextColor={colors.textMuted}
+            />
+            <Text style={styles.label}>OR % of remaining held</Text>
             <TextInput
               style={styles.input}
               value={percent}
@@ -217,14 +221,12 @@ export default function PayoutsScreen() {
               value={note}
               onChangeText={setNote}
               multiline
-              placeholder="Monthly release…"
+              placeholder="e.g. March settlement…"
               placeholderTextColor={colors.textMuted}
             />
-            {force ? (
-              <Text style={styles.warn}>
-                ⚠ Not yet past hold date — this will be an early release.
-              </Text>
-            ) : null}
+            <Text style={styles.warn}>
+              Admin control: aap jitna chahe den — full payment pehle aapke paas hold hai.
+            </Text>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setSelected(null)}>
                 <Text style={styles.cancelText}>Cancel</Text>
@@ -234,7 +236,7 @@ export default function PayoutsScreen() {
                 onPress={doRelease}
                 disabled={releasing}
               >
-                <Text style={styles.okText}>{releasing ? '…' : 'Release'}</Text>
+                <Text style={styles.okText}>{releasing ? '…' : 'Pay now'}</Text>
               </TouchableOpacity>
             </View>
           </View>

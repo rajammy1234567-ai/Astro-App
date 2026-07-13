@@ -179,7 +179,7 @@ export default function Dashboard() {
         <View style={styles.moneyHint}>
           <Ionicons name="information-circle" size={16} color={COLORS.primary} />
           <Text style={styles.moneyHintText}>
-            Pooja/remedy ka full paisa pehle admin ke paas jata hai. Kuch mahine baad admin aapka % release karega.
+            Pooja/remedy aap post karte ho. User ka full paisa pehle ADMIN ke paas jata hai — admin apne hisaab se aapko dega.
           </Text>
         </View>
 
