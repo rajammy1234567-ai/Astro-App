@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS } from '../../constants/theme';
 import { TAB_BAR_BASE, tabBarBottomInset } from '../../utils/layout';
+import IncomingRequestPopup from '../../components/IncomingRequestPopup';
 
 function TabIcon({ name, focused, color }) {
   return (
@@ -35,7 +36,9 @@ export default function TabsLayout() {
   if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   return (
-    <Tabs
+    <>
+      <IncomingRequestPopup />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -111,6 +114,7 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+    </>
   );
 }
 

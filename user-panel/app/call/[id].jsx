@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { sessionApi } from '../../services/sessionApi';
 import agoraService, { isAgoraNativeAvailable } from '../../services/agoraService';
 import { COLORS } from '../../constants/colors';
+import { getSocket } from '../../utils/socket';
+import { useAuth } from '../../hooks/useAuth';
 
 function formatDuration(s) {
   const m = Math.floor(s / 60);
@@ -23,6 +25,7 @@ function formatDuration(s) {
 export default function UserCallScreen() {
   const { id, type, astroName } = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
   const isVideo = type === 'video';
   const displayName = astroName || 'Astrologer';
 
@@ -65,6 +68,42 @@ export default function UserCallScreen() {
   }, [id, router]);
 
   useEffect(() => { loadSession(); }, [loadSession]);
+
+  // Socket signaling: notify astrologer of incoming call + faster accept/decline
+  useEffect(() => {
+    if (!session || !user?._id) return undefined;
+    if (['ended', 'rejected', 'active', 'paused'].includes(session.status)) return undefined;
+
+    const socket = getSocket();
+    socket.emit('join-user', user._id);
+    socket.emit('initiate-request', {
+      astroId: session.astrologer?._id || session.astrologer,
+      userId: user._id,
+      sessionId: id,
+      type: 'call',
+      userName: user.name || 'User',
+    });
+
+    const handleAccepted = (data) => {
+      if (String(data.sessionId) === String(id)) {
+        loadSession();
+      }
+    };
+    const handleDeclined = (data) => {
+      if (String(data.sessionId) === String(id)) {
+        setCallState('ended');
+        Alert.alert('Call Declined', 'Astrologer ne call decline kar diya hai.');
+        setTimeout(() => router.back(), 2000);
+      }
+    };
+
+    socket.on('request-accepted', handleAccepted);
+    socket.on('request-declined', handleDeclined);
+    return () => {
+      socket.off('request-accepted', handleAccepted);
+      socket.off('request-declined', handleDeclined);
+    };
+  }, [session?.status, session?.astrologer, user?._id, user?.name, id, router, loadSession]);
 
   // Poll until astrologer accepts
   useEffect(() => {

@@ -23,6 +23,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchWallet } from '../../redux/walletSlice';
 import { COLORS } from '../../constants/colors';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { getSocket } from '../../utils/socket';
+import { useAuth } from '../../hooks/useAuth';
 
 function formatTime(seconds) {
   const s = Math.max(0, Math.floor(seconds));
@@ -35,6 +37,7 @@ export default function UserChatScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
+  const { user } = useAuth();
   const balance = useSelector((s) => s.wallet.balance);
   const listRef = useRef(null);
   const [session, setSession] = useState(null);
@@ -76,6 +79,38 @@ export default function UserChatScreen() {
     const interval = setInterval(load, 2500);
     return () => clearInterval(interval);
   }, [load, session?.status]);
+
+  // Socket signaling for pending chat requests (notify astrologer popup)
+  useEffect(() => {
+    if (!session || !user?._id || session.status !== 'pending') return undefined;
+
+    const socket = getSocket();
+    socket.emit('join-user', user._id);
+    socket.emit('initiate-request', {
+      astroId: session.astrologer?._id || session.astrologer,
+      userId: user._id,
+      sessionId: id,
+      type: 'chat',
+      userName: user.name || 'User',
+    });
+
+    const handleAccepted = (data) => {
+      if (String(data.sessionId) === String(id)) load();
+    };
+    const handleDeclined = (data) => {
+      if (String(data.sessionId) === String(id)) {
+        Alert.alert('Request Declined', 'Astrologer ne chat request decline kar di hai.');
+        setTimeout(() => router.back(), 2000);
+      }
+    };
+
+    socket.on('request-accepted', handleAccepted);
+    socket.on('request-declined', handleDeclined);
+    return () => {
+      socket.off('request-accepted', handleAccepted);
+      socket.off('request-declined', handleDeclined);
+    };
+  }, [session?.status, session?.astrologer, user?._id, user?.name, id, load, router]);
 
   const billing = session?.billing;
   const isCall = session?.type === 'call';
