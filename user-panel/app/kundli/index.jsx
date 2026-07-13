@@ -14,6 +14,9 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import BirthDatePicker from '../../components/common/BirthDatePicker';
+import BirthTimePicker from '../../components/common/BirthTimePicker';
+import PlacePicker from '../../components/common/PlacePicker';
 import { COLORS } from '../../constants/colors';
 import { SHADOW_MD } from '../../constants/theme';
 import { useAuth } from '../../hooks/useAuth';
@@ -168,10 +171,10 @@ export default function KundliScreen() {
 
             <View style={styles.form}>
               <Input label="Full Name" value={name} onChangeText={setName} placeholder="Enter your name" />
-              <Input label="Date of Birth" value={dob} onChangeText={setDob} placeholder="DD/MM/YYYY" />
-              {age != null && <Text style={styles.ageLine}>Age: {age} years</Text>}
-              <Input label="Time of Birth" value={tob} onChangeText={setTob} placeholder="HH:MM AM/PM" />
-              <Input label="Place of Birth" value={pob} onChangeText={setPob} placeholder="City, State" />
+              <BirthDatePicker value={dob} onChange={setDob} />
+              {age != null ? <Text style={styles.ageLine}>Age: {age} years (auto)</Text> : null}
+              <BirthTimePicker value={tob} onChange={setTob} />
+              <PlacePicker value={pob} onChange={setPob} />
               <Button
                 title={loading ? 'Generating…' : 'Generate Actual Kundli'}
                 onPress={() => tryGenerate(false)}

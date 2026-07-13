@@ -26,4 +26,12 @@ export const astroApi = {
   createReview: (data) => api.post('/reviews', data),
   updateReview: (id, data) => api.put(`/reviews/${id}`, data),
   deleteReview: (id) => api.delete(`/reviews/${id}`),
+
+  /** Pooja & remedies you offer to users */
+  getServices: () => api.get('/services'),
+  createService: (data) => api.post('/services', data),
+  updateService: (id, data) => api.put(`/services/${id}`, data),
+  deleteService: (id) => api.delete(`/services/${id}`),
+  getServiceBookings: () => api.get('/service-bookings'),
+  getEarnings: () => api.get('/earnings'),
 };

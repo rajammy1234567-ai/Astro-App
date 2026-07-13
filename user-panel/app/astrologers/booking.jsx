@@ -112,7 +112,10 @@ export default function BookingScreen() {
     }
 
     if (!astro.isOnline) {
-      Alert.alert('Offline', 'This astrologer is offline. Please try again later.');
+      Alert.alert(
+        'Astrologer Offline',
+        'Chat/Call tabhi start hota hai jab astrologer apne app me Online ON kare. Baad me try karo.'
+      );
       return;
     }
 
@@ -159,24 +162,41 @@ export default function BookingScreen() {
         birthDetails,
       });
       const sessionId = res.session?._id;
+      const status = res.session?.status;
+
+      // Always open waiting room — live chat/call only after astrologer accepts
       if (sessionId) {
-        if (isCall) {
-          router.replace({
-            pathname: `/call/${sessionId}`,
-            params: {
-              type: 'voice',
-              astroName: astro?.name || 'Astrologer',
-              ...(typeof returnTo === 'string' && returnTo ? { returnTo } : {}),
+        Alert.alert(
+          'Request Sent',
+          status === 'active'
+            ? 'Session is live.'
+            : `${isCall ? 'Call' : 'Chat'} request bhej diya. Jab ${astro?.name || 'astrologer'} Accept karega tab session start hoga.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (isCall) {
+                  router.replace({
+                    pathname: `/call/${sessionId}`,
+                    params: {
+                      type: 'voice',
+                      astroName: astro?.name || 'Astrologer',
+                      ...(typeof returnTo === 'string' && returnTo ? { returnTo } : {}),
+                    },
+                  });
+                } else {
+                  const chatRoute =
+                    typeof returnTo === 'string' && returnTo
+                      ? { pathname: `/chat/${sessionId}`, params: { returnTo } }
+                      : `/chat/${sessionId}`;
+                  router.replace(chatRoute);
+                }
+              },
             },
-          });
-        } else {
-          const chatRoute = typeof returnTo === 'string' && returnTo
-            ? { pathname: `/chat/${sessionId}`, params: { returnTo } }
-            : `/chat/${sessionId}`;
-          router.replace(chatRoute);
-        }
+          ]
+        );
       } else {
-        Alert.alert('Request Sent', res.message || 'The session will start when the astrologer accepts.');
+        Alert.alert('Request Sent', res.message || 'Wait for astrologer to accept.');
         router.back();
       }
     } catch (err) {

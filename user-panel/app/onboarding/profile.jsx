@@ -28,6 +28,9 @@ import {
   hasCompleteProfile,
 } from '../../utils/birthDetails';
 import { COLORS } from '../../constants/colors';
+import BirthDatePicker from '../../components/common/BirthDatePicker';
+import BirthTimePicker from '../../components/common/BirthTimePicker';
+import PlacePicker from '../../components/common/PlacePicker';
 
 const { width: W } = Dimensions.get('window');
 
@@ -384,15 +387,10 @@ export default function OnboardingProfileScreen() {
 
             {current.field === 'dob' && (
               <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>DD / MM / YYYY</Text>
-                <TextInput
-                  style={styles.input}
+                <BirthDatePicker
+                  label="Date of Birth"
                   value={dateOfBirth}
-                  onChangeText={setDateOfBirth}
-                  placeholder="15/08/1995"
-                  placeholderTextColor={COLORS.textLight}
-                  keyboardType="numbers-and-punctuation"
-                  autoFocus
+                  onChange={setDateOfBirth}
                 />
                 <View style={styles.ageCard}>
                   <Ionicons name="hourglass-outline" size={20} color={COLORS.primary} />
@@ -401,7 +399,7 @@ export default function OnboardingProfileScreen() {
                     <Text style={styles.ageValue}>
                       {age != null
                         ? `${age} years old`
-                        : 'Auto-calculated when you enter DOB'}
+                        : 'Auto-calculated when you pick DOB'}
                     </Text>
                   </View>
                 </View>
@@ -410,31 +408,23 @@ export default function OnboardingProfileScreen() {
 
             {current.field === 'tob' && (
               <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>Time of Birth</Text>
-                <TextInput
-                  style={styles.input}
+                <BirthTimePicker
+                  label="Time of Birth"
                   value={timeOfBirth}
-                  onChangeText={setTimeOfBirth}
-                  placeholder="10:30 AM"
-                  placeholderTextColor={COLORS.textLight}
-                  autoFocus
+                  onChange={setTimeOfBirth}
                 />
                 <Text style={styles.tip}>
-                  💡 If you do not know the exact time, use an approximate time from mother or hospital records.
+                  💡 Exact time best hai; nahi pata ho to approximate time choose karo.
                 </Text>
               </View>
             )}
 
             {current.field === 'pob' && (
               <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>City, State</Text>
-                <TextInput
-                  style={styles.input}
+                <PlacePicker
+                  label="Place of Birth"
                   value={placeOfBirth}
-                  onChangeText={setPlaceOfBirth}
-                  placeholder="e.g. Jaipur, Rajasthan"
-                  placeholderTextColor={COLORS.textLight}
-                  autoFocus
+                  onChange={setPlaceOfBirth}
                 />
               </View>
             )}

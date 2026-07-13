@@ -1,18 +1,25 @@
-import { View, TextInput, StyleSheet } from 'react-native';
+import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 
-export default function SearchBar({ value, onChangeText, placeholder = 'Search', style }) {
+export default function SearchBar({
+  value,
+  onChangeText,
+  placeholder = 'Search astrologers…',
+  style,
+}) {
   return (
     <View style={[styles.container, style]}>
+      <Ionicons name="search" size={18} color={COLORS.textLight} style={styles.icon} />
       <TextInput
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={COLORS.textLight}
+        returnKeyType="search"
+        clearButtonMode="while-editing"
       />
-      <Ionicons name="search" size={20} color={COLORS.textLight} />
     </View>
   );
 }
@@ -23,17 +30,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: COLORS.borderLight,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 11 : 8,
     marginHorizontal: 14,
-    marginBottom: 10,
+    marginBottom: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#1E1033',
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+      },
+      android: { elevation: 1 },
+    }),
   },
+  icon: { marginRight: 8 },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: COLORS.text,
     padding: 0,
+    fontWeight: '500',
   },
 });

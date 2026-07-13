@@ -18,6 +18,9 @@ import { COLORS } from '../../constants/colors';
 import { SHADOW, SHADOW_MD } from '../../constants/theme';
 import { ageFromDob, parseDob, GENDER_OPTIONS } from '../../utils/birthDetails';
 import { formatPhone } from '../../utils/formatters';
+import BirthDatePicker from '../../components/common/BirthDatePicker';
+import BirthTimePicker from '../../components/common/BirthTimePicker';
+import PlacePicker from '../../components/common/PlacePicker';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -247,35 +250,14 @@ export default function EditProfileScreen() {
               Useful for consultations and free Kundli. You can update these anytime.
             </Text>
 
-            <Text style={styles.label}>Date of Birth (DD/MM/YYYY)</Text>
-            <TextInput
-              style={styles.input}
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-              placeholder="15/08/1995"
-              placeholderTextColor={COLORS.textLight}
-            />
+            <BirthDatePicker value={dateOfBirth} onChange={setDateOfBirth} />
             <Text style={styles.ageLine}>
-              Age: {age != null ? `${age} years (auto)` : '— enter DOB'}
+              Age: {age != null ? `${age} years (auto)` : '— select DOB from calendar'}
             </Text>
 
-            <Text style={styles.label}>Time of Birth</Text>
-            <TextInput
-              style={styles.input}
-              value={timeOfBirth}
-              onChangeText={setTimeOfBirth}
-              placeholder="10:30 AM"
-              placeholderTextColor={COLORS.textLight}
-            />
+            <BirthTimePicker value={timeOfBirth} onChange={setTimeOfBirth} />
 
-            <Text style={styles.label}>Place of Birth</Text>
-            <TextInput
-              style={styles.input}
-              value={placeOfBirth}
-              onChangeText={setPlaceOfBirth}
-              placeholder="City, State"
-              placeholderTextColor={COLORS.textLight}
-            />
+            <PlacePicker value={placeOfBirth} onChange={setPlaceOfBirth} />
 
             <Text style={styles.label}>Gender</Text>
             <View style={styles.genderRow}>

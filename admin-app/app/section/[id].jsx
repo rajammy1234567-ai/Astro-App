@@ -62,7 +62,10 @@ export default function SectionScreen() {
     if (section?.mode === 'applications') {
       router.replace('/section/astrologer-applications');
     }
-  }, [section, router]);
+    if (section?.mode === 'payouts' || id === 'payouts') {
+      router.replace('/section/payouts');
+    }
+  }, [section, router, id]);
 
   if (!section) {
     return (
@@ -72,7 +75,7 @@ export default function SectionScreen() {
     );
   }
 
-  if (section.mode === 'applications') {
+  if (section.mode === 'applications' || section.mode === 'payouts') {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />

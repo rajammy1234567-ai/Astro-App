@@ -34,6 +34,9 @@ const toPublicProfile = (astro) => ({
   languages: astro.languages,
   chatEnabled: astro.chatEnabled,
   callEnabled: astro.callEnabled,
+  pendingHeld: astro.pendingHeld || 0,
+  availableBalance: astro.availableBalance || 0,
+  totalReleased: astro.totalReleased || 0,
 });
 
 const login = async (req, res) => {
@@ -200,15 +203,26 @@ const toggleOnline = async (req, res) => {
 const getDashboard = async (req, res) => {
   try {
     const astroId = req.astrologer._id;
-    const [pendingCount, activeChats, totalChats, recentChats] = await Promise.all([
-      Chat.countDocuments({ astrologer: astroId, status: 'pending' }),
-      Chat.countDocuments({ astrologer: astroId, status: { $in: ['active', 'paused'] } }),
-      Chat.countDocuments({ astrologer: astroId }),
-      Chat.find({ astrologer: astroId })
-        .sort({ updatedAt: -1 })
-        .limit(10)
-        .populate('user', 'name phone email avatar'),
-    ]);
+    const Pooja = require('../models/Pooja');
+    const Order = require('../models/Order');
+    const [pendingCount, activeChats, totalChats, recentChats, myServices, serviceBookings] =
+      await Promise.all([
+        Chat.countDocuments({ astrologer: astroId, status: 'pending' }),
+        Chat.countDocuments({ astrologer: astroId, status: { $in: ['active', 'paused'] } }),
+        Chat.countDocuments({ astrologer: astroId }),
+        Chat.find({ astrologer: astroId })
+          .sort({ updatedAt: -1 })
+          .limit(10)
+          .populate('user', 'name phone email avatar'),
+        Pooja.countDocuments({ astrologer: astroId, isActive: true }),
+        Order.countDocuments({
+          astrologer: astroId,
+          orderType: { $in: ['pooja', 'remedy'] },
+        }),
+      ]);
+
+    const pendingHeld = req.astrologer.pendingHeld || 0;
+    const availableBalance = req.astrologer.availableBalance || 0;
 
     res.json({
       stats: {
@@ -219,9 +233,17 @@ const getDashboard = async (req, res) => {
         pendingRequests: pendingCount,
         activeChats,
         totalChats,
-        earnings: (req.astrologer.orders || 0) * (req.astrologer.pricePerMin || 0),
+        myServices,
+        serviceBookings,
+        pendingHeld,
+        availableBalance,
+        totalReleased: req.astrologer.totalReleased || 0,
+        // Available (released by admin) + chat estimate for display
+        earnings: availableBalance,
       },
       recentChats,
+      moneyNote:
+        'Pooja/remedy payments go to admin first. Your share appears in Pending, then Available after admin release (usually after a few months).',
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -280,6 +302,13 @@ const getChatById = async (req, res) => {
 
 const acceptChat = async (req, res) => {
   try {
+    // Must be signed Online in partner panel to accept
+    if (!req.astrologer.isOnline) {
+      return res.status(400).json({
+        message: 'Pehle Online ON karo (partner panel toggle). Offline pe chat/call accept nahi hota.',
+      });
+    }
+
     const chat = await Chat.findOne({
       _id: req.params.id,
       astrologer: req.astrologer._id,

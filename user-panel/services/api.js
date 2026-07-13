@@ -23,7 +23,7 @@ api.interceptors.response.use(
     if (!error.response) {
       const base = error.config?.baseURL || getApiBaseUrl();
       return Promise.reject({
-        message: `Could not connect to the server (${base}). Is the Render URL correct? On the free plan the first request may take 30–60s. EXPO_PUBLIC_API_URL must be baked into the APK.`,
+        message: `Server se connect nahi hua (${base}). PC pe server chalu karo: cd server → npm run dev. Phir Expo restart: npx expo start -c`,
         networkError: true,
         baseURL: base,
       });

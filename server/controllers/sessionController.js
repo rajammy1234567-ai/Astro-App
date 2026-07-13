@@ -14,19 +14,22 @@ const {
   buildKundliIntroMessage,
 } = require('../utils/birthDetails');
 
-const bookableFilter = {
-  isPublished: true,
-  isOnline: true,
-  isBlocked: { $ne: true },
-};
-
 const createSession = async (req, res) => {
   try {
     const { astrologerId, type = 'chat', minutes = 1, birthDetails: bodyBirth } = req.body;
     const sessionType = type === 'call' ? 'call' : 'chat';
 
-    const astrologer = await Astrologer.findOne({ _id: astrologerId, ...bookableFilter });
-    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found or offline' });
+    // Fresh read — must be published, not blocked, and self-signed Online
+    const astrologer = await Astrologer.findById(astrologerId);
+    if (!astrologer || astrologer.isBlocked || !astrologer.isPublished) {
+      return res.status(404).json({ message: 'Astrologer not found or not available' });
+    }
+    if (!astrologer.isOnline) {
+      return res.status(400).json({
+        message: 'Astrologer is offline. Chat/Call only when they switch Online.',
+        code: 'ASTRO_OFFLINE',
+      });
+    }
 
     if (sessionType === 'chat' && !astrologer.chatEnabled) {
       return res.status(400).json({ message: 'Astrologer not available for chat' });

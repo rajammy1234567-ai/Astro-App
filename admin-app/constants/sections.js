@@ -8,6 +8,13 @@ export const SECTION_GROUPS = [
       { id: 'products', title: 'Products', icon: '🛍️', endpoint: '/products', mode: 'crud' },
       { id: 'orders', title: 'Orders', icon: '📦', endpoint: '/orders', mode: 'orders' },
       { id: 'transactions', title: 'Transactions', icon: '💳', endpoint: '/transactions', mode: 'readonly' },
+      {
+        id: 'payouts',
+        title: 'Payouts Hold',
+        icon: '💰',
+        endpoint: '/payouts',
+        mode: 'payouts',
+      },
     ],
   },
   {
@@ -15,7 +22,7 @@ export const SECTION_GROUPS = [
     items: [
       { id: 'blogs', title: 'Blogs', icon: '📝', endpoint: '/blogs', mode: 'crud' },
       { id: 'news', title: 'News', icon: '📰', endpoint: '/news', mode: 'crud' },
-      { id: 'poojas', title: 'Pooja Services', icon: '🪔', endpoint: '/poojas', mode: 'crud' },
+      { id: 'poojas', title: 'Pooja & Remedies', icon: '🪔', endpoint: '/poojas', mode: 'crud' },
       { id: 'testimonials', title: 'Testimonials', icon: '⭐', endpoint: '/testimonials', mode: 'crud' },
       { id: 'support-faqs', title: 'Support FAQs', icon: '❓', endpoint: '/support-faqs', mode: 'crud' },
       { id: 'free-services', title: 'Free Services', icon: '🎁', endpoint: '/free-services', mode: 'crud' },

@@ -105,7 +105,10 @@ export default function AstrologerDetailsScreen() {
 
   const openBooking = (bookingType) => {
     if (!astro.isOnline) {
-      Alert.alert('Offline', 'This astrologer is offline. Please try again later.');
+      Alert.alert(
+        'Astrologer Offline',
+        'Chat/Call tabhi hoga jab yeh astrologer apne partner app me Online ON karega.'
+      );
       return;
     }
     router.push({

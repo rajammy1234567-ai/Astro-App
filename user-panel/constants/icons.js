@@ -3,6 +3,8 @@ export const CATEGORY_ICONS = {
   kundli: 'chart-donut-variant',
   gemstones: 'diamond-stone',
   matching: 'heart-multiple',
+  panchang: 'calendar-month',
+  numerology: 'numeric',
   blog: 'book-open-page-variant',
 };
 

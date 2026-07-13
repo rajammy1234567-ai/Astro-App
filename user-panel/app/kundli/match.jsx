@@ -11,25 +11,25 @@ import Screen from '../../components/common/Screen';
 import Header from '../../components/common/Header';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import BirthDatePicker from '../../components/common/BirthDatePicker';
+import BirthTimePicker from '../../components/common/BirthTimePicker';
+import PlacePicker from '../../components/common/PlacePicker';
 import { COLORS } from '../../constants/colors';
 import { SHADOW_MD } from '../../constants/theme';
 import { matchKundli as localMatch } from '../../utils/vedic';
 import { parseDob } from '../../utils/birthDetails';
 import { kundliApi } from '../../services/kundliApi';
 
+const emptyPerson = () => ({
+  name: '',
+  dateOfBirth: '',
+  timeOfBirth: '10:00 AM',
+  placeOfBirth: 'New Delhi, Delhi',
+});
+
 export default function KundliMatchScreen() {
-  const [boy, setBoy] = useState({
-    name: '',
-    dateOfBirth: '',
-    timeOfBirth: '10:00 AM',
-    placeOfBirth: 'New Delhi',
-  });
-  const [girl, setGirl] = useState({
-    name: '',
-    dateOfBirth: '',
-    timeOfBirth: '10:00 AM',
-    placeOfBirth: 'New Delhi',
-  });
+  const [boy, setBoy] = useState(emptyPerson());
+  const [girl, setGirl] = useState(emptyPerson());
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +39,15 @@ export default function KundliMatchScreen() {
       return;
     }
     if (!parseDob(boy.dateOfBirth) || !parseDob(girl.dateOfBirth)) {
-      Alert.alert('DOB', 'Enter both dates of birth in DD/MM/YYYY format.');
+      Alert.alert('DOB', 'Please select date of birth for both partners.');
+      return;
+    }
+    if (!boy.timeOfBirth?.trim() || !girl.timeOfBirth?.trim()) {
+      Alert.alert('Time', 'Please select time of birth for both.');
+      return;
+    }
+    if (!boy.placeOfBirth?.trim() || !girl.placeOfBirth?.trim()) {
+      Alert.alert('Place', 'Please select place of birth for both.');
       return;
     }
 
@@ -51,7 +59,7 @@ export default function KundliMatchScreen() {
       } catch {
         res = localMatch(boy, girl);
         if (res?.ok === false) {
-          Alert.alert('Error', res.message);
+          Alert.alert('Error', res.message || 'Match failed');
           return;
         }
         res.source = 'local';
@@ -64,6 +72,9 @@ export default function KundliMatchScreen() {
     }
   };
 
+  const levelStyle =
+    result?.level && styles[`level_${result.level}`] ? styles[`level_${result.level}`] : null;
+
   return (
     <Screen edges={['left', 'right', 'bottom']} style={styles.screen}>
       <Header title="Kundli Matching" subtitle="Ashtakoot gun milan · Live API" />
@@ -71,8 +82,7 @@ export default function KundliMatchScreen() {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Match two kundlis</Text>
           <Text style={styles.heroSub}>
-            36-point Ashtakoot matching with Manglik / Nadi / Bhakoot checks — powered by live Vedic
-            API when available.
+            Calendar se DOB, clock se time, list se city choose karo — 36-point gun milan.
           </Text>
         </View>
 
@@ -81,26 +91,20 @@ export default function KundliMatchScreen() {
           <Input
             label="Name"
             value={boy.name}
-            onChangeText={(v) => setBoy({ ...boy, name: v })}
+            onChangeText={(v) => setBoy((p) => ({ ...p, name: v }))}
             placeholder="Name"
           />
-          <Input
-            label="Date of Birth"
+          <BirthDatePicker
             value={boy.dateOfBirth}
-            onChangeText={(v) => setBoy({ ...boy, dateOfBirth: v })}
-            placeholder="DD/MM/YYYY"
+            onChange={(v) => setBoy((p) => ({ ...p, dateOfBirth: v }))}
           />
-          <Input
-            label="Time of Birth"
+          <BirthTimePicker
             value={boy.timeOfBirth}
-            onChangeText={(v) => setBoy({ ...boy, timeOfBirth: v })}
-            placeholder="HH:MM AM/PM"
+            onChange={(v) => setBoy((p) => ({ ...p, timeOfBirth: v }))}
           />
-          <Input
-            label="Place of Birth"
+          <PlacePicker
             value={boy.placeOfBirth}
-            onChangeText={(v) => setBoy({ ...boy, placeOfBirth: v })}
-            placeholder="City"
+            onChange={(v) => setBoy((p) => ({ ...p, placeOfBirth: v }))}
           />
         </View>
 
@@ -109,26 +113,20 @@ export default function KundliMatchScreen() {
           <Input
             label="Name"
             value={girl.name}
-            onChangeText={(v) => setGirl({ ...girl, name: v })}
+            onChangeText={(v) => setGirl((p) => ({ ...p, name: v }))}
             placeholder="Name"
           />
-          <Input
-            label="Date of Birth"
+          <BirthDatePicker
             value={girl.dateOfBirth}
-            onChangeText={(v) => setGirl({ ...girl, dateOfBirth: v })}
-            placeholder="DD/MM/YYYY"
+            onChange={(v) => setGirl((p) => ({ ...p, dateOfBirth: v }))}
           />
-          <Input
-            label="Time of Birth"
+          <BirthTimePicker
             value={girl.timeOfBirth}
-            onChangeText={(v) => setGirl({ ...girl, timeOfBirth: v })}
-            placeholder="HH:MM AM/PM"
+            onChange={(v) => setGirl((p) => ({ ...p, timeOfBirth: v }))}
           />
-          <Input
-            label="Place of Birth"
+          <PlacePicker
             value={girl.placeOfBirth}
-            onChangeText={(v) => setGirl({ ...girl, placeOfBirth: v })}
-            placeholder="City"
+            onChange={(v) => setGirl((p) => ({ ...p, placeOfBirth: v }))}
           />
         </View>
 
@@ -137,53 +135,53 @@ export default function KundliMatchScreen() {
           onPress={runMatch}
           disabled={loading}
         />
-        {loading && (
+        {loading ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator color={COLORS.primary} />
             <Text style={styles.loadingText}>Running Ashtakoot + dosha checks…</Text>
           </View>
-        )}
+        ) : null}
 
-        {result && (
+        {result ? (
           <>
-            <View style={[styles.scoreCard, styles[`level_${result.level}`] || null]}>
+            <View style={[styles.scoreCard, levelStyle]}>
               <Text style={styles.scoreBig}>
                 {result.total}/{result.maxScore || 36}
               </Text>
               <Text style={styles.scorePct}>{result.percent}% match</Text>
-              <Text style={styles.verdict}>{result.verdict}</Text>
-              <Text style={styles.summary}>{result.summary}</Text>
-              {result.source === 'astrologyapi' && (
+              <Text style={styles.verdict}>{result.verdict || ''}</Text>
+              {result.summary ? <Text style={styles.summary}>{result.summary}</Text> : null}
+              {result.source === 'astrologyapi' ? (
                 <Text style={styles.liveTag}>✓ Live AstrologyAPI</Text>
-              )}
+              ) : null}
             </View>
 
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Partners</Text>
               <Text style={styles.line}>
-                {result.boy?.name}: Moon {result.boy?.moon?.name || '—'} ·{' '}
+                {result.boy?.name || 'Boy'}: Moon {result.boy?.moon?.name || '—'} ·{' '}
                 {result.boy?.nakshatra?.name || '—'}
               </Text>
               <Text style={styles.line}>
-                {result.girl?.name}: Moon {result.girl?.moon?.name || '—'} ·{' '}
+                {result.girl?.name || 'Girl'}: Moon {result.girl?.moon?.name || '—'} ·{' '}
                 {result.girl?.nakshatra?.name || '—'}
               </Text>
-              {!!result.manglikNote && (
+              {result.manglikNote ? (
                 <Text style={[styles.line, { marginTop: 8 }]}>{result.manglikNote}</Text>
-              )}
+              ) : null}
             </View>
 
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Ashtakoot breakdown</Text>
               {(result.kootas || []).map((k) => (
-                <View key={k.key || k.label} style={styles.kootRow}>
+                <View key={String(k.key || k.label)} style={styles.kootRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.kootLabel}>{k.label}</Text>
-                    {(k.male || k.female) && (
+                    <Text style={styles.kootLabel}>{k.label || ''}</Text>
+                    {k.male || k.female ? (
                       <Text style={styles.kootSub}>
                         {k.male || '—'} / {k.female || '—'}
                       </Text>
-                    )}
+                    ) : null}
                   </View>
                   <Text style={styles.kootScore}>
                     {k.score}/{k.max}
@@ -192,7 +190,7 @@ export default function KundliMatchScreen() {
               ))}
             </View>
           </>
-        )}
+        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -255,25 +253,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.borderLight,
   },
-  cardTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: COLORS.textLight,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  line: { fontSize: 13, color: COLORS.text, fontWeight: '600', marginTop: 4, lineHeight: 19 },
+  cardTitle: { fontSize: 14, fontWeight: '800', color: COLORS.text, marginBottom: 8 },
+  line: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, fontWeight: '500' },
   kootRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-    gap: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.borderLight,
   },
   kootLabel: { fontSize: 13, fontWeight: '700', color: COLORS.text },
-  kootSub: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2 },
-  kootScore: { fontSize: 13, fontWeight: '800', color: COLORS.primaryDark },
+  kootSub: { fontSize: 11, color: COLORS.textLight, marginTop: 2 },
+  kootScore: { fontSize: 14, fontWeight: '800', color: COLORS.bannerDark },
 });

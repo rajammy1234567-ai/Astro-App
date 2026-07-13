@@ -1,13 +1,30 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { astrologerApi } from '../services/astrologerApi';
 
-export const fetchAstrologers = createAsyncThunk('astrologer/fetchAll', async (params) => {
-  return astrologerApi.getAll(params);
-});
+export const fetchAstrologers = createAsyncThunk(
+  'astrologer/fetchAll',
+  async (params, { rejectWithValue }) => {
+    try {
+      return await astrologerApi.getAll(params);
+    } catch (err) {
+      return rejectWithValue({
+        message: err?.message || 'Could not load astrologers',
+        networkError: !!err?.networkError,
+      });
+    }
+  }
+);
 
-export const fetchAstrologerById = createAsyncThunk('astrologer/fetchById', async (id) => {
-  return astrologerApi.getById(id);
-});
+export const fetchAstrologerById = createAsyncThunk(
+  'astrologer/fetchById',
+  async (id, { rejectWithValue }) => {
+    try {
+      return await astrologerApi.getById(id);
+    } catch (err) {
+      return rejectWithValue({ message: err?.message || 'Could not load profile' });
+    }
+  }
+);
 
 const astrologerSlice = createSlice({
   name: 'astrologer',
@@ -34,7 +51,7 @@ const astrologerSlice = createSlice({
       })
       .addCase(fetchAstrologers.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload?.message || action.error?.message || 'Load failed';
         state.list = [];
       })
       .addCase(fetchAstrologerById.fulfilled, (state, action) => {

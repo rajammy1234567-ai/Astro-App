@@ -117,7 +117,9 @@ export default function UserChatScreen() {
   const isPending = session?.status === 'pending';
   const isEnded = session?.status === 'ended' || session?.status === 'rejected';
   const isPaused = billing?.requiresPayment || session?.status === 'paused';
-  const canSend = billing?.canChat && !isPending && !isEnded;
+  // Messages only after astrologer accepts (status active) — not while pending
+  const isLiveChat = session?.status === 'active';
+  const canSend = !!(billing?.canChat && isLiveChat && !isPending && !isEnded && !isPaused);
 
   const handleSend = async () => {
     if (!message.trim() || !canSend) return;
@@ -288,18 +290,18 @@ export default function UserChatScreen() {
         <Text style={styles.rateText}>₹{session.pricePerMin}/min</Text>
       </View>
 
-      {isPending && (
+      {isPending ? (
         <View style={styles.waitingBox}>
           <ActivityIndicator color={COLORS.primary} />
-          <Text style={styles.waitingTitle}>Request sent</Text>
+          <Text style={styles.waitingTitle}>Waiting for astrologer</Text>
           <Text style={styles.waitingSub}>
-            Chat will start when {astroName} accepts — first 1 minute is FREE!
+            Chat tab start hogi jab {astroName} apne panel me Online ho aur aapki request Accept kare.
           </Text>
           <Text style={styles.waitingHint}>
-            Going back does not end the chat. You can return from Profile → Chat & Call History.
+            Pehle 1 minute FREE after accept. Back karne se request cancel nahi hoti — History se wapas aa sakte ho.
           </Text>
         </View>
-      )}
+      ) : null}
 
       <FlatList
         ref={listRef}

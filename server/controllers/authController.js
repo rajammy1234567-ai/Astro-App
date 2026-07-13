@@ -28,21 +28,38 @@ const formatUser = (user) => {
   };
 };
 
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
 
+const ensureWallet = async (userId) => {
+  let wallet = await Wallet.findOne({ user: userId });
+  if (!wallet) {
+    wallet = await Wallet.create({ user: userId, balance: 100 });
+  }
+  return wallet;
+};
+
+/**
+ * Create or complete email account.
+ * Does NOT set phone (avoids sparse unique index collisions on null).
+ */
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
+    const { name, email, password } = req.body || {};
+    const normalizedEmail = String(email || '')
+      .trim()
+      .toLowerCase();
 
     if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
       return res.status(400).json({ message: 'Valid email address required' });
     }
-    if (!name?.trim() || name.trim().length < 2) {
+    if (!name || String(name).trim().length < 2) {
       return res.status(400).json({ message: 'Name is required (min 2 characters)' });
     }
-    if (!password || password.length < 6) {
+    if (!password || String(password).length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'Server JWT_SECRET missing — check server/.env' });
     }
 
     const existing = await User.findOne({ email: normalizedEmail });
@@ -54,56 +71,81 @@ const register = async (req, res) => {
     let isNewUser = false;
 
     if (existing) {
-      existing.name = name.trim();
-      existing.password = password;
+      existing.name = String(name).trim();
+      existing.password = String(password);
       existing.isVerified = true;
-      // clear empty phone so unique sparse index never blocks
-      if (!existing.phone) existing.phone = undefined;
+      // Never keep null phone — breaks unique sparse index
+      if (existing.phone == null || existing.phone === '') {
+        existing.phone = undefined;
+        existing.set('phone', undefined);
+      }
       await existing.save();
       user = existing;
+      await ensureWallet(user._id);
     } else {
       isNewUser = true;
-      user = await User.create({
+      user = new User({
         email: normalizedEmail,
-        name: name.trim(),
-        password,
+        name: String(name).trim(),
+        password: String(password),
         isVerified: true,
       });
-      const walletExists = await Wallet.findOne({ user: user._id });
-      if (!walletExists) {
-        await Wallet.create({ user: user._id, balance: 100 });
-      }
+      // Explicitly do not set phone field
+      user.phone = undefined;
+      await user.save();
+      await ensureWallet(user._id);
     }
 
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ message: 'Server JWT_SECRET missing — check server/.env' });
+    // Re-fetch clean document
+    user = await User.findById(user._id);
+    if (!user) {
+      return res.status(500).json({ message: 'Account created but could not load user. Please login.' });
     }
 
     const token = generateToken(user._id);
-    res.status(201).json({
+    return res.status(201).json({
       token,
       user: formatUser(user),
       isNewUser,
+      message: isNewUser ? 'Account created successfully' : 'Account ready',
     });
   } catch (error) {
-    console.error('register error:', error.code || '', error.message);
-    // Duplicate key (email/phone unique)
+    console.error('register error:', error.code || '', error.message, error.stack);
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern || {})[0] || 'email';
+      if (field === 'phone') {
+        // Self-heal null-phone index pollution and ask to retry
+        try {
+          await User.updateMany(
+            { $or: [{ phone: null }, { phone: '' }] },
+            { $unset: { phone: 1 } }
+          );
+        } catch {
+          /* ignore */
+        }
+        return res.status(400).json({
+          message: 'Could not create account due to a data conflict. Please try again once.',
+        });
+      }
       return res.status(400).json({
-        message: field === 'email'
-          ? 'Email already registered. Please login.'
-          : `Could not create account (${field} already in use). Please try a different email.`,
+        message:
+          field === 'email'
+            ? 'Email already registered. Please login.'
+            : `Could not create account (${field} already in use).`,
       });
     }
-    res.status(500).json({ message: error.message || 'Registration failed' });
+    return res.status(500).json({
+      message: error.message || 'Registration failed. Please try again.',
+    });
   }
 };
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
+    const { email, password } = req.body || {};
+    const normalizedEmail = String(email || '')
+      .trim()
+      .toLowerCase();
 
     if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
       return res.status(400).json({ message: 'Valid email address required' });
@@ -117,25 +159,33 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     if (user.isBlocked) {
-      return res.status(403).json({ message: user.blockReason || 'Your account has been blocked by admin.' });
+      return res
+        .status(403)
+        .json({ message: user.blockReason || 'Your account has been blocked by admin.' });
+    }
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'Server JWT_SECRET missing' });
     }
 
     const token = generateToken(user._id);
-    res.json({
+    return res.json({
       token,
       user: formatUser(user),
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('login error:', error.message);
+    return res.status(500).json({ message: error.message || 'Login failed' });
   }
 };
 
 const sendOtp = async (req, res) => {
   try {
-    const { phone, email, loginType } = req.body;
+    const { phone, email, loginType } = req.body || {};
 
     if (loginType === 'email' || email) {
-      const normalizedEmail = email?.trim().toLowerCase();
+      const normalizedEmail = String(email || '')
+        .trim()
+        .toLowerCase();
       if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
         return res.status(400).json({ message: 'Valid email address required' });
       }
@@ -152,12 +202,12 @@ const sendOtp = async (req, res) => {
       });
     }
 
-    if (!phone || phone.length !== 10) {
+    if (!phone || String(phone).length !== 10) {
       return res.status(400).json({ message: 'Valid 10-digit phone required' });
     }
 
     const result = await sendPhoneOtp(phone);
-    res.json({
+    return res.json({
       message: 'OTP sent successfully',
       loginType: 'phone',
       phone,
@@ -165,13 +215,13 @@ const sendOtp = async (req, res) => {
     });
   } catch (error) {
     console.error('sendOtp error:', error.message);
-    res.status(500).json({ message: error.message || 'Failed to send OTP' });
+    return res.status(500).json({ message: error.message || 'Failed to send OTP' });
   }
 };
 
 const verifyOtp = async (req, res) => {
   try {
-    const { phone, email, otp, loginType, name } = req.body;
+    const { phone, email, otp, loginType, name } = req.body || {};
     if (!otp) {
       return res.status(400).json({ message: 'OTP required' });
     }
@@ -180,7 +230,9 @@ const verifyOtp = async (req, res) => {
     let type;
 
     if (loginType === 'email' || email) {
-      const normalizedEmail = email?.trim().toLowerCase();
+      const normalizedEmail = String(email || '')
+        .trim()
+        .toLowerCase();
       if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
         return res.status(400).json({ message: 'Valid email required' });
       }
@@ -206,12 +258,21 @@ const verifyOtp = async (req, res) => {
       user = await User.findOne({ email: identifier });
       if (!user) {
         isNewUser = true;
-        user = await User.create({
+        user = new User({
           email: identifier,
-          name: name?.trim() || identifier.split('@')[0],
+          name: name?.trim() || 'User',
           isVerified: true,
         });
-        await Wallet.create({ user: user._id, balance: 100 });
+        user.phone = undefined;
+        await user.save();
+        await ensureWallet(user._id);
+      } else {
+        user.isVerified = true;
+        if (name?.trim()) user.name = name.trim();
+        if (user.phone == null || user.phone === '') {
+          user.phone = undefined;
+        }
+        await user.save();
       }
     } else {
       user = await User.findOne({ phone: identifier });
@@ -222,35 +283,44 @@ const verifyOtp = async (req, res) => {
           name: name?.trim() || 'User',
           isVerified: true,
         });
-        await Wallet.create({ user: user._id, balance: 100 });
+        await ensureWallet(user._id);
+      } else {
+        user.isVerified = true;
+        if (name?.trim()) user.name = name.trim();
+        await user.save();
       }
     }
 
+    if (user.isBlocked) {
+      return res
+        .status(403)
+        .json({ message: user.blockReason || 'Your account has been blocked by admin.' });
+    }
+
     const token = generateToken(user._id);
-    res.json({
+    return res.json({
       token,
       user: formatUser(user),
       isNewUser,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('verifyOtp error:', error.code || '', error.message);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Account already exists. Please login.' });
+    }
+    return res.status(500).json({ message: error.message || 'OTP verification failed' });
   }
 };
 
 const logout = async (req, res) => {
-  res.json({ message: 'Logged out successfully' });
+  res.json({ message: 'Logged out' });
 };
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-following');
-    const wallet = await Wallet.findOne({ user: req.user._id });
-    const orderCount = await require('../models/Order').countDocuments({ user: req.user._id });
-    res.json({
-      ...formatUser(user),
-      balance: wallet?.balance ?? 0,
-      orderCount,
-    });
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(formatUser(user));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -258,35 +328,51 @@ const getMe = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, email, dateOfBirth, timeOfBirth, placeOfBirth, gender, avatar } = req.body;
     const user = await User.findById(req.user._id);
-    if (name !== undefined) {
-      const trimmed = String(name || '').trim();
-      if (trimmed.length < 2) {
-        return res.status(400).json({ message: 'Name min 2 characters' });
-      }
-      user.name = trimmed;
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const { name, avatar, dateOfBirth, timeOfBirth, placeOfBirth, gender, phone, email } =
+      req.body || {};
+
+    if (name != null) user.name = String(name).trim();
+    if (avatar != null) user.avatar = avatar;
+    if (dateOfBirth != null) user.dateOfBirth = String(dateOfBirth).trim();
+    if (timeOfBirth != null) user.timeOfBirth = String(timeOfBirth).trim();
+    if (placeOfBirth != null) user.placeOfBirth = String(placeOfBirth).trim();
+    if (gender != null) {
+      const g = String(gender).trim().toLowerCase();
+      if (['male', 'female', 'other', ''].includes(g)) user.gender = g;
     }
-    if (email !== undefined) {
-      const normalizedEmail = email?.trim().toLowerCase();
-      if (normalizedEmail && !isValidEmail(normalizedEmail)) {
-        return res.status(400).json({ message: 'Valid email required' });
-      }
-      user.email = normalizedEmail || undefined;
+    if (phone != null && String(phone).trim()) {
+      user.phone = String(phone).trim();
     }
-    if (dateOfBirth !== undefined) user.dateOfBirth = String(dateOfBirth || '').trim();
-    if (timeOfBirth !== undefined) user.timeOfBirth = String(timeOfBirth || '').trim();
-    if (placeOfBirth !== undefined) user.placeOfBirth = String(placeOfBirth || '').trim();
-    if (gender !== undefined) {
-      const g = String(gender || '').trim().toLowerCase();
-      user.gender = ['male', 'female', 'other', ''].includes(g) ? g : '';
+    if (email != null && String(email).trim()) {
+      user.email = String(email).trim().toLowerCase();
     }
-    if (avatar !== undefined) user.avatar = avatar;
+
+    // Avoid null phone pollution
+    if (user.phone == null || user.phone === '') {
+      user.phone = undefined;
+      user.set('phone', undefined);
+    }
+
     await user.save();
     res.json(formatUser(user));
   } catch (error) {
+    console.error('updateProfile error:', error.code || '', error.message);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Email or phone already in use' });
+    }
     res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = { register, login, sendOtp, verifyOtp, logout, getMe, updateProfile };
+module.exports = {
+  register,
+  login,
+  sendOtp,
+  verifyOtp,
+  logout,
+  getMe,
+  updateProfile,
+};

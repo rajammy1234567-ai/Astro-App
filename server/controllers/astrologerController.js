@@ -2,9 +2,12 @@ const Astrologer = require('../models/Astrologer');
 const AstrologerReview = require('../models/AstrologerReview');
 const { formatPublicAstrologer } = require('../utils/astrologerHelpers');
 
-// List: only online + published. Detail: published even if offline (profile/follow).
-const listFilter = { isPublished: true, isOnline: true, isBlocked: { $ne: true } };
+// List: all published (not blocked). Online first is done client-side / sort.
+// Previously only isOnline:true — empty list jab koi online na ho.
+const listFilter = { isPublished: true, isBlocked: { $ne: true } };
 const profileFilter = { isPublished: true, isBlocked: { $ne: true } };
+
+const sortOnlineFirst = { isOnline: -1, rating: -1 };
 
 const getAstrologers = async (req, res) => {
   try {
@@ -12,11 +15,17 @@ const getAstrologers = async (req, res) => {
     if (req.query.type === 'chat') filter.chatEnabled = true;
     if (req.query.type === 'call') filter.callEnabled = true;
     if (req.query.filter === 'new') filter.isNew = true;
+    // Optional: only online when client asks
+    if (req.query.online === '1' || req.query.online === 'true') {
+      filter.isOnline = true;
+    }
     if (req.query.search) {
       filter.name = { $regex: req.query.search, $options: 'i' };
     }
 
-    const astrologers = await Astrologer.find(filter).select('-password').sort({ rating: -1 });
+    const astrologers = await Astrologer.find(filter)
+      .select('-password')
+      .sort(sortOnlineFirst);
     res.json(astrologers.map((a) => formatPublicAstrologer(a)));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -28,7 +37,9 @@ const getChatList = async (req, res) => {
     const astrologers = await Astrologer.find({
       ...listFilter,
       chatEnabled: true,
-    }).select('-password').sort({ rating: -1 });
+    })
+      .select('-password')
+      .sort(sortOnlineFirst);
     res.json(astrologers.map((a) => formatPublicAstrologer(a)));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -40,7 +51,9 @@ const getCallList = async (req, res) => {
     const astrologers = await Astrologer.find({
       ...listFilter,
       callEnabled: true,
-    }).select('-password').sort({ rating: -1 });
+    })
+      .select('-password')
+      .sort(sortOnlineFirst);
     res.json(astrologers.map((a) => formatPublicAstrologer(a)));
   } catch (error) {
     res.status(500).json({ message: error.message });

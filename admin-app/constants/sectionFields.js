@@ -15,7 +15,8 @@ export const SECTION_DEFAULTS = {
   news: { title: '', source: '', image: '', isPublished: true },
   poojas: {
     name: '', description: '', duration: '2 hours', price: 1500,
-    icon: 'flame-outline', isActive: true,
+    icon: 'flame-outline', serviceType: 'pooja',
+    astrologerSharePercent: 70, isActive: true,
   },
   testimonials: {
     name: '', location: '', quote: '', rating: 5,
@@ -83,9 +84,15 @@ export const SECTION_FIELDS = {
   ],
   poojas: [
     { key: 'name', label: 'Name', required: true },
+    { key: 'serviceType', label: 'Type', type: 'select', options: [
+      { value: 'pooja', label: 'Pooja' },
+      { value: 'remedy', label: 'Remedy' },
+    ]},
     { key: 'duration', label: 'Duration' },
     { key: 'price', label: 'Price (₹)', type: 'number', required: true },
+    { key: 'astrologerSharePercent', label: 'Astrologer share % (held by admin first)', type: 'number' },
     { key: 'icon', label: 'Icon (Ionicons)' },
+    { key: 'image', label: 'Image', type: 'image' },
     { key: 'description', label: 'Description', type: 'textarea' },
     { key: 'isActive', label: 'Active', type: 'checkbox', checkboxLabel: 'Available for booking' },
   ],

@@ -28,19 +28,19 @@ export const FILTERS = [
 
 export const ASTROLOGERS = [
   {
-    _id: '1', name: 'Nilanjik', image: 'https://i.pravatar.cc/150?img=11',
+    _id: '1', name: 'Nilanjik', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop',
     specialty: 'Vedic', languages: ['Hindi', 'English'], experience: 12, orders: 5000,
     rating: 4.9, pricePerMin: 50, isOnline: true, isVerified: true, badge: 'Celebrity',
     chatEnabled: true, callEnabled: true,
   },
   {
-    _id: '2', name: 'Himant', image: 'https://i.pravatar.cc/150?img=12',
+    _id: '2', name: 'Himant', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop',
     specialty: 'Vedic, Tarot', languages: ['Hindi', 'English'], experience: 8, orders: 3200,
     rating: 4.8, pricePerMin: 31, isOnline: true, isVerified: true, badge: 'Celebrity',
     chatEnabled: true, callEnabled: true,
   },
   {
-    _id: '3', name: 'Vishvesh', image: 'https://i.pravatar.cc/150?img=15',
+    _id: '3', name: 'Vishvesh', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop',
     specialty: 'Vedic', languages: ['Hindi'], experience: 15, orders: 8900,
     rating: 4.9, pricePerMin: 23, isOnline: true, isVerified: true, badge: 'Top Choice',
     chatEnabled: true, callEnabled: true,

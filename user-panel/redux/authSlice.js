@@ -6,9 +6,14 @@ const persistAuth = async (response) => {
   if (!response?.token) {
     throw { message: 'Server did not return a token. Please try again.' };
   }
-  await storage.set('token', response.token);
-  if (response.user) {
-    await storage.set('user', response.user);
+  try {
+    await storage.set('token', response.token);
+    if (response.user) {
+      await storage.set('user', response.user);
+    }
+  } catch (e) {
+    // Still allow login if storage fails (private mode / quota)
+    console.warn('persistAuth storage warning', e?.message);
   }
   return response;
 };

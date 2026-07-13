@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useScreenInsets } from '../../hooks/useScreenInsets';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
@@ -9,9 +9,7 @@ import { COLORS } from '../../constants/colors';
 export default function AppHeader({
   showSearch = false,
   showLang = false,
-  /** Opens full chat history (all past + ongoing chats) */
   showChat = false,
-  /** Opens full call history (duration summary) */
   showCallHistory = false,
   onMenuPress,
   onSearchPress,
@@ -29,8 +27,21 @@ export default function AppHeader({
           onPress={onMenuPress || (() => router.push('/profile'))}
           activeOpacity={0.7}
         >
-          <RemoteImage uri={user?.avatar} type="avatar" style={styles.avatar} fallbackIcon="person" iconSize={18} />
-          <Text style={styles.greeting}>Hi {displayName}</Text>
+          <View style={styles.avatarRing}>
+            <RemoteImage
+              uri={user?.avatar}
+              type="avatar"
+              style={styles.avatar}
+              fallbackIcon="person"
+              iconSize={18}
+            />
+          </View>
+          <View>
+            <Text style={styles.hello}>Namaste 🙏</Text>
+            <Text style={styles.greeting} numberOfLines={1}>
+              Hi {displayName}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <View style={styles.right}>
@@ -39,7 +50,7 @@ export default function AppHeader({
             onPress={() => router.push('/wallet/add-money')}
             activeOpacity={0.8}
           >
-            <Ionicons name="wallet-outline" size={14} color={COLORS.text} />
+            <Ionicons name="wallet" size={14} color={COLORS.bannerDark} />
             <Text style={styles.addCashText}>Add Cash</Text>
             <View style={styles.plusBadge}>
               <Ionicons name="add" size={12} color="#FFF" />
@@ -47,7 +58,11 @@ export default function AppHeader({
           </TouchableOpacity>
 
           {showLang && (
-            <TouchableOpacity style={styles.langBtn} activeOpacity={0.7} onPress={() => router.push('/settings')}>
+            <TouchableOpacity
+              style={styles.langBtn}
+              activeOpacity={0.7}
+              onPress={() => router.push('/settings')}
+            >
               <Text style={styles.langText}>A अ</Text>
             </TouchableOpacity>
           )}
@@ -88,7 +103,7 @@ export default function AppHeader({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.cream,
-    paddingBottom: 10,
+    paddingBottom: 8,
     paddingHorizontal: 14,
   },
   row: {
@@ -100,16 +115,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flexShrink: 1,
+  },
+  avatarRing: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    padding: 1,
+    overflow: 'hidden',
   },
   avatar: {
-    width: 36,
-    height: 36,
+    width: '100%',
+    height: '100%',
     borderRadius: 18,
+  },
+  hello: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   greeting: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.text,
+    maxWidth: 140,
   },
   right: {
     flexDirection: 'row',
@@ -119,24 +150,31 @@ const styles = StyleSheet.create({
   addCash: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.primary,
     borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    gap: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.primaryDark,
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+      },
+      android: { elevation: 2 },
+    }),
   },
   addCashText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '800',
+    color: COLORS.bannerDark,
   },
   plusBadge: {
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: COLORS.success,
+    backgroundColor: COLORS.bannerDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -145,7 +183,7 @@ const styles = StyleSheet.create({
   },
   langText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: COLORS.text,
   },
   iconBtn: {

@@ -1,6 +1,10 @@
 import { View, TextInput, Text, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
+/**
+ * Safe text input for web + native.
+ * Avoids RN-web "Unexpected text node" by never rendering bare strings in Views.
+ */
 export default function Input({
   label,
   value,
@@ -12,24 +16,31 @@ export default function Input({
   secureTextEntry = false,
   style,
   prefix,
+  editable = true,
 }) {
+  const safeValue = value == null ? '' : String(value);
+  const showLabel = typeof label === 'string' && label.trim().length > 0;
+  const showPrefix = typeof prefix === 'string' && prefix.length > 0;
+  const showError = typeof error === 'string' && error.trim().length > 0;
+
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <View style={[styles.inputWrapper, error && styles.inputError]}>
-        {prefix && <Text style={styles.prefix}>{prefix}</Text>}
+      {showLabel ? <Text style={styles.label}>{label}</Text> : null}
+      <View style={[styles.inputWrapper, showError ? styles.inputError : null]}>
+        {showPrefix ? <Text style={styles.prefix}>{prefix}</Text> : null}
         <TextInput
           style={styles.input}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
+          value={safeValue}
+          onChangeText={(t) => onChangeText?.(t == null ? '' : String(t))}
+          placeholder={placeholder || ''}
           placeholderTextColor={COLORS.textLight}
           keyboardType={keyboardType}
           maxLength={maxLength}
           secureTextEntry={secureTextEntry}
+          editable={editable}
         />
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {showError ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }

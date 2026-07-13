@@ -15,6 +15,42 @@ import { SHADOW_MD } from '../../constants/theme';
 import { panchangForDate } from '../../utils/vedic';
 import { kundliApi } from '../../services/kundliApi';
 
+/** API may return strings or { start, end } / nested objects — never render raw objects */
+function formatPanchangValue(val) {
+  if (val == null || val === '') return '—';
+  if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+    return String(val);
+  }
+  if (Array.isArray(val)) {
+    return val.map(formatPanchangValue).filter((x) => x && x !== '—').join(', ') || '—';
+  }
+  if (typeof val === 'object') {
+    if (val.start != null || val.end != null) {
+      const a = formatPanchangValue(val.start);
+      const b = formatPanchangValue(val.end);
+      if (a !== '—' && b !== '—') return `${a} – ${b}`;
+      if (a !== '—') return a;
+      if (b !== '—') return b;
+    }
+    if (val.name != null) {
+      const lord = val.lord != null ? ` (${formatPanchangValue(val.lord)})` : '';
+      return `${formatPanchangValue(val.name)}${lord}`;
+    }
+    if (val.value != null) return formatPanchangValue(val.value);
+    // last resort: readable key:value pairs
+    try {
+      const parts = Object.entries(val)
+        .filter(([, v]) => v != null && typeof v !== 'object')
+        .map(([k, v]) => `${k}: ${v}`);
+      if (parts.length) return parts.join(' · ');
+    } catch {
+      /* ignore */
+    }
+    return '—';
+  }
+  return '—';
+}
+
 export default function PanchangScreen() {
   const [offset, setOffset] = useState(0);
   const [live, setLive] = useState(null);
@@ -57,43 +93,63 @@ export default function PanchangScreen() {
     };
   }, [date]);
 
-  const p = live || local;
+  const p = live || local || {};
+
+  const nakshatraRaw = p.nakshatra;
+  let nakshatraDisplay = formatPanchangValue(nakshatraRaw);
+  if (p.nakshatraLord && typeof nakshatraRaw !== 'object') {
+    nakshatraDisplay = `${formatPanchangValue(nakshatraRaw)} (${formatPanchangValue(p.nakshatraLord)})`;
+  }
 
   const rows = [
-    { icon: 'calendar-outline', label: 'Tithi', value: p.tithi },
-    { icon: 'moon-outline', label: 'Paksha', value: p.paksha || '—' },
+    { icon: 'calendar-outline', label: 'Tithi', value: formatPanchangValue(p.tithi) },
+    { icon: 'moon-outline', label: 'Paksha', value: formatPanchangValue(p.paksha) },
+    { icon: 'star-outline', label: 'Nakshatra', value: nakshatraDisplay },
+    { icon: 'sparkles-outline', label: 'Yoga', value: formatPanchangValue(p.yoga) },
+    { icon: 'time-outline', label: 'Karana', value: formatPanchangValue(p.karana) },
+    { icon: 'sunny-outline', label: 'Sunrise', value: formatPanchangValue(p.sunrise) },
+    { icon: 'partly-sunny-outline', label: 'Sunset', value: formatPanchangValue(p.sunset) },
+    { icon: 'warning-outline', label: 'Rahu Kaal', value: formatPanchangValue(p.rahuKaal) },
     {
-      icon: 'star-outline',
-      label: 'Nakshatra',
-      value: p.nakshatraLord ? `${p.nakshatra} (${p.nakshatraLord})` : p.nakshatra,
+      icon: 'checkmark-circle-outline',
+      label: 'Abhijit Muhurat',
+      value: formatPanchangValue(p.abhijit),
     },
-    { icon: 'sparkles-outline', label: 'Yoga', value: p.yoga },
-    { icon: 'time-outline', label: 'Karana', value: p.karana },
-    { icon: 'sunny-outline', label: 'Sunrise', value: p.sunrise },
-    { icon: 'partly-sunny-outline', label: 'Sunset', value: p.sunset },
-    { icon: 'warning-outline', label: 'Rahu Kaal', value: p.rahuKaal || '—' },
-    { icon: 'checkmark-circle-outline', label: 'Abhijit Muhurat', value: p.abhijit || '—' },
   ];
 
-  if (p.moonrise) rows.push({ icon: 'moon', label: 'Moonrise', value: p.moonrise });
-  if (p.gulika) rows.push({ icon: 'alert-circle-outline', label: 'Gulika', value: p.gulika });
+  if (p.moonrise) {
+    rows.push({ icon: 'moon', label: 'Moonrise', value: formatPanchangValue(p.moonrise) });
+  }
+  if (p.gulika) {
+    rows.push({
+      icon: 'alert-circle-outline',
+      label: 'Gulika',
+      value: formatPanchangValue(p.gulika),
+    });
+  }
 
   return (
     <Screen edges={['left', 'right', 'bottom']} style={styles.screen}>
       <Header title="Panchang" subtitle="Tithi · Nakshatra · Muhurat" />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>{p.vaarHindi || p.vaar || local.vaarHindi}</Text>
-          <Text style={styles.heroSub}>{p.displayDate || local.displayDate}</Text>
-          {live?.source === 'astrologyapi' && (
-            <Text style={styles.liveTag}>✓ Live AstrologyAPI · {live.place || 'New Delhi'}</Text>
-          )}
-          {loading && (
+          <Text style={styles.heroTitle}>
+            {formatPanchangValue(p.vaarHindi || p.vaar || local?.vaarHindi)}
+          </Text>
+          <Text style={styles.heroSub}>
+            {formatPanchangValue(p.displayDate || local?.displayDate)}
+          </Text>
+          {live?.source === 'astrologyapi' ? (
+            <Text style={styles.liveTag}>
+              ✓ Live AstrologyAPI · {formatPanchangValue(live.place) || 'New Delhi'}
+            </Text>
+          ) : null}
+          {loading ? (
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color={COLORS.primaryDark} />
               <Text style={styles.loadingText}>Updating live panchang…</Text>
             </View>
-          )}
+          ) : null}
           <View style={styles.navRow}>
             <TouchableOpacity style={styles.navBtn} onPress={() => setOffset((o) => o - 1)}>
               <Ionicons name="chevron-back" size={18} color={COLORS.text} />
@@ -116,7 +172,7 @@ export default function PanchangScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.label}>{r.label}</Text>
-              <Text style={styles.value}>{r.value || '—'}</Text>
+              <Text style={styles.value}>{formatPanchangValue(r.value)}</Text>
             </View>
           </View>
         ))}
@@ -126,7 +182,9 @@ export default function PanchangScreen() {
           <Text style={styles.noteText}>
             {error
               ? `${error} — showing local estimate.`
-              : p.note || local.note}
+              : formatPanchangValue(p.note || local?.note) !== '—'
+                ? formatPanchangValue(p.note || local?.note)
+                : 'Daily panchang for muhurat, tithi and nakshatra guidance.'}
           </Text>
         </View>
       </ScrollView>

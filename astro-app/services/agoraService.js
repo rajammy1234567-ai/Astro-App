@@ -1,6 +1,5 @@
 /**
- * Agora RTC — Astrologer Panel
- * Real voice/video using react-native-agora (needs dev build / APK, not Expo Go).
+ * Agora RTC — Astrologer Panel (native only; web uses agoraService.web.js)
  */
 import { Platform, PermissionsAndroid } from 'react-native';
 
@@ -11,6 +10,7 @@ let eventHandler = null;
 let agoraModule = null;
 
 function loadAgora() {
+  if (Platform.OS === 'web') return null;
   if (agoraModule) return agoraModule;
   try {
     // eslint-disable-next-line global-require, import/no-extraneous-dependencies

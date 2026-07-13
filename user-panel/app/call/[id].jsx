@@ -129,22 +129,28 @@ export default function UserCallScreen() {
     joinedRef.current = false;
   }, []);
 
-  // Join Agora once (pending/active) — do not re-join on status change
+  // Join Agora ONLY after astrologer accepts (active/paused) — not while pending
   useEffect(() => {
     if (!session) return;
+
+    if (session.status === 'pending') {
+      setCallState('waiting');
+      setStatusHint('Request bhej diya — jab astrologer Online ho aur Accept kare tab call start hoga');
+      return;
+    }
+
     const canJoinRtc =
       session.callPaidUpfront
-      && ['pending', 'accepted', 'active', 'paused'].includes(session.status);
+      && ['accepted', 'active', 'paused'].includes(session.status);
     if (!canJoinRtc) return;
     if (joinedRef.current) {
-      // Already in channel; just refresh UI when accepted
       if (session.status === 'active' || session.status === 'paused') {
         if (remoteJoined) {
           setCallState('active');
           setStatusHint('Live — dono taraf awaz open');
-        } else if (callState === 'waiting') {
+        } else if (callState === 'waiting' || callState === 'connecting') {
           setCallState('connecting');
-          setStatusHint('Astrologer accepted — waiting for their audio…');
+          setStatusHint('Astrologer accepted — connecting audio…');
         }
       }
       return;
@@ -152,12 +158,8 @@ export default function UserCallScreen() {
 
     let cancelled = false;
     joinedRef.current = true;
-    setCallState(session.status === 'pending' ? 'waiting' : 'connecting');
-    setStatusHint(
-      session.status === 'pending'
-        ? 'Audio ready — waiting for astrologer to accept…'
-        : 'Getting secure call token…'
-    );
+    setCallState('connecting');
+    setStatusHint('Accepted! Getting secure call token…');
 
     const startTimer = () => {
       if (!timerRef.current) {

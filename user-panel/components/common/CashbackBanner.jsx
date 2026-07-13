@@ -1,15 +1,10 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/colors';
 
-function CoinIcon({ size = 40 }) {
-  return (
-    <View style={[styles.coinIcon, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Ionicons name="cash" size={size * 0.5} color={COLORS.primary} />
-    </View>
-  );
-}
+const BG =
+  'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1000&h=500&fit=crop';
 
 export default function CashbackBanner({ variant = 'light' }) {
   const router = useRouter();
@@ -17,40 +12,43 @@ export default function CashbackBanner({ variant = 'light' }) {
 
   if (isDark) {
     return (
-      <View style={styles.darkBanner}>
-        <View style={styles.darkContent}>
-          <Text style={styles.darkTitle}>100% CASHBACK!</Text>
-          <Text style={styles.darkSub}>on your first recharge</Text>
-          <TouchableOpacity
-            style={styles.rechargeBtn}
-            onPress={() => router.push('/wallet/add-money')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.rechargeText}>RECHARGE NOW</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.coinArea}>
-          <CoinIcon size={56} />
-        </View>
-        <View style={styles.dots}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-        </View>
-      </View>
+      <TouchableOpacity
+        activeOpacity={0.92}
+        onPress={() => router.push('/wallet/add-money')}
+        style={styles.darkWrap}
+      >
+        <ImageBackground source={{ uri: BG }} style={styles.darkBanner} imageStyle={styles.darkImg}>
+          <View style={styles.darkOverlay} />
+          <View style={styles.darkContent}>
+            <View style={styles.offerPill}>
+              <Ionicons name="gift" size={12} color={COLORS.bannerDark} />
+              <Text style={styles.offerPillText}>LIMITED OFFER</Text>
+            </View>
+            <Text style={styles.darkTitle}>100% CASHBACK</Text>
+            <Text style={styles.darkSub}>on your first wallet recharge</Text>
+            <View style={styles.rechargeBtn}>
+              <Text style={styles.rechargeText}>RECHARGE NOW</Text>
+              <Ionicons name="arrow-forward" size={14} color={COLORS.bannerDark} />
+            </View>
+          </View>
+          <View style={styles.coinArea}>
+            <View style={styles.coinBig}>
+              <Ionicons name="wallet" size={28} color={COLORS.primary} />
+            </View>
+          </View>
+        </ImageBackground>
+      </TouchableOpacity>
     );
   }
 
   return (
     <View style={styles.lightBanner}>
-      <CoinIcon size={36} />
+      <View style={styles.coinIcon}>
+        <Ionicons name="cash" size={20} color={COLORS.primary} />
+      </View>
       <View style={styles.lightCenter}>
         <Text style={styles.lightTitle}>100% Cashback!</Text>
-        <View style={styles.lineRow}>
-          <View style={styles.line} />
-          <Text style={styles.lineText}>ON FIRST RECHARGE</Text>
-          <View style={styles.line} />
-        </View>
+        <Text style={styles.lineText}>ON FIRST RECHARGE</Text>
         <TouchableOpacity
           style={styles.rechargeBtn}
           onPress={() => router.push('/wallet/add-money')}
@@ -59,72 +57,103 @@ export default function CashbackBanner({ variant = 'light' }) {
           <Text style={styles.rechargeText}>RECHARGE NOW</Text>
         </TouchableOpacity>
       </View>
-      <CoinIcon size={36} />
+      <View style={styles.coinIcon}>
+        <Ionicons name="cash" size={20} color={COLORS.primary} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  darkBanner: {
-    backgroundColor: COLORS.bannerDark,
+  darkWrap: {
     marginHorizontal: 14,
-    borderRadius: 12,
-    padding: 18,
     marginBottom: 14,
+    borderRadius: 18,
     overflow: 'hidden',
-    minHeight: 130,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#1E1033',
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 5 },
+      },
+      android: { elevation: 4 },
+    }),
   },
-  darkContent: { zIndex: 1, maxWidth: '62%' },
+  darkBanner: {
+    minHeight: 148,
+    padding: 18,
+    justifyContent: 'center',
+  },
+  darkImg: { borderRadius: 18 },
+  darkOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(18, 6, 36, 0.72)',
+    borderRadius: 18,
+  },
+  darkContent: { zIndex: 1, maxWidth: '72%' },
+  offerPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  offerPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.bannerDark,
+    letterSpacing: 0.4,
+  },
   darkTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900',
     color: '#FFF',
     letterSpacing: 0.5,
   },
   darkSub: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.88)',
     marginTop: 4,
-    marginBottom: 12,
+    marginBottom: 14,
+    fontWeight: '600',
   },
   rechargeBtn: {
     backgroundColor: COLORS.yellow,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 22,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   rechargeText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
-    color: COLORS.text,
-    letterSpacing: 0.5,
+    color: COLORS.bannerDark,
+    letterSpacing: 0.4,
   },
   coinArea: {
     position: 'absolute',
-    right: 18,
-    top: 28,
+    right: 16,
+    top: 36,
+    zIndex: 1,
   },
-  coinIcon: {
-    backgroundColor: 'rgba(253, 185, 19, 0.15)',
+  coinBig: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(253, 185, 19, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(253, 185, 19, 0.35)',
+    borderColor: 'rgba(253, 185, 19, 0.4)',
   },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 10,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  dotActive: { backgroundColor: COLORS.primary, width: 16 },
   lightBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -141,12 +170,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.text,
   },
-  lineRow: {
-    flexDirection: 'row',
+  lineText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600', marginVertical: 6 },
+  coinIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(253, 185, 19, 0.15)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 6,
-    gap: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(253, 185, 19, 0.35)',
   },
-  line: { flex: 1, height: 1, backgroundColor: COLORS.border, maxWidth: 40 },
-  lineText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
 });

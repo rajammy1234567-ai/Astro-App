@@ -36,6 +36,14 @@ const astrologerSchema = new mongoose.Schema(
     blockedAt: { type: Date },
     approvedViaApplication: { type: Boolean, default: false },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    /**
+     * Pooja/remedy money is held by admin first.
+     * pendingHeld = not yet released share (expected)
+     * availableBalance = released by admin (can withdraw later)
+     */
+    pendingHeld: { type: Number, default: 0 },
+    availableBalance: { type: Number, default: 0 },
+    totalReleased: { type: Number, default: 0 },
   },
   { timestamps: true, suppressReservedKeysWarning: true }
 );

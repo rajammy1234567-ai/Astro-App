@@ -158,18 +158,29 @@ export default function Dashboard() {
           />
         </View>
 
-        {/* Earnings highlight */}
-        <View style={styles.earnCard}>
-          <View>
-            <Text style={styles.earnLabel}>Total Earnings</Text>
+        {/* Earnings highlight — available from admin release */}
+        <TouchableOpacity
+          style={styles.earnCard}
+          activeOpacity={0.9}
+          onPress={() => router.push('/earnings')}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.earnLabel}>Available balance</Text>
             <Text style={styles.earnVal}>₹{earnings}</Text>
             <Text style={styles.earnSub}>
-              {stats?.activeChats || 0} active · {stats?.totalChats || 0} total chats
+              Pending hold ₹{(stats?.pendingHeld ?? 0).toLocaleString('en-IN')} · tap for details
             </Text>
           </View>
           <View style={styles.earnIcon}>
             <Ionicons name="wallet" size={26} color={COLORS.bannerDark} />
           </View>
+        </TouchableOpacity>
+
+        <View style={styles.moneyHint}>
+          <Ionicons name="information-circle" size={16} color={COLORS.primary} />
+          <Text style={styles.moneyHintText}>
+            Pooja/remedy ka full paisa pehle admin ke paas jata hai. Kuch mahine baad admin aapka % release karega.
+          </Text>
         </View>
 
         {/* Stats */}
@@ -178,7 +189,7 @@ export default function Dashboard() {
           <MiniStat icon="star" color={COLORS.star} label="Rating" value={`${stats?.rating ?? astrologer?.rating ?? '—'}`} />
           <MiniStat icon="flash" color={COLORS.warning} label="Active" value={`${stats?.activeChats ?? 0}`} />
           <MiniStat icon="chatbubbles" color={COLORS.link} label="Chats" value={`${stats?.totalChats ?? 0}`} />
-          <MiniStat icon="briefcase" color={COLORS.violet} label="Orders" value={`${stats?.totalOrders ?? 0}`} />
+          <MiniStat icon="flame" color={COLORS.violet || '#8b5cf6'} label="Services" value={`${stats?.myServices ?? 0}`} />
         </View>
 
         {/* Workspace */}
@@ -200,15 +211,30 @@ export default function Dashboard() {
             onPress={() => router.push('/(tabs)/calls')}
           />
           <ActionTile
+            icon="flame"
+            color="#E67E22"
+            title="Pooja / Remedy"
+            sub="Offer to users"
+            badge={stats?.myServices}
+            onPress={() => router.push('/services')}
+          />
+          <ActionTile
+            icon="wallet"
+            color={COLORS.warning}
+            title="Earnings"
+            sub="Admin hold & release"
+            onPress={() => router.push('/earnings')}
+          />
+          <ActionTile
             icon="person"
-            color={COLORS.violet}
+            color={COLORS.violet || '#8b5cf6'}
             title="Profile"
             sub="Public listing"
             onPress={() => router.push('/(tabs)/profile')}
           />
           <ActionTile
             icon="create"
-            color={COLORS.warning}
+            color="#6366f1"
             title="Edit"
             sub="Rates & bio"
             onPress={() => router.push('/profile/edit')}
@@ -254,7 +280,7 @@ export default function Dashboard() {
         <View style={styles.tip}>
           <Ionicons name="sparkles" size={16} color={COLORS.primary} />
           <Text style={styles.tipText}>
-            Online + Chat/Call ON rakho. User ki DOB / TOB / place request me auto milti hai.
+            Online rakho · Chat/Call ON · Pooja/Remedy add karke users se booking lo. Paisa admin hold karta hai.
           </Text>
         </View>
 
@@ -366,6 +392,23 @@ const styles = StyleSheet.create({
   earnIcon: {
     width: 54, height: 54, borderRadius: 18, backgroundColor: COLORS.primary,
     alignItems: 'center', justifyContent: 'center',
+  },
+  moneyHint: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: '#FFF8E1',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(253,185,19,0.35)',
+  },
+  moneyHintText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    color: COLORS.text,
+    fontWeight: '500',
   },
 
   section: {

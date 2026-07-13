@@ -22,7 +22,7 @@ const APPROVED_DUMMY_ASTROLOGERS = [
   {
     userPhone: '9000000001', userName: 'Sunaina Sharma', userEmail: 'sunaina@demo.com',
     name: 'Nilanjik', phone: '9876543210', password: 'astro123',
-    image: 'https://i.pravatar.cc/150?img=11',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop',
     specialty: 'Vedic', languages: ['Hindi', 'English'], experience: 12, orders: 5000,
     rating: 4.9, pricePerMin: 50, isOnline: true, isVerified: true, badge: 'Celebrity',
     chatEnabled: true, callEnabled: true, isPublished: true,
@@ -30,7 +30,7 @@ const APPROVED_DUMMY_ASTROLOGERS = [
   {
     userPhone: '9000000002', userName: 'Rahul Verma', userEmail: 'rahul@demo.com',
     name: 'Himant', phone: '9876543211', password: 'astro123',
-    image: 'https://i.pravatar.cc/150?img=12',
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop',
     specialty: 'Vedic, Tarot', languages: ['Hindi', 'English'], experience: 8, orders: 3200,
     rating: 4.8, pricePerMin: 31, isOnline: true, isVerified: true, badge: 'Celebrity',
     chatEnabled: true, callEnabled: true, isPublished: true,
@@ -38,7 +38,7 @@ const APPROVED_DUMMY_ASTROLOGERS = [
   {
     userPhone: '9000000003', userName: 'Priya Patel', userEmail: 'priya@demo.com',
     name: 'Vishvesh', phone: '9876543212', password: 'astro123',
-    image: 'https://i.pravatar.cc/150?img=15',
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop',
     specialty: 'Vedic', languages: ['Hindi'], experience: 15, orders: 8900,
     rating: 4.9, pricePerMin: 23, isOnline: true, isVerified: true, badge: 'Top Choice',
     chatEnabled: true, callEnabled: true, isPublished: true,
@@ -46,18 +46,18 @@ const APPROVED_DUMMY_ASTROLOGERS = [
   {
     userPhone: '9000000004', userName: 'Anjali Singh', userEmail: 'anjali@demo.com',
     name: 'Richal', phone: '9876543213', password: 'astro123',
-    image: 'https://i.pravatar.cc/150?img=5',
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop',
     specialty: 'Tarot', languages: ['English', 'Hindi'], experience: 3, orders: 1100,
-    rating: 5, pricePerMin: 17, isOnline: true, isVerified: true,
+    rating: 5, pricePerMin: 17, isOnline: true, isVerified: true, badge: 'Rising Star',
     chatEnabled: true, callEnabled: true, isPublished: true,
   },
   {
     userPhone: '9000000005', userName: 'Amit Kumar', userEmail: 'amit@demo.com',
     name: 'Nipun', phone: '9876543214', password: 'astro123',
-    image: 'https://i.pravatar.cc/150?img=18',
+    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=300&fit=crop',
     specialty: 'Tarot', languages: ['English', 'Hindi'], experience: 7, orders: 10500,
-    rating: 5, pricePerMin: 18, isOnline: false, isVerified: true, waitTime: '8m',
-    chatEnabled: true, callEnabled: true, isPublished: false,
+    rating: 5, pricePerMin: 18, isOnline: true, isVerified: true, waitTime: '8m', badge: 'Popular',
+    chatEnabled: true, callEnabled: true, isPublished: true,
   },
 ];
 
@@ -121,12 +121,15 @@ const NEWS = [
 ];
 
 const POOJAS = [
-  { name: 'Grahan Dosh Shanti Pooja', duration: '2 hours', price: 2100, icon: 'flame-outline', description: 'Performed at sacred temple with live streaming' },
-  { name: 'Guru Chandal Dosh Nivaran', duration: '1.5 hours', price: 1500, icon: 'planet-outline', description: 'Removes Guru Chandal dosha from your chart' },
-  { name: 'Loan (Karz) Mukti Pooja', duration: '2 hours', price: 2500, icon: 'cash-outline', description: 'For financial freedom and debt relief' },
-  { name: 'Pitra Dosh Shanti', duration: '3 hours', price: 3100, icon: 'flower-outline', description: 'Ancestral peace and family harmony' },
-  { name: 'Satyanarayan Katha', duration: '4 hours', price: 1800, icon: 'book-outline', description: 'Prosperity and well-being pooja' },
-  { name: 'Mangal Dosh Nivaran', duration: '2 hours', price: 2200, icon: 'heart-outline', description: 'For marriage and relationship harmony' },
+  { name: 'Grahan Dosh Shanti Pooja', duration: '2 hours', price: 2100, icon: 'flame-outline', description: 'Performed by verified astrologer-pandit', serviceType: 'pooja' },
+  { name: 'Guru Chandal Dosh Nivaran', duration: '1.5 hours', price: 1500, icon: 'planet-outline', description: 'Removes Guru Chandal dosha from your chart', serviceType: 'pooja' },
+  { name: 'Loan (Karz) Mukti Pooja', duration: '2 hours', price: 2500, icon: 'cash-outline', description: 'For financial freedom and debt relief', serviceType: 'pooja' },
+  { name: 'Pitra Dosh Shanti', duration: '3 hours', price: 3100, icon: 'flower-outline', description: 'Ancestral peace and family harmony', serviceType: 'pooja' },
+  { name: 'Satyanarayan Katha', duration: '4 hours', price: 1800, icon: 'book-outline', description: 'Prosperity and well-being pooja', serviceType: 'pooja' },
+  { name: 'Mangal Dosh Nivaran', duration: '2 hours', price: 2200, icon: 'heart-outline', description: 'For marriage and relationship harmony', serviceType: 'pooja' },
+  { name: 'Evil Eye Protection Remedy', duration: 'As advised', price: 999, icon: 'shield-outline', description: 'Personalized nazar protection remedy pack', serviceType: 'remedy' },
+  { name: 'Career Success Remedy', duration: 'As advised', price: 1499, icon: 'briefcase-outline', description: 'Mantra + remedy plan for career growth', serviceType: 'remedy' },
+  { name: 'Relationship Healing Remedy', duration: 'As advised', price: 1299, icon: 'heart-outline', description: 'Healing rituals advised by your astrologer', serviceType: 'remedy' },
 ];
 
 const SUPPORT_FAQS = [

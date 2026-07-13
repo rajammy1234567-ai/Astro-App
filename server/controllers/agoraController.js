@@ -34,8 +34,13 @@ const getTokenForUser = async (req, res) => {
       type: 'call',
     });
     if (!chat) return res.status(404).json({ message: 'Call session not found' });
-    if (!['pending', 'active', 'paused', 'accepted'].includes(chat.status)) {
-      return res.status(400).json({ message: 'Call session is not active' });
+    // User can only get RTC token AFTER astrologer accepts (status active/paused)
+    if (!['active', 'paused', 'accepted'].includes(chat.status)) {
+      return res.status(400).json({
+        message: 'Call starts only after astrologer accepts your request.',
+        status: chat.status,
+        waitingForAccept: chat.status === 'pending',
+      });
     }
     if (!chat.callPaidUpfront) {
       return res.status(402).json({ message: 'Pay for call minutes first' });

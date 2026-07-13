@@ -1,7 +1,7 @@
 /**
- * Agora RTC — User Panel
- * Real voice/video using react-native-agora (needs dev build / APK, not Expo Go).
- * Falls back to clear error if native module is missing.
+ * Agora RTC — User Panel (native Android/iOS only)
+ * Web uses agoraService.web.js so react-native-agora is never bundled there.
+ * Needs dev build / APK (not Expo Go) for real audio.
  */
 import { Platform, PermissionsAndroid } from 'react-native';
 
@@ -12,6 +12,7 @@ let eventHandler = null;
 let agoraModule = null;
 
 function loadAgora() {
+  if (Platform.OS === 'web') return null;
   if (agoraModule) return agoraModule;
   try {
     // eslint-disable-next-line global-require, import/no-extraneous-dependencies

@@ -95,6 +95,30 @@ const getDashboard = async (req, res) => {
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]);
 
+    const escrowAgg = await Order.aggregate([
+      {
+        $match: {
+          orderType: { $in: ['pooja', 'remedy'] },
+          fundsHeldByAdmin: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalHeld: { $sum: '$heldAmount' },
+          totalAstroShare: { $sum: '$astrologerShareAmount' },
+          totalReleased: { $sum: '$releasedToAstrologer' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+    const escrow = escrowAgg[0] || {
+      totalHeld: 0,
+      totalAstroShare: 0,
+      totalReleased: 0,
+      count: 0,
+    };
+
     res.json({
       stats: {
         totalUsers,
@@ -109,10 +133,18 @@ const getDashboard = async (req, res) => {
         totalRevenue: totalRevenue[0]?.total || 0,
         pendingOrders: orderStats.find((s) => s._id === 'pending')?.count || 0,
         confirmedOrders: orderStats.find((s) => s._id === 'confirmed')?.count || 0,
+        /** Pooja/remedy money with admin */
+        serviceHeldAmount: escrow.totalHeld,
+        serviceAstroShare: escrow.totalAstroShare,
+        serviceReleasedToAstro: escrow.totalReleased,
+        serviceBookings: escrow.count,
+        servicePendingRelease: Math.max(0, (escrow.totalAstroShare || 0) - (escrow.totalReleased || 0)),
       },
       recentOrders,
       recentUsers,
       activeLives,
+      moneyFlowNote:
+        'Pooja & remedy payments are held by admin. Release a percentage to astrologers from Payouts after the hold period.',
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -379,6 +411,7 @@ const listOrders = async (req, res) => {
   try {
     const orders = await Order.find()
       .populate('user', 'name phone email')
+      .populate('astrologer', 'name phone')
       .populate('products.product')
       .sort({ createdAt: -1 });
     res.json(orders);

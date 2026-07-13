@@ -32,4 +32,13 @@ router.post('/chats/:id/send-kundli', astroProtect, kundliCtrl.sendKundliToChat)
 router.get('/chats/:id/call-token', astroProtect, require('../controllers/agoraController').getTokenForAstro);
 router.get('/agora/status', astroProtect, require('../controllers/agoraController').getStatus);
 
+// Pooja & remedies offered by this astrologer + earnings (admin holds money first)
+const serviceCtrl = require('../controllers/serviceOfferController');
+router.get('/services', astroProtect, serviceCtrl.listMyServices);
+router.post('/services', astroProtect, serviceCtrl.createMyService);
+router.put('/services/:id', astroProtect, serviceCtrl.updateMyService);
+router.delete('/services/:id', astroProtect, serviceCtrl.deleteMyService);
+router.get('/service-bookings', astroProtect, serviceCtrl.myServiceBookings);
+router.get('/earnings', astroProtect, serviceCtrl.myEarnings);
+
 module.exports = router;

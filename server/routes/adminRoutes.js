@@ -74,4 +74,9 @@ router.put('/astrologer-applications/:id/schedule-interview', adminProtect, appC
 router.put('/astrologer-applications/:id/approve', adminProtect, appCtrl.approveApplication);
 router.put('/astrologer-applications/:id/reject', adminProtect, appCtrl.rejectApplication);
 
+// Pooja/remedy money held by admin → release % to astrologers later
+const serviceCtrl = require('../controllers/serviceOfferController');
+router.get('/payouts', adminProtect, serviceCtrl.adminListHeldOrders);
+router.post('/payouts/:id/release', adminProtect, serviceCtrl.adminReleasePayout);
+
 module.exports = router;

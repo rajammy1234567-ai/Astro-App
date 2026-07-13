@@ -18,16 +18,34 @@ export default function ChatCallButtons({ sticky = false, style }) {
         onPress={() => router.push('/(tabs)/chat')}
         activeOpacity={0.88}
       >
-        <Ionicons name="chatbubbles" size={18} color="#fff" />
-        <Text style={styles.btnTextLight} numberOfLines={1}>Chat with Astrologer</Text>
+        <View style={styles.iconBubbleDark}>
+          <Ionicons name="chatbubbles" size={16} color="#fff" />
+        </View>
+        <View style={styles.btnTextCol}>
+          <Text style={styles.btnTextLight} numberOfLines={1}>
+            Chat now
+          </Text>
+          <Text style={styles.btnHintLight} numberOfLines={1}>
+            Instant reply
+          </Text>
+        </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.btn, styles.callBtn]}
         onPress={() => router.push('/(tabs)/call')}
         activeOpacity={0.88}
       >
-        <Ionicons name="call" size={18} color={COLORS.text} />
-        <Text style={styles.btnText} numberOfLines={1}>Call with Astrologer</Text>
+        <View style={styles.iconBubbleLight}>
+          <Ionicons name="call" size={16} color={COLORS.bannerDark} />
+        </View>
+        <View style={styles.btnTextCol}>
+          <Text style={styles.btnText} numberOfLines={1}>
+            Call now
+          </Text>
+          <Text style={styles.btnHint} numberOfLines={1}>
+            Voice guidance
+          </Text>
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -53,7 +71,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 20,
-    backgroundColor: 'rgba(255,252,248,0.98)',
+    backgroundColor: 'rgba(255,252,248,0.97)',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: COLORS.border,
     paddingTop: 8,
@@ -75,25 +93,51 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-    gap: 6,
-    minHeight: 46,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    gap: 8,
+    minHeight: 52,
   },
   chatBtn: { backgroundColor: COLORS.bannerDark },
   callBtn: { backgroundColor: COLORS.primary },
+  iconBubbleDark: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBubbleLight: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(30,16,51,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnTextCol: { flex: 1 },
   btnText: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '800',
-    color: COLORS.text,
-    flexShrink: 1,
+    color: COLORS.bannerDark,
   },
   btnTextLight: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '800',
     color: '#fff',
-    flexShrink: 1,
+  },
+  btnHint: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'rgba(30,16,51,0.65)',
+    marginTop: 1,
+  },
+  btnHintLight: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 1,
   },
 });
