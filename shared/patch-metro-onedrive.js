@@ -9,6 +9,10 @@ function patchFile(projectRoot, relativePath, replacements) {
   let changed = false;
 
   for (const [from, to] of replacements) {
+    if (source.includes(to)) {
+      // already patched
+      continue;
+    }
     if (source.includes(from)) {
       source = source.replace(from, to);
       changed = true;
@@ -21,6 +25,114 @@ function patchFile(projectRoot, relativePath, replacements) {
   }
 
   return changed;
+}
+
+/**
+ * Metro FallbackWatcher crashes on Windows/OneDrive when npm temp dirs
+ * like node_modules/.any-promise-XXXX disappear while being watched.
+ * Wrap fs.watch in try/catch so ENOENT/EPERM do not kill Expo.
+ */
+function patchFallbackWatcher(projectRoot) {
+  const candidates = [
+    'node_modules/@expo/metro-file-map/build/watchers/FallbackWatcher.js',
+    'node_modules/metro-file-map/src/watchers/FallbackWatcher.js',
+    // nested under expo
+    'node_modules/expo/node_modules/@expo/metro-file-map/build/watchers/FallbackWatcher.js',
+  ];
+
+  // Compiled (@expo) form
+  const compiledFrom = `    #watchdir = (dir) => {
+        if (this.#watched[dir]) {
+            return false;
+        }
+        const watcher = fs_1.default.watch(dir, { persistent: true }, (event, filename) => this.#normalizeChange(dir, event, filename));
+        this.#watched[dir] = watcher;
+        watcher.on('error', this.#checkedEmitError);
+        if (this.root !== dir) {
+            this.#register(dir, 'd');
+        }
+        return true;
+    };`;
+
+  const compiledTo = `    #watchdir = (dir) => {
+        if (this.#watched[dir]) {
+            return false;
+        }
+        let watcher;
+        try {
+            watcher = fs_1.default.watch(dir, { persistent: true }, (event, filename) => this.#normalizeChange(dir, event, filename));
+        } catch (error) {
+            // OneDrive / npm temp folders (e.g. .any-promise-XXXX) vanish mid-walk
+            if (error && (error.code === 'ENOENT' || error.code === 'EPERM' || error.code === 'EACCES')) {
+                return false;
+            }
+            throw error;
+        }
+        this.#watched[dir] = watcher;
+        watcher.on('error', this.#checkedEmitError);
+        if (this.root !== dir) {
+            this.#register(dir, 'd');
+        }
+        return true;
+    };`;
+
+  // Source (metro-file-map) form
+  const sourceFrom = `  #watchdir = (dir) => {
+    if (this.#watched[dir]) {
+      return false;
+    }
+    const watcher = _fs.default.watch(
+      dir,
+      {
+        persistent: true,
+      },
+      (event, filename) => this.#normalizeChange(dir, event, filename),
+    );
+    this.#watched[dir] = watcher;
+    watcher.on("error", this.#checkedEmitError);
+    if (this.root !== dir) {
+      this.#register(dir, "d");
+    }
+    return true;
+  };`;
+
+  const sourceTo = `  #watchdir = (dir) => {
+    if (this.#watched[dir]) {
+      return false;
+    }
+    let watcher;
+    try {
+      watcher = _fs.default.watch(
+        dir,
+        {
+          persistent: true,
+        },
+        (event, filename) => this.#normalizeChange(dir, event, filename),
+      );
+    } catch (error) {
+      // OneDrive / npm temp folders vanish mid-walk on Windows
+      if (error && (error.code === "ENOENT" || error.code === "EPERM" || error.code === "EACCES")) {
+        return false;
+      }
+      throw error;
+    }
+    this.#watched[dir] = watcher;
+    watcher.on("error", this.#checkedEmitError);
+    if (this.root !== dir) {
+      this.#register(dir, "d");
+    }
+    return true;
+  };`;
+
+  let any = false;
+  for (const relativePath of candidates) {
+    any =
+      patchFile(projectRoot, relativePath, [
+        [compiledFrom, compiledTo],
+        [sourceFrom, sourceTo],
+      ]) || any;
+  }
+  return any;
 }
 
 function applyMetroOneDrivePatches(projectRoot = process.cwd()) {
@@ -90,10 +202,41 @@ function applyMetroOneDrivePatches(projectRoot = process.cwd()) {
             else if (fileData[constants_1.default.MTIME] != null && fileData[constants_1.default.MTIME] !== 0) {`,
     ],
   ]);
+
+  // Critical: ignore vanished npm temp dirs on OneDrive/Windows
+  patchFallbackWatcher(projectRoot);
+
+  // Clean leftover npm temp dirs under node_modules (e.g. .any-promise-XXXX)
+  cleanNpmTempDirs(projectRoot);
+}
+
+function cleanNpmTempDirs(projectRoot) {
+  const nm = path.join(projectRoot, 'node_modules');
+  if (!fs.existsSync(nm)) return;
+  let removed = 0;
+  try {
+    for (const name of fs.readdirSync(nm)) {
+      // npm uses .package-name-xxxxx temp folders during install
+      if (name.startsWith('.') && /-[A-Za-z0-9]{6,}$/.test(name)) {
+        const full = path.join(nm, name);
+        try {
+          fs.rmSync(full, { recursive: true, force: true });
+          removed += 1;
+        } catch {
+          /* ignore locked */
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  if (removed) {
+    console.log(`cleaned ${removed} npm temp folder(s) under node_modules`);
+  }
 }
 
 if (require.main === module) {
-  applyMetroOneDrivePatches(path.join(__dirname, '..'));
+  applyMetroOneDrivePatches(process.cwd());
 }
 
-module.exports = { applyMetroOneDrivePatches };
+module.exports = { applyMetroOneDrivePatches, cleanNpmTempDirs };

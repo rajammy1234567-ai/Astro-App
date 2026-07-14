@@ -5,8 +5,20 @@ const { getDefaultConfig } = require('expo/metro-config');
 const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
 
-// OneDrive + Windows: avoid symlink readlink crashes
+// OneDrive + Windows: avoid symlink / vanished-temp-folder crashes
 config.resolver.useWatchman = false;
+// Ignore npm install temp dirs + common junk so watcher does not crash (ENOENT)
+config.watcher = {
+  ...(config.watcher || {}),
+  healthCheck: { enabled: false },
+  additionalExts: config.watcher?.additionalExts,
+};
+// Do not crawl npm temp folders like node_modules/.any-promise-XXXX
+const prevBlock = config.resolver.blockList;
+const tempDirBlock = /[\\/]node_modules[\\/]\.[^\\/]+-[A-Za-z0-9]{6,}([\\/]|$)/;
+config.resolver.blockList = prevBlock
+  ? [prevBlock, tempDirBlock].flat()
+  : tempDirBlock;
 
 const reactNativeRoot = path.join(projectRoot, 'node_modules/react-native');
 const metroRuntimeRoot = path.join(projectRoot, 'node_modules', '@expo', 'metro-runtime');
@@ -18,12 +30,10 @@ config.watchFolders = [
   ]),
 ];
 
-// Prefer project node_modules over broken nested expo-router copies
-config.resolver.nodeModulesPaths = [
-  path.join(projectRoot, 'node_modules'),
-  ...(config.resolver.nodeModulesPaths || []),
-];
-config.resolver.disableHierarchicalLookup = false;
+// Prefer project root node_modules only.
+// Nested copies under expo/expo-router are often incomplete on OneDrive (missing build/*.js).
+config.resolver.nodeModulesPaths = [path.join(projectRoot, 'node_modules')];
+config.resolver.disableHierarchicalLookup = true;
 
 function resolveFile(...parts) {
   const filePath = path.join(...parts);
