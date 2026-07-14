@@ -32,7 +32,7 @@ git config core.longpaths true
 git config gc.auto 0
 git config gc.autoDetach false
 git config pack.threads 1
-git config core.fsync object-files false
+git config core.fsync none
 
 echo [2] Staging all changes...
 git add -A
@@ -43,7 +43,7 @@ if errorlevel 1 (
 )
 
 echo [3] Commit...
-git -c core.fsync=none commit -m "%MSG%"
+git -c core.fsync=none -c gc.auto=0 commit -m "%MSG%"
 if errorlevel 1 (
   echo.
   echo Commit fail / unlink warning?
