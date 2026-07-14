@@ -22,6 +22,13 @@ export default {
     userInterfaceStyle: 'automatic',
     // New Arch often crashes release APKs with Agora / some native modules
     newArchEnabled: false,
+    // EAS Update (required for eas build / eas update)
+    updates: {
+      url: 'https://u.expo.dev/7636ced8-8e7e-456d-9e88-1a8a802d3bf6',
+    },
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
     ios: {
       bundleIdentifier: 'com.astrotalk.user',
       buildNumber: '2',

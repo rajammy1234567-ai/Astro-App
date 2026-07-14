@@ -11,7 +11,8 @@
     "dev": "node ../shared/block-onedrive.js expo start --host lan --port 8082",
     "android": "node ../shared/block-onedrive.js expo start --android --host lan --port 8082",
     "ios": "expo start --ios --host lan --port 8082",
-    "build:apk": "eas build --platform android --profile preview",
+    "build:apk": "eas build --platform android --profile apk --clear-cache",
+    "build:apk:preview": "eas build --platform android --profile preview --clear-cache",
     "build:playstore": "eas build --platform android --profile production",
     "postinstall": "node scripts/patch-metro-onedrive.js"
   },
@@ -29,6 +30,7 @@
     "expo-router": "~57.0.4",
     "expo-splash-screen": "~57.0.2",
     "expo-status-bar": "~57.0.0",
+    "expo-updates": "~57.0.6",
     "react": "19.2.3",
     "react-native": "0.86.0",
     "react-native-gesture-handler": "~2.32.0",

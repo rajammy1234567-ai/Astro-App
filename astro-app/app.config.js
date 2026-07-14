@@ -19,6 +19,13 @@ export default {
     scheme: 'astro-app',
     userInterfaceStyle: 'automatic',
     newArchEnabled: false,
+    // EAS Update (required for eas build / eas update)
+    updates: {
+      url: 'https://u.expo.dev/bd897ff7-209e-4dc9-a215-33ae6875352f',
+    },
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
     ios: {
       bundleIdentifier: 'com.astrotalk.astro',
       buildNumber: '2',
