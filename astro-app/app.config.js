@@ -5,7 +5,7 @@ export default {
   expo: {
     name: 'AstroTalk Partner',
     slug: 'astrotalk-astro',
-     "owner": "sunaina0s-team",
+    owner: 'sunaina0s-team',
     version: '1.0.0',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
