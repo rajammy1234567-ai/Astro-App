@@ -12,7 +12,7 @@ export default {
     name: 'AstroTalk',
     slug: 'astrotalk-user',
     owner: 'sunaina0',
-    version: '1.0.1',
+    version: '1.0.2',
     platforms: ['ios', 'android', 'web'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -20,8 +20,9 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'astrotalkuser',
     userInterfaceStyle: 'automatic',
-    // New Arch often crashes release APKs with Agora / some native modules
+    // New Arch often crashes release APKs with some native modules
     newArchEnabled: false,
+    jsEngine: 'hermes',
     // EAS Update (required for eas build / eas update)
     updates: {
       url: 'https://u.expo.dev/7636ced8-8e7e-456d-9e88-1a8a802d3bf6',
@@ -44,7 +45,7 @@ export default {
     },
     android: {
       package: 'com.astrotalk.user',
-      versionCode: 2,
+      versionCode: 3,
       // edge-to-edge can crash some OEM launchers / older WebViews — keep off for stability
       edgeToEdgeEnabled: false,
       adaptiveIcon: {
@@ -98,15 +99,16 @@ export default {
         'expo-build-properties',
         {
           android: {
+            // Expo 57 / androidx need compileSdk 36+
             compileSdkVersion: 36,
-            targetSdkVersion: 36,
+            targetSdkVersion: 35,
             minSdkVersion: 24,
             buildToolsVersion: '36.0.0',
-            // Avoid R8 stripping Agora / Hermes symbols that cause instant close
             enableMinifyInReleaseBuilds: false,
             enableShrinkResourcesInReleaseBuilds: false,
             usesCleartextTraffic: true,
-            // Agora + React Native both ship libc++_shared → pick first or crash on load
+            // Helps some OEM devices load native libs without instant-close
+            useLegacyPackaging: true,
             packagingOptions: {
               pickFirst: [
                 '**/libc++_shared.so',
@@ -115,7 +117,6 @@ export default {
                 '**/libreactnative.so',
               ],
             },
-            // Prefer arm devices (phones); fewer .so variants = fewer load issues
             buildArchs: ['armeabi-v7a', 'arm64-v8a'],
           },
         },

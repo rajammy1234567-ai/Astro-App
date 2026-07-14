@@ -104,13 +104,14 @@ export default function AstrologerDetailsScreen() {
   };
 
   const openBooking = (bookingType) => {
-    const chatOk = astro.chatOnline ?? astro.isOnline;
-    const callOk = astro.callOnline ?? astro.isOnline;
-    const ok = bookingType === 'call' ? callOk : chatOk;
+    const ok =
+      bookingType === 'call'
+        ? astro.callOnline === true
+        : astro.chatOnline === true;
     if (!ok) {
       Alert.alert(
         bookingType === 'call' ? 'Call Offline' : 'Chat Offline',
-        `Yeh astrologer ne ${bookingType === 'call' ? 'Call' : 'Chat'} Online band rakha hai.`
+        `Yeh astrologer ne ${bookingType === 'call' ? 'Call' : 'Chat'} Online band rakha hai. Jab ON kare tab try karo.`
       );
       return;
     }

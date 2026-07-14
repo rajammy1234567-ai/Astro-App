@@ -14,7 +14,9 @@ export default function CallListScreen() {
   const [filter, setFilter] = useState('All');
   const { list } = useSelector((state) => state.astrologer);
 
-  const astrologers = (list.length ? list : ASTROLOGERS).filter((a) => a.callEnabled);
+  const astrologers = (list.length ? list : ASTROLOGERS).filter(
+    (a) => a.callEnabled !== false && a.callOnline === true
+  );
   const filtered = astrologers.filter((a) => {
     const matchSearch = !search || a.name.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === 'All' || a.specialty?.includes(filter);

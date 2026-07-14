@@ -14,7 +14,7 @@ export default function AstrologerHorizontalCard({ astrologer }) {
   };
 
   const openChat = () => {
-    const chatOk = astrologer.chatOnline ?? astrologer.isOnline;
+    const chatOk = astrologer.chatOnline === true;
     if (!chatOk) {
       Alert.alert(
         'Chat Offline',

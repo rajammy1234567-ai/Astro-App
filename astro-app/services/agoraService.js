@@ -1,5 +1,7 @@
 /**
- * Agora RTC — Astrologer Panel (native only; web uses agoraService.web.js)
+ * Agora RTC — Astrologer Panel
+ * Native Agora excluded from APK autolink (launch crash on RN 0.86). Soft-disabled.
+ * Web uses agoraService.web.js.
  */
 import { Platform, PermissionsAndroid } from 'react-native';
 
@@ -8,16 +10,24 @@ let joined = false;
 let currentChannel = null;
 let eventHandler = null;
 let agoraModule = null;
+let agoraLoadAttempted = false;
 
 function loadAgora() {
   if (Platform.OS === 'web') return null;
-  if (agoraModule) return agoraModule;
+  if (agoraLoadAttempted) return agoraModule;
+  agoraLoadAttempted = true;
   try {
     // eslint-disable-next-line global-require, import/no-extraneous-dependencies
-    agoraModule = require('react-native-agora');
+    const mod = require('react-native-agora');
+    if (!mod || typeof mod.createAgoraRtcEngine !== 'function') {
+      agoraModule = null;
+      return null;
+    }
+    agoraModule = mod;
     return agoraModule;
   } catch (e) {
     console.warn('[Agora] react-native-agora not available:', e?.message);
+    agoraModule = null;
     return null;
   }
 }

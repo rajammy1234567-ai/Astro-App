@@ -31,8 +31,14 @@ const recalcRating = async (astrologerId) => {
 const formatPublicAstrologer = (astro, reviews = []) => {
   const obj = astro.toObject ? astro.toObject() : { ...astro };
   delete obj.password;
+  const chatOnline = obj.chatOnline === true;
+  const callOnline = obj.callOnline === true;
+  const isOnline = chatOnline || callOnline || !!obj.isOnline;
   return {
     ...obj,
+    chatOnline,
+    callOnline,
+    isOnline,
     pricingPackages: normalizePackages(obj.pricingPackages, obj.pricePerMin),
     gallery: (obj.gallery || []).slice(0, 12),
     reviews: reviews.filter((r) => r.isVisible !== false),

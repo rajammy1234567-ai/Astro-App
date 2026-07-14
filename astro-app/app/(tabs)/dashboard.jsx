@@ -145,7 +145,10 @@ export default function Dashboard() {
             </Text>
           </View>
           <Text style={styles.onlineHint}>
-            Jis mode ka toggle ON hoga, user app me sirf usi list me aap dikhoge.
+            Status aap control karte ho:{'\n'}
+            • Chat ON → sirf User app Chat tab{'\n'}
+            • Call ON → sirf User app Call tab{'\n'}
+            • Dono alag-alag ON/OFF kar sakte ho
           </Text>
 
           <View style={styles.modeRow}>
@@ -153,7 +156,9 @@ export default function Dashboard() {
               <Ionicons name="chatbubbles" size={18} color={COLORS.link} />
               <View>
                 <Text style={styles.modeTitle}>Chat Online</Text>
-                <Text style={styles.modeSub}>User Chat tab me dikho</Text>
+                <Text style={styles.modeSub}>
+                  {chatOnline ? 'User Chat list me dikh rahe ho' : 'Chat list se hide'}
+                </Text>
               </View>
             </View>
             <Switch
@@ -167,17 +172,19 @@ export default function Dashboard() {
 
           <View style={styles.modeRow}>
             <View style={styles.modeLeft}>
-              <Ionicons name="call" size={18} color={COLORS.success} />
+              <Ionicons name="call" size={18} color="#25D366" />
               <View>
                 <Text style={styles.modeTitle}>Call Online</Text>
-                <Text style={styles.modeSub}>User Call tab me dikho</Text>
+                <Text style={styles.modeSub}>
+                  {callOnline ? 'User Call list me dikh rahe ho' : 'Call list se hide'}
+                </Text>
               </View>
             </View>
             <Switch
               value={callOnline}
               onValueChange={(v) => handleToggle({ callOnline: v })}
               disabled={toggling || astrologer?.callEnabled === false}
-              trackColor={{ true: COLORS.success, false: '#D5D0E0' }}
+              trackColor={{ true: '#25D366', false: '#D5D0E0' }}
               thumbColor="#fff"
             />
           </View>

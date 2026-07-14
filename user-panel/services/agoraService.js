@@ -1,7 +1,12 @@
 /**
- * Agora RTC — User Panel (native Android/iOS only)
- * Web uses agoraService.web.js so react-native-agora is never bundled there.
- * Needs dev build / APK (not Expo Go) for real audio.
+ * Agora RTC — User Panel
+ *
+ * IMPORTANT (APK stability):
+ * react-native-agora native .so was crashing release APKs on launch with RN 0.86.
+ * It is excluded from Expo autolinking + Metro-stubbed. App stays open; voice
+ * engine is disabled until a compatible Agora build is re-enabled.
+ *
+ * Web uses agoraService.web.js.
  */
 import { Platform, PermissionsAndroid } from 'react-native';
 
@@ -10,16 +15,25 @@ let joined = false;
 let currentChannel = null;
 let eventHandler = null;
 let agoraModule = null;
+let agoraLoadAttempted = false;
 
 function loadAgora() {
   if (Platform.OS === 'web') return null;
-  if (agoraModule) return agoraModule;
+  if (agoraLoadAttempted) return agoraModule;
+  agoraLoadAttempted = true;
   try {
     // eslint-disable-next-line global-require, import/no-extraneous-dependencies
-    agoraModule = require('react-native-agora');
+    const mod = require('react-native-agora');
+    // Metro may resolve to empty module when stubbed
+    if (!mod || typeof mod.createAgoraRtcEngine !== 'function') {
+      agoraModule = null;
+      return null;
+    }
+    agoraModule = mod;
     return agoraModule;
   } catch (e) {
     console.warn('[Agora] react-native-agora not available:', e?.message);
+    agoraModule = null;
     return null;
   }
 }

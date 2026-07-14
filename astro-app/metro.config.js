@@ -10,13 +10,13 @@ config.resolver.useWatchman = false;
 const reactNativeRoot = path.join(projectRoot, 'node_modules/react-native');
 config.watchFolders = [...new Set([...(config.watchFolders || []), reactNativeRoot])];
 
-// Web cannot load native Agora SDK
+// Stub Agora on all platforms — native .so was crashing release APKs on launch.
+// package.json also excludes it from autolinking.
 const defaultResolve = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (
-    platform === 'web' &&
-    (moduleName === 'react-native-agora' ||
-      moduleName.startsWith('react-native-agora/'))
+    moduleName === 'react-native-agora' ||
+    moduleName.startsWith('react-native-agora/')
   ) {
     return { type: 'empty' };
   }

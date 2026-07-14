@@ -31,9 +31,8 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
   };
 
   const openBooking = () => {
-    const chatOk = astrologer.chatOnline ?? astrologer.isOnline;
-    const callOk = astrologer.callOnline ?? astrologer.isOnline;
-    const ok = isCall ? callOk : chatOk;
+    // Strict: chat list only when chatOnline, call list only when callOnline
+    const ok = isCall ? astrologer.callOnline === true : astrologer.chatOnline === true;
     if (!ok) {
       Alert.alert(
         isCall ? 'Call Offline' : 'Chat Offline',
@@ -48,8 +47,8 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
   };
 
   const modeOnline = isCall
-    ? (astrologer.callOnline ?? astrologer.isOnline)
-    : (astrologer.chatOnline ?? astrologer.isOnline);
+    ? astrologer.callOnline === true
+    : astrologer.chatOnline === true;
 
   return (
     <View style={styles.wrap}>
@@ -66,7 +65,7 @@ export default function AstrologerListCard({ astrologer, mode = 'chat' }) {
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: astrologer.isOnline ? COLORS.online : COLORS.offline },
+                { backgroundColor: modeOnline ? COLORS.online : COLORS.offline },
               ]}
             />
           </View>

@@ -10,7 +10,7 @@ export default {
     name: 'AstroTalk Partner',
     slug: 'astrotalk-astro',
     owner: 'sunaina0s-team',
-    version: '1.0.1',
+    version: '1.0.2',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -19,6 +19,7 @@ export default {
     scheme: 'astro-app',
     userInterfaceStyle: 'automatic',
     newArchEnabled: false,
+    jsEngine: 'hermes',
     // EAS Update (required for eas build / eas update)
     updates: {
       url: 'https://u.expo.dev/bd897ff7-209e-4dc9-a215-33ae6875352f',
@@ -41,7 +42,7 @@ export default {
     },
     android: {
       package: 'com.astrotalk.astro',
-      versionCode: 2,
+      versionCode: 3,
       edgeToEdgeEnabled: false,
       adaptiveIcon: {
         backgroundColor: '#1E1033',
@@ -92,13 +93,15 @@ export default {
         'expo-build-properties',
         {
           android: {
+            // Expo 57 / androidx need compileSdk 36+
             compileSdkVersion: 36,
-            targetSdkVersion: 36,
+            targetSdkVersion: 35,
             minSdkVersion: 24,
             buildToolsVersion: '36.0.0',
             enableMinifyInReleaseBuilds: false,
             enableShrinkResourcesInReleaseBuilds: false,
             usesCleartextTraffic: true,
+            useLegacyPackaging: true,
             packagingOptions: {
               pickFirst: [
                 '**/libc++_shared.so',

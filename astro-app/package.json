@@ -1,8 +1,13 @@
 {
   "name": "astro-panel-app",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "private": true,
   "main": "expo-router/entry",
+  "expo": {
+    "autolinking": {
+      "exclude": ["react-native-agora"]
+    }
+  },
   "scripts": {
     "start": "node ../shared/block-onedrive.js expo start --host lan --port 8083",
     "dev": "node ../shared/block-onedrive.js expo start --host lan --port 8083 --clear",

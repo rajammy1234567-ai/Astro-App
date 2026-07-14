@@ -17,9 +17,17 @@ const formatDate = (dateStr) => {
   });
 };
 
-function sortAstrologers(list = []) {
+function modeOnline(a, type) {
+  if (type === 'chat') return a.chatOnline === true;
+  if (type === 'call') return a.callOnline === true;
+  return !!(a.chatOnline || a.callOnline || a.isOnline);
+}
+
+function sortAstrologers(list = [], type) {
   return [...list].sort((a, b) => {
-    if (!!b.isOnline !== !!a.isOnline) return b.isOnline ? 1 : -1;
+    const aOn = modeOnline(a, type);
+    const bOn = modeOnline(b, type);
+    if (bOn !== aOn) return bOn ? 1 : -1;
     const r = (Number(b.rating) || 0) - (Number(a.rating) || 0);
     if (r !== 0) return r;
     return String(a.name || '').localeCompare(String(b.name || ''));
@@ -90,7 +98,7 @@ export function useHomeData() {
   const connectionError = storeError || blogError || newsError || astroError;
 
   return {
-    astrologers: sortAstrologers(astrologers || []),
+    astrologers: sortAstrologers(astrologers || [], null),
     blogs: mappedBlogs,
     products: products || [],
     news,
@@ -114,14 +122,15 @@ export function useAstrologers(type) {
     }, [dispatch, type])
   );
 
+  // Server already filters by chatOnline/callOnline; client double-checks
   const filtered = (list || []).filter((a) => {
-    if (type === 'chat') return a.chatEnabled !== false;
-    if (type === 'call') return a.callEnabled !== false;
+    if (type === 'chat') return a.chatEnabled !== false && a.chatOnline === true;
+    if (type === 'call') return a.callEnabled !== false && a.callOnline === true;
     return true;
   });
 
   return {
-    astrologers: sortAstrologers(filtered),
+    astrologers: sortAstrologers(filtered, type),
     loading,
     error,
   };

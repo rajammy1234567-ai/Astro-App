@@ -127,7 +127,9 @@ export default function CallTabScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.list, { paddingBottom: safe.tabBar + 24 }]}
         ListEmptyComponent={
-          <Text style={styles.empty}>No astrologers found. Pull to refresh or try another filter.</Text>
+          <Text style={styles.empty}>
+            Abhi koi Call Online nahi hai. Jab astrologer Call status ON karega, yahan dikhega.
+          </Text>
         }
       />
 

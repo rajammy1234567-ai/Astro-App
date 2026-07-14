@@ -1,6 +1,4 @@
 import 'react-native-gesture-handler';
-// Side-effect import — required so reanimated/worklets init before first render
-import 'react-native-reanimated';
 import { Stack } from 'expo-router';
 import { Platform } from 'react-native';
 import { Provider } from 'react-redux';

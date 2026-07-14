@@ -29,16 +29,10 @@ const createSession = async (req, res) => {
       if (astrologer.chatEnabled === false) {
         return res.status(400).json({ message: 'Astrologer not available for chat' });
       }
-      if (!astrologer.chatOnline && !astrologer.isOnline) {
+      // Strict: must have Chat Online ON (call-only status → not on chat list)
+      if (astrologer.chatOnline !== true) {
         return res.status(400).json({
-          message: 'Astrologer is offline for chat. Jab woh Chat Online kare tab request bhejo.',
-          code: 'ASTRO_CHAT_OFFLINE',
-        });
-      }
-      // Prefer explicit chatOnline; legacy: isOnline alone allowed only if chatOnline not false
-      if (astrologer.chatOnline === false) {
-        return res.status(400).json({
-          message: 'Astrologer ne Chat Online band rakha hai. Sirf call available ho sakti hai.',
+          message: 'Astrologer ne Chat Online band rakha hai. Jab woh Chat ON kare tab request bhejo.',
           code: 'ASTRO_CHAT_OFFLINE',
         });
       }
@@ -48,15 +42,10 @@ const createSession = async (req, res) => {
       if (astrologer.callEnabled === false) {
         return res.status(400).json({ message: 'Astrologer not available for call' });
       }
-      if (astrologer.callOnline === false) {
+      // Strict: must have Call Online ON (chat-only status → not on call list)
+      if (astrologer.callOnline !== true) {
         return res.status(400).json({
-          message: 'Astrologer ne Call Online band rakha hai. Sirf chat available ho sakti hai.',
-          code: 'ASTRO_CALL_OFFLINE',
-        });
-      }
-      if (!astrologer.callOnline && !astrologer.isOnline) {
-        return res.status(400).json({
-          message: 'Astrologer is offline for call.',
+          message: 'Astrologer ne Call Online band rakha hai. Jab woh Call ON kare tab request bhejo.',
           code: 'ASTRO_CALL_OFFLINE',
         });
       }

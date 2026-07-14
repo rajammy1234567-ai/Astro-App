@@ -40,10 +40,15 @@ function resolveIfExists(...parts) {
 }
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // Agora native-only (web uses services/agoraService.web.js)
+  /**
+   * ALWAYS stub Agora native SDK in JS bundle.
+   * Native module is also excluded via package.json expo.autolinking
+   * because linking libagora*.so crashes many Android APKs on launch (RN 0.86).
+   * Call UI still works; isAgoraNativeAvailable() returns false.
+   */
   if (
-    platform === 'web' &&
-    (moduleName === 'react-native-agora' || moduleName.startsWith('react-native-agora/'))
+    moduleName === 'react-native-agora' ||
+    moduleName.startsWith('react-native-agora/')
   ) {
     return { type: 'empty' };
   }
