@@ -33,7 +33,10 @@ export function getItemSub(sectionId, item) {
       const live = item.isPublished && item.approvedViaApplication ? 'Live' : 'Hidden';
       const approved = item.approvedViaApplication ? '✓ Approved' : 'Not approved';
       const online = item.isOnline ? 'Online' : 'Offline';
-      return `Panel ${item.phone || '-'} · ${item.specialty || '-'} · ₹${item.pricePerMin}/min · ${live} · ${online} · ${approved}`;
+      const blocked = item.isBlocked ? '🚫 BLOCKED' : null;
+      const creds = item.credentialsActive === false ? '🔒 Login OFF' : null;
+      const flags = [blocked, creds].filter(Boolean).join(' · ');
+      return `Panel ${item.phone || '-'} · ${item.specialty || '-'} · ₹${item.pricePerMin}/min · ${live} · ${online} · ${approved}${flags ? ` · ${flags}` : ''}`;
     }
     if (sectionId === 'products') {
       const flags = [
@@ -53,7 +56,11 @@ export function getItemSub(sectionId, item) {
       const userName = item.user && typeof item.user === 'object' ? (item.user.name || '-') : '-';
       return `${userName} · ${sign}${fmt(item.amount)} · ${item.status || '-'}`;
     }
-    if (sectionId === 'blogs') return `${item.author || '-'} · ${item.category || ''}`;
+    if (sectionId === 'blogs') {
+      const who = item.author || (item.authorAstrologer?.name) || '-';
+      const src = item.authorAstrologer ? 'Astrologer' : 'Admin';
+      return `${who} · ${item.category || ''} · ${src}`;
+    }
     if (sectionId === 'news') return item.source || '-';
     if (sectionId === 'poojas') return `${item.duration || '-'} · ${fmt(item.price)}`;
     if (sectionId === 'testimonials') return `${item.location || '-'} · ⭐ ${item.rating || 5}`;

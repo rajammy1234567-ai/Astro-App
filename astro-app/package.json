@@ -12,7 +12,8 @@
     "tunnel": "node ../shared/block-onedrive.js expo start --host tunnel -c --port 8083",
     "android": "node ../shared/block-onedrive.js expo start --android --host lan --port 8083",
     "ios": "expo start --ios --host lan --port 8083",
-    "build:apk": "eas build --platform android --profile preview",
+    "build:apk": "eas build --platform android --profile apk --clear-cache",
+    "build:apk:preview": "eas build --platform android --profile preview --clear-cache",
     "build:playstore": "eas build --platform android --profile production",
     "postinstall": "node scripts/patch-metro-onedrive.js"
   },

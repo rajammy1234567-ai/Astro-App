@@ -12,12 +12,20 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
+      "channel": "preview",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://astro-app-ru1d.onrender.com/api"
       }
     },
     "production": {
       "android": { "buildType": "app-bundle" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://astro-app-ru1d.onrender.com/api"
+      }
+    },
+    "apk": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://astro-app-ru1d.onrender.com/api"
       }

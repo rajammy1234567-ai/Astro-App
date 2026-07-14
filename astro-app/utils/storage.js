@@ -4,17 +4,31 @@ export const storage = {
   async get(key) {
     try {
       const value = await AsyncStorage.getItem(key);
-      return value ? JSON.parse(value) : null;
+      if (value == null) return null;
+      try {
+        return JSON.parse(value);
+      } catch {
+        // plain string fallback (corrupt / older installs)
+        return value;
+      }
     } catch {
       return null;
     }
   },
 
   async set(key, value) {
-    await AsyncStorage.setItem(key, JSON.stringify(value));
+    try {
+      await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      console.warn('storage.set failed', key, err?.message);
+    }
   },
 
   async remove(key) {
-    await AsyncStorage.removeItem(key);
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
   },
 };

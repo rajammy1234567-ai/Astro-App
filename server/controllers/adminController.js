@@ -486,7 +486,11 @@ const getAnalytics = async (req, res) => {
         _id: a._id,
         name: a.name,
         phone: a.phone,
+        image: a.image,
+        specialty: a.specialty,
         isOnline: a.isOnline,
+        isBlocked: !!a.isBlocked,
+        credentialsActive: a.credentialsActive !== false,
         chatOnline: !!(a.chatOnline ?? a.isOnline),
         callOnline: !!(a.callOnline ?? a.isOnline),
         ...st,
@@ -540,23 +544,31 @@ const getAnalytics = async (req, res) => {
 const blockAstrologer = async (req, res) => {
   try {
     const { isBlocked, blockReason } = req.body;
-    const astrologer = await Astrologer.findByIdAndUpdate(
-      req.params.id,
-      {
-        isBlocked: !!isBlocked,
-        blockReason: isBlocked ? (blockReason || 'Blocked by admin') : '',
-        blockedAt: isBlocked ? new Date() : null,
-        isLive: false,
-        isOnline: false,
-      },
-      { new: true }
-    ).select('-password');
+    const blocked = !!isBlocked;
+    const update = {
+      isBlocked: blocked,
+      blockReason: blocked ? (blockReason || 'Blocked by admin') : '',
+      blockedAt: blocked ? new Date() : null,
+    };
+    if (blocked) {
+      // Hide from user app and force offline when blocked
+      update.isPublished = false;
+      update.isLive = false;
+      update.isOnline = false;
+      update.chatOnline = false;
+      update.callOnline = false;
+    }
+    const astrologer = await Astrologer.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    }).select('-password');
     if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
 
-    await LiveSession.updateMany(
-      { astrologer: astrologer._id, status: 'live' },
-      { status: 'ended', endedAt: new Date() }
-    );
+    if (blocked) {
+      await LiveSession.updateMany(
+        { astrologer: astrologer._id, status: 'live' },
+        { status: 'ended', endedAt: new Date() }
+      );
+    }
 
     res.json(astrologer);
   } catch (error) {
@@ -564,9 +576,89 @@ const blockAstrologer = async (req, res) => {
   }
 };
 
+/**
+ * Deactivate / re-activate partner login ID & password.
+ * Body: { credentialsActive: boolean, reason?: string }
+ */
+const setAstrologerCredentials = async (req, res) => {
+  try {
+    const active = req.body.credentialsActive !== false && req.body.credentialsActive !== 'false';
+    const reason = (req.body.reason || req.body.credentialsDeactivatedReason || '').trim();
+    const update = active
+      ? {
+          credentialsActive: true,
+          credentialsDeactivatedAt: null,
+          credentialsDeactivatedReason: '',
+        }
+      : {
+          credentialsActive: false,
+          credentialsDeactivatedAt: new Date(),
+          credentialsDeactivatedReason: reason || 'Login ID/password deactivated by admin',
+          isOnline: false,
+          chatOnline: false,
+          callOnline: false,
+          isLive: false,
+        };
+
+    const astrologer = await Astrologer.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    }).select('-password');
+    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
+
+    if (!active) {
+      await LiveSession.updateMany(
+        { astrologer: astrologer._id, status: 'live' },
+        { status: 'ended', endedAt: new Date() }
+      );
+    }
+
+    res.json(astrologer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Admin sets a new password for astrologer panel login.
+ * Body: { password: string }
+ */
+const setAstrologerPassword = async (req, res) => {
+  try {
+    const password = String(req.body.password || '').trim();
+    if (password.length < 4) {
+      return res.status(400).json({ message: 'Password must be at least 4 characters' });
+    }
+    const astrologer = await Astrologer.findById(req.params.id);
+    if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
+    astrologer.password = password;
+    // Setting a new password re-activates login credentials
+    astrologer.credentialsActive = true;
+    astrologer.credentialsDeactivatedAt = null;
+    astrologer.credentialsDeactivatedReason = '';
+    await astrologer.save();
+    res.json({
+      message: 'Password updated',
+      loginId: astrologer.phone,
+      credentialsActive: true,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const astrologers = { ...crud(Astrologer), list: listAstrologers, update: updateAstrologer };
 const products = crud(Product);
-const blogs = crud(Blog);
+const listBlogs = async (req, res) => {
+  try {
+    const items = await Blog.find()
+      .populate('authorAstrologer', 'name image phone specialty')
+      .sort({ createdAt: -1 });
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+const blogs = { ...crud(Blog), list: listBlogs };
 const news = crud(News);
 const poojas = crud(Pooja);
 const testimonials = crud(Testimonial);
@@ -659,6 +751,8 @@ module.exports = {
   deleteUser,
   getAstrologerDetails,
   blockAstrologer,
+  setAstrologerCredentials,
+  setAstrologerPassword,
   astrologers,
   products,
   blogs,

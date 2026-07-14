@@ -20,6 +20,8 @@ router.delete('/users/:id', adminProtect, ctrl.deleteUser);
 router.get('/astrologers', adminProtect, ctrl.astrologers.list);
 router.get('/astrologers/:id/details', adminProtect, ctrl.getAstrologerDetails);
 router.put('/astrologers/:id/block', adminProtect, ctrl.blockAstrologer);
+router.put('/astrologers/:id/credentials', adminProtect, ctrl.setAstrologerCredentials);
+router.put('/astrologers/:id/password', adminProtect, ctrl.setAstrologerPassword);
 router.post('/astrologers', adminProtect, ctrl.astrologers.create);
 router.put('/astrologers/:id', adminProtect, ctrl.astrologers.update);
 router.delete('/astrologers/:id', adminProtect, ctrl.astrologers.remove);

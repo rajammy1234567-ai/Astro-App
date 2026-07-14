@@ -41,4 +41,11 @@ router.delete('/services/:id', astroProtect, serviceCtrl.deleteMyService);
 router.get('/service-bookings', astroProtect, serviceCtrl.myServiceBookings);
 router.get('/earnings', astroProtect, serviceCtrl.myEarnings);
 
+// Blogs posted by this astrologer (appear on user app when published)
+const blogCtrl = require('../controllers/blogController');
+router.get('/blogs', astroProtect, blogCtrl.listMyBlogs);
+router.post('/blogs', astroProtect, blogCtrl.createMyBlog);
+router.put('/blogs/:id', astroProtect, blogCtrl.updateMyBlog);
+router.delete('/blogs/:id', astroProtect, blogCtrl.deleteMyBlog);
+
 module.exports = router;

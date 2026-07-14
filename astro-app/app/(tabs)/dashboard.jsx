@@ -254,6 +254,13 @@ export default function Dashboard() {
             onPress={() => router.push('/services')}
           />
           <ActionTile
+            icon="newspaper"
+            color="#0ea5e9"
+            title="My Blogs"
+            sub="Post articles"
+            onPress={() => router.push('/blogs')}
+          />
+          <ActionTile
             icon="wallet"
             color={COLORS.warning}
             title="Earnings"

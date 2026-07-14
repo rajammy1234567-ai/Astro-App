@@ -44,6 +44,13 @@ const astrologerSchema = new mongoose.Schema(
     isBlocked: { type: Boolean, default: false },
     blockReason: { type: String },
     blockedAt: { type: Date },
+    /**
+     * When false, login ID/password is deactivated — cannot sign into partner app.
+     * Admin can re-activate later. Separate from isBlocked (listing ban).
+     */
+    credentialsActive: { type: Boolean, default: true },
+    credentialsDeactivatedAt: { type: Date },
+    credentialsDeactivatedReason: { type: String },
     approvedViaApplication: { type: Boolean, default: false },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     /**

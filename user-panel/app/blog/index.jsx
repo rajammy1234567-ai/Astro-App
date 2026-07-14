@@ -61,11 +61,14 @@ export default function BlogScreen() {
               <EmptyState
                 icon="newspaper-outline"
                 title="No blogs yet"
-                subtitle="Blogs posted by admin will appear here."
+                subtitle="Blogs by admin & astrologers will appear here."
               />
             ) : null
           }
-          renderItem={({ item }) => (
+          renderItem={({ item }) => {
+            const authorName = item.authorProfile?.name || item.author || 'Astrologer';
+            const authorImg = item.authorImage || item.authorProfile?.image;
+            return (
             <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => setSelected(item)}>
               <RemoteImage uri={item.image} type="blog" style={styles.cover} fallbackIcon="newspaper-outline" />
               <View style={styles.cardBody}>
@@ -78,10 +81,22 @@ export default function BlogScreen() {
                 <Text style={styles.excerpt} numberOfLines={2}>
                   {item.excerpt || item.content}
                 </Text>
-                <Text style={styles.meta}>{item.author} · {item.date || formatDate(item.createdAt)}</Text>
+                <View style={styles.authorRow}>
+                  {authorImg ? (
+                    <RemoteImage uri={authorImg} type="astrologer" style={styles.authorPic} fallbackIcon="person" />
+                  ) : (
+                    <View style={styles.authorPicFallback}>
+                      <Text style={styles.authorLetter}>{authorName.charAt(0)}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.meta}>
+                    {authorName} · {item.date || formatDate(item.createdAt)}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
-          )}
+            );
+          }}
         />
       )}
       <ArticleModal visible={!!selected} type="blog" item={selected} onClose={() => setSelected(null)} />
@@ -109,5 +124,12 @@ const styles = StyleSheet.create({
   badgeText: { color: COLORS.primary, fontSize: 11, fontWeight: '700' },
   title: { fontSize: 17, fontWeight: '800', color: COLORS.text, lineHeight: 24 },
   excerpt: { fontSize: 13, color: COLORS.textSecondary, marginTop: 8, lineHeight: 20 },
-  meta: { fontSize: 12, color: COLORS.textLight, marginTop: 10, fontWeight: '600' },
+  authorRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  authorPic: { width: 28, height: 28, borderRadius: 14 },
+  authorPicFallback: {
+    width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.bannerDark,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  authorLetter: { color: COLORS.primary, fontWeight: '800', fontSize: 12 },
+  meta: { fontSize: 12, color: COLORS.textLight, fontWeight: '600', flex: 1 },
 });

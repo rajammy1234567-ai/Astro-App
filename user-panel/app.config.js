@@ -1,12 +1,18 @@
-const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://astro-app-ru1d.onrender.com/api';
 const isHttp = apiUrl.startsWith('http://');
 
+/**
+ * Crash-safe Android APK config
+ * - New Architecture OFF (Agora + reanimated more stable)
+ * - packagingOptions pickFirst for libc++_shared (Agora vs RN clash)
+ * - Production default API = Render HTTPS (not localhost)
+ */
 export default {
   expo: {
     name: 'AstroTalk',
     slug: 'astrotalk-user',
-     "owner": "sunaina0",
-    version: '1.0.0',
+    owner: 'sunaina0',
+    version: '1.0.1',
     platforms: ['ios', 'android', 'web'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -14,9 +20,11 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'astrotalkuser',
     userInterfaceStyle: 'automatic',
+    // New Arch often crashes release APKs with Agora / some native modules
+    newArchEnabled: false,
     ios: {
       bundleIdentifier: 'com.astrotalk.user',
-      buildNumber: '1',
+      buildNumber: '2',
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
@@ -29,8 +37,9 @@ export default {
     },
     android: {
       package: 'com.astrotalk.user',
-      versionCode: 1,
-      edgeToEdgeEnabled: true,
+      versionCode: 2,
+      // edge-to-edge can crash some OEM launchers / older WebViews — keep off for stability
+      edgeToEdgeEnabled: false,
       adaptiveIcon: {
         backgroundColor: '#1E1033',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -46,7 +55,8 @@ export default {
         'BLUETOOTH',
         'BLUETOOTH_CONNECT',
       ],
-      usesCleartextTraffic: isHttp,
+      // true so misconfigured LAN builds still work; HTTPS preferred via env
+      usesCleartextTraffic: true,
       softwareKeyboardLayoutMode: 'pan',
     },
     web: {
@@ -81,11 +91,25 @@ export default {
         'expo-build-properties',
         {
           android: {
-            // androidx libs (via RN/Expo 57) require compileSdk >= 36
             compileSdkVersion: 36,
             targetSdkVersion: 36,
             minSdkVersion: 24,
             buildToolsVersion: '36.0.0',
+            // Avoid R8 stripping Agora / Hermes symbols that cause instant close
+            enableMinifyInReleaseBuilds: false,
+            enableShrinkResourcesInReleaseBuilds: false,
+            usesCleartextTraffic: true,
+            // Agora + React Native both ship libc++_shared → pick first or crash on load
+            packagingOptions: {
+              pickFirst: [
+                '**/libc++_shared.so',
+                '**/libfbjni.so',
+                '**/libjsc.so',
+                '**/libreactnative.so',
+              ],
+            },
+            // Prefer arm devices (phones); fewer .so variants = fewer load issues
+            buildArchs: ['armeabi-v7a', 'arm64-v8a'],
           },
         },
       ],

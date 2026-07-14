@@ -50,7 +50,7 @@ export default function Manage() {
                     {item.mode === 'users' && 'Edit name, phone, email · view wallet'}
                     {item.mode === 'readonly' && 'View only'}
                     {item.mode === 'crud' && item.id === 'products' && 'Store products · stock · top selling'}
-                    {item.mode === 'crud' && item.id === 'astrologers' && 'Publish on user app'}
+                    {item.mode === 'crud' && item.id === 'astrologers' && 'Photo · Block · Deactivate login · Publish'}
                     {item.mode === 'crud' && !['products', 'astrologers'].includes(item.id) && 'Add · Edit · Delete'}
                   </Text>
                 </View>

@@ -21,6 +21,13 @@ const astroProtect = async (req, res, next) => {
     if (astrologer.isBlocked) {
       return res.status(403).json({ message: astrologer.blockReason || 'Account blocked by admin' });
     }
+    if (astrologer.credentialsActive === false) {
+      return res.status(403).json({
+        message:
+          astrologer.credentialsDeactivatedReason ||
+          'Login credentials deactivated by admin',
+      });
+    }
     req.astrologer = astrologer;
     next();
   } catch {

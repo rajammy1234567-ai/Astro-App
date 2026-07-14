@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator,
-  RefreshControl, Alert, TextInput, Modal, ScrollView,
+  RefreshControl, Alert, TextInput, Modal, ScrollView, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,6 +16,33 @@ import { normalizeAdminList, rowKey } from '../../utils/normalizeList';
 import { colors } from '../../constants/theme';
 
 const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+
+function AstroAvatar({ item, size = 48 }) {
+  const uri = item?.image;
+  const letter = (item?.name || '?').charAt(0).toUpperCase();
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.border }}
+      />
+    );
+  }
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: colors.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text style={{ fontSize: size * 0.4, fontWeight: '800', color: '#0f172a' }}>{letter}</Text>
+    </View>
+  );
+}
 
 export default function SectionScreen() {
   const params = useLocalSearchParams();
@@ -35,6 +62,8 @@ export default function SectionScreen() {
   const [userDetail, setUserDetail] = useState(null);
   const [userDetailOpen, setUserDetailOpen] = useState(false);
   const [userDetailLoading, setUserDetailLoading] = useState(false);
+  const [astroDetailOpen, setAstroDetailOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
 
   const fields = SECTION_FIELDS[id] || [];
   const isReadonly = section?.mode === 'readonly';
@@ -125,11 +154,22 @@ export default function SectionScreen() {
     }
   };
 
+  const openAstroDetail = (item) => {
+    if (!item?._id) return;
+    setEditing(item);
+    setNewPassword('');
+    setAstroDetailOpen(true);
+  };
+
   const openEdit = (item) => {
     if (!item?._id) return;
     setEditing(item);
     if (isUsers) {
       openUserDetail(item);
+      return;
+    }
+    if (id === 'astrologers') {
+      openAstroDetail(item);
       return;
     }
     if (isOrders) {
@@ -227,9 +267,12 @@ export default function SectionScreen() {
   const handleBlockToggle = (item) => {
     if (!item?._id) return;
     const next = !item.isBlocked;
+    const who = item.name || getItemLabel(item);
     Alert.alert(
-      next ? 'Block' : 'Unblock',
-      `${next ? 'Block' : 'Unblock'} "${getItemLabel(item)}"?`,
+      next ? 'Block Astrologer' : 'Unblock Astrologer',
+      next
+        ? `Block "${who}"?\n\nPhone: ${item.phone || '—'}\n\n• Login band\n• User app se hide\n• Live sessions end`
+        : `Unblock "${who}"? Profile pic check kar lo sahi person hai.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -237,10 +280,13 @@ export default function SectionScreen() {
           style: next ? 'destructive' : 'default',
           onPress: async () => {
             try {
-              await api.put(`${section.endpoint}/${item._id}/block`, {
+              const updated = await api.put(`${section.endpoint}/${item._id}/block`, {
                 isBlocked: next,
                 blockReason: next ? 'Blocked by admin' : '',
               });
+              if (astroDetailOpen && editing?._id === item._id) {
+                setEditing({ ...item, ...updated });
+              }
               load();
             } catch (err) {
               Alert.alert('Error', err.message || 'Block update failed');
@@ -251,7 +297,63 @@ export default function SectionScreen() {
     );
   };
 
+  const handleCredentialsToggle = (item) => {
+    if (!item?._id) return;
+    const currentlyActive = item.credentialsActive !== false;
+    const nextActive = !currentlyActive;
+    const who = item.name || getItemLabel(item);
+    Alert.alert(
+      nextActive ? 'Activate Login' : 'Deactivate ID/Password',
+      nextActive
+        ? `Re-activate login for "${who}"?\nPhone (ID): ${item.phone || '—'}`
+        : `Deactivate login for "${who}"?\n\nPhone (ID): ${item.phone || '—'}\n\nProfile pic se confirm karo. Partner app login nahi ho payega.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: nextActive ? 'Activate' : 'Deactivate',
+          style: nextActive ? 'default' : 'destructive',
+          onPress: async () => {
+            try {
+              const updated = await api.put(`/astrologers/${item._id}/credentials`, {
+                credentialsActive: nextActive,
+                reason: nextActive ? '' : 'Login ID/password deactivated by admin',
+              });
+              if (astroDetailOpen && editing?._id === item._id) {
+                setEditing({ ...item, ...updated });
+              }
+              load();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Credentials update failed');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSetPassword = async () => {
+    if (!editing?._id) return;
+    const pwd = newPassword.trim();
+    if (pwd.length < 4) {
+      Alert.alert('Password', 'Kam se kam 4 characters chahiye');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.put(`/astrologers/${editing._id}/password`, { password: pwd });
+      setNewPassword('');
+      setEditing({ ...editing, credentialsActive: true });
+      Alert.alert('Done', `Naya password set · Login ID: ${editing.phone || '—'}`);
+      load();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Password update failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const canBlock = isUsers || id === 'astrologers';
+  const isAstrologers = id === 'astrologers';
   const showActions = !isReadonly;
 
   return (
@@ -286,10 +388,22 @@ export default function SectionScreen() {
             if (!item) return null;
             return (
             <TouchableOpacity
-              style={styles.row}
-              activeOpacity={isUsers ? 0.75 : 1}
-              onPress={() => isUsers && openUserDetail(item)}
+              style={[
+                styles.row,
+                item.isBlocked && styles.rowBlocked,
+                item.credentialsActive === false && styles.rowCredOff,
+              ]}
+              activeOpacity={isUsers || isAstrologers ? 0.75 : 1}
+              onPress={() => {
+                if (isUsers) openUserDetail(item);
+                else if (isAstrologers) openAstroDetail(item);
+              }}
             >
+              {isAstrologers && (
+                <View style={styles.avatarWrap}>
+                  <AstroAvatar item={item} size={52} />
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowTitle}>{getItemLabel(item)}</Text>
                 <Text style={styles.rowSub}>{getItemSub(id, item)}</Text>
@@ -299,6 +413,25 @@ export default function SectionScreen() {
                     {item.isBlocked ? ' · BLOCKED' : ''}
                   </Text>
                 )}
+                {isAstrologers && (
+                  <View style={styles.badgeRow}>
+                    {item.isBlocked ? (
+                      <Text style={styles.badgeDanger}>BLOCKED</Text>
+                    ) : (
+                      <Text style={styles.badgeOk}>Active</Text>
+                    )}
+                    {item.credentialsActive === false ? (
+                      <Text style={styles.badgeWarn}>Login OFF</Text>
+                    ) : (
+                      <Text style={styles.badgeOk}>Login ON</Text>
+                    )}
+                    {item.isPublished ? (
+                      <Text style={styles.badgeInfo}>Published</Text>
+                    ) : (
+                      <Text style={styles.badgeMuted}>Hidden</Text>
+                    )}
+                  </View>
+                )}
               </View>
               {showActions && (
                 <View style={styles.actions}>
@@ -307,19 +440,24 @@ export default function SectionScreen() {
                       <Text style={styles.edit}>View</Text>
                     </TouchableOpacity>
                   )}
-                  {canBlock && (
+                  {isAstrologers && (
+                    <TouchableOpacity onPress={() => openAstroDetail(item)}>
+                      <Text style={styles.edit}>Manage</Text>
+                    </TouchableOpacity>
+                  )}
+                  {canBlock && !isAstrologers && (
                     <TouchableOpacity onPress={() => handleBlockToggle(item)}>
                       <Text style={item.isBlocked ? styles.edit : styles.delete}>
                         {item.isBlocked ? 'Unblock' : 'Block'}
                       </Text>
                     </TouchableOpacity>
                   )}
-                  {!isUsers && (
+                  {!isUsers && !isAstrologers && (
                     <TouchableOpacity onPress={() => openEdit(item)}>
                       <Text style={styles.edit}>{isOrders ? 'Status' : 'Edit'}</Text>
                     </TouchableOpacity>
                   )}
-                  {!isOrders && (
+                  {!isOrders && !isAstrologers && (
                     <TouchableOpacity onPress={() => handleDelete(item)}>
                       <Text style={styles.delete}>Del</Text>
                     </TouchableOpacity>
@@ -497,6 +635,109 @@ export default function SectionScreen() {
         </Modal>
       )}
 
+      {/* Astrologer manage sheet — profile pic + block / deactivate / password */}
+      {astroDetailOpen && editing && (
+        <Modal visible animationType="slide" transparent onRequestClose={() => setAstroDetailOpen(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalSheet}>
+              <Text style={styles.modalTitle}>Manage Astrologer</Text>
+              <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+                <View style={styles.astroHero}>
+                  <AstroAvatar item={editing} size={88} />
+                  <Text style={styles.astroHeroName}>{editing.name || 'Astrologer'}</Text>
+                  <Text style={styles.detailLine}>📱 Login ID: {editing.phone || '—'}</Text>
+                  <Text style={styles.detailLine}>⭐ {editing.specialty || '—'} · ₹{editing.pricePerMin}/min</Text>
+                  <Text style={styles.detailLine}>
+                    Status:{' '}
+                    {editing.isBlocked ? '🚫 Blocked' : '✅ Active'}
+                    {' · '}
+                    {editing.credentialsActive === false ? '🔒 Login OFF' : '🔑 Login ON'}
+                  </Text>
+                  {!!editing.blockReason && editing.isBlocked && (
+                    <Text style={styles.detailLine}>Reason: {editing.blockReason}</Text>
+                  )}
+                </View>
+
+                <Text style={styles.powerHint}>
+                  Profile photo se confirm karo sahi astrologer hai — phir block / deactivate karo.
+                </Text>
+
+                <TouchableOpacity
+                  style={[styles.powerBtn, editing.isBlocked ? styles.powerBtnOk : styles.powerBtnDanger]}
+                  onPress={() => handleBlockToggle(editing)}
+                >
+                  <Text style={styles.powerBtnText}>
+                    {editing.isBlocked ? '✅ Unblock Astrologer' : '🚫 Block Astrologer'}
+                  </Text>
+                  <Text style={styles.powerBtnSub}>
+                    {editing.isBlocked
+                      ? 'Wapas allow karega (user app pe publish alag se)'
+                      : 'Login band + user app se hide + live end'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.powerBtn,
+                    editing.credentialsActive === false ? styles.powerBtnOk : styles.powerBtnWarn,
+                  ]}
+                  onPress={() => handleCredentialsToggle(editing)}
+                >
+                  <Text style={styles.powerBtnText}>
+                    {editing.credentialsActive === false
+                      ? '🔑 Activate ID / Password'
+                      : '🔒 Deactivate ID / Password'}
+                  </Text>
+                  <Text style={styles.powerBtnSub}>
+                    {editing.credentialsActive === false
+                      ? 'Partner app login phir se chalega'
+                      : 'Phone + password se login nahi hoga'}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={styles.label}>Set / Reset Password</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Naya password (min 4)"
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry
+                />
+                <TouchableOpacity
+                  style={styles.powerBtnSecondary}
+                  onPress={handleSetPassword}
+                  disabled={saving}
+                >
+                  <Text style={styles.powerBtnSecondaryText}>
+                    {saving ? 'Saving…' : 'Save New Password'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.powerBtnSecondary, { marginTop: 8 }]}
+                  onPress={() => {
+                    setAstroDetailOpen(false);
+                    setForm(buildFormFromItem(id, editing));
+                    setModalOpen(true);
+                  }}
+                >
+                  <Text style={styles.powerBtnSecondaryText}>Edit Profile Fields</Text>
+                </TouchableOpacity>
+              </ScrollView>
+              <View style={styles.modalFooter}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setAstroDetailOpen(false)}
+                >
+                  <Text style={styles.cancelText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       {orderModal && editing && (
       <Modal visible animationType="slide" transparent onRequestClose={() => setOrderModal(false)}>
         <View style={styles.modalOverlay}>
@@ -542,11 +783,35 @@ const styles = StyleSheet.create({
   list: { padding: 16, paddingBottom: 40 },
   row: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card,
-    borderRadius: 10, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 10, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border, gap: 12,
   },
+  rowBlocked: { borderColor: '#991b1b', backgroundColor: 'rgba(153,27,27,0.12)' },
+  rowCredOff: { borderColor: '#b45309' },
+  avatarWrap: { marginRight: 2 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   rowMeta: { fontSize: 11, color: colors.primary, marginTop: 4, fontWeight: '600' },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  badgeDanger: {
+    fontSize: 10, fontWeight: '800', color: '#fff', backgroundColor: '#991b1b',
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, overflow: 'hidden',
+  },
+  badgeWarn: {
+    fontSize: 10, fontWeight: '800', color: '#fff', backgroundColor: '#b45309',
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, overflow: 'hidden',
+  },
+  badgeOk: {
+    fontSize: 10, fontWeight: '800', color: '#fff', backgroundColor: '#166534',
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, overflow: 'hidden',
+  },
+  badgeInfo: {
+    fontSize: 10, fontWeight: '800', color: '#0f172a', backgroundColor: colors.primary,
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, overflow: 'hidden',
+  },
+  badgeMuted: {
+    fontSize: 10, fontWeight: '700', color: colors.textMuted, backgroundColor: colors.border,
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, overflow: 'hidden',
+  },
   actions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 140 },
   edit: { color: colors.primary, fontWeight: '600' },
   delete: { color: colors.danger, fontWeight: '600' },
@@ -557,6 +822,27 @@ const styles = StyleSheet.create({
   },
   detailName: { fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 8 },
   detailLine: { fontSize: 13, color: colors.textMuted, marginTop: 4, lineHeight: 18 },
+  astroHero: {
+    alignItems: 'center', padding: 16, marginBottom: 12, borderRadius: 14,
+    backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
+  },
+  astroHeroName: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 12, marginBottom: 4 },
+  powerHint: {
+    fontSize: 12, color: colors.primary, marginBottom: 12, lineHeight: 18, fontWeight: '600',
+  },
+  powerBtn: {
+    borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border,
+  },
+  powerBtnDanger: { backgroundColor: 'rgba(153,27,27,0.25)', borderColor: '#991b1b' },
+  powerBtnWarn: { backgroundColor: 'rgba(180,83,9,0.25)', borderColor: '#b45309' },
+  powerBtnOk: { backgroundColor: 'rgba(22,101,52,0.25)', borderColor: '#166534' },
+  powerBtnText: { fontSize: 15, fontWeight: '800', color: colors.text },
+  powerBtnSub: { fontSize: 11, color: colors.textMuted, marginTop: 4, lineHeight: 16 },
+  powerBtnSecondary: {
+    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border,
+    alignItems: 'center', backgroundColor: colors.bg, marginBottom: 8,
+  },
+  powerBtnSecondaryText: { fontSize: 14, fontWeight: '700', color: colors.primary },
   statsRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   statBox: {
     flex: 1, backgroundColor: colors.bg, borderRadius: 10, padding: 10, alignItems: 'center',

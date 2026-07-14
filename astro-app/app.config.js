@@ -1,12 +1,16 @@
-const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://astro-app-ru1d.onrender.com/api';
 const isHttp = apiUrl.startsWith('http://');
 
+/**
+ * Crash-safe Android APK config (Partner / Astrologer panel)
+ * Same stability fixes as user-panel: New Arch OFF, Agora packaging pickFirst.
+ */
 export default {
   expo: {
     name: 'AstroTalk Partner',
     slug: 'astrotalk-astro',
     owner: 'sunaina0s-team',
-    version: '1.0.0',
+    version: '1.0.1',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -14,9 +18,10 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'astro-app',
     userInterfaceStyle: 'automatic',
+    newArchEnabled: false,
     ios: {
       bundleIdentifier: 'com.astrotalk.astro',
-      buildNumber: '1',
+      buildNumber: '2',
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
@@ -29,8 +34,8 @@ export default {
     },
     android: {
       package: 'com.astrotalk.astro',
-      versionCode: 1,
-      edgeToEdgeEnabled: true,
+      versionCode: 2,
+      edgeToEdgeEnabled: false,
       adaptiveIcon: {
         backgroundColor: '#1E1033',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -48,7 +53,7 @@ export default {
         'BLUETOOTH',
         'BLUETOOTH_CONNECT',
       ],
-      usesCleartextTraffic: isHttp,
+      usesCleartextTraffic: true,
       softwareKeyboardLayoutMode: 'pan',
     },
     plugins: [
@@ -80,11 +85,22 @@ export default {
         'expo-build-properties',
         {
           android: {
-            // androidx libs (via RN/Expo 57) require compileSdk >= 36
             compileSdkVersion: 36,
             targetSdkVersion: 36,
             minSdkVersion: 24,
             buildToolsVersion: '36.0.0',
+            enableMinifyInReleaseBuilds: false,
+            enableShrinkResourcesInReleaseBuilds: false,
+            usesCleartextTraffic: true,
+            packagingOptions: {
+              pickFirst: [
+                '**/libc++_shared.so',
+                '**/libfbjni.so',
+                '**/libjsc.so',
+                '**/libreactnative.so',
+              ],
+            },
+            buildArchs: ['armeabi-v7a', 'arm64-v8a'],
           },
         },
       ],
@@ -98,7 +114,7 @@ export default {
     experiments: { typedRoutes: true },
     extra: {
       apiUrl,
-      eas: {"projectId": "bd897ff7-209e-4dc9-a215-33ae6875352f"},
+      eas: { projectId: 'bd897ff7-209e-4dc9-a215-33ae6875352f' },
     },
   },
 };

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -95,7 +96,26 @@ export default function AnalyticsScreen() {
           <TouchableOpacity onPress={() => setSelected(null)} style={styles.back}>
             <Text style={styles.backText}>‹ All astrologers</Text>
           </TouchableOpacity>
-          <Text style={styles.heading}>{selected.name}</Text>
+          <View style={styles.detailHero}>
+            {selected.image || detail?.astrologer?.image ? (
+              <Image
+                source={{ uri: selected.image || detail?.astrologer?.image }}
+                style={styles.detailAvatar}
+              />
+            ) : (
+              <View style={[styles.detailAvatar, styles.detailAvatarFallback]}>
+                <Text style={styles.detailAvatarLetter}>
+                  {(selected.name || '?').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.heading}>{selected.name}</Text>
+              <Text style={styles.sub}>
+                Profile pic se pehchano · Phone {selected.phone || '—'}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.sub}>
             {selected.phone || '—'} · Chat {s.chatOnline || selected.chatOnline ? 'ON' : 'OFF'} · Call{' '}
             {s.callOnline || selected.callOnline ? 'ON' : 'OFF'}
@@ -201,9 +221,16 @@ export default function AnalyticsScreen() {
           ))}
         </View>
 
-        <Text style={styles.section}>Astrologers (tap for full detail)</Text>
+        <Text style={styles.section}>Astrologers (tap for full detail · photo se pehchano)</Text>
         {(data?.allAstrologers || data?.topAstrologers || []).map((a) => (
           <TouchableOpacity key={a._id} style={styles.row} onPress={() => openAstro(a)} activeOpacity={0.85}>
+            {a.image ? (
+              <Image source={{ uri: a.image }} style={styles.listAvatar} />
+            ) : (
+              <View style={[styles.listAvatar, styles.listAvatarFallback]}>
+                <Text style={styles.listAvatarLetter}>{(a.name || '?').charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={styles.rowTitle}>
                 {a.name}{' '}
@@ -289,7 +316,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: colors.border,
+    gap: 10,
   },
+  listAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.border },
+  listAvatarFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  listAvatarLetter: { fontSize: 16, fontWeight: '800', color: '#0f172a' },
+  detailHero: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 },
+  detailAvatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.border },
+  detailAvatarFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  detailAvatarLetter: { fontSize: 28, fontWeight: '800', color: '#0f172a' },
   rowTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
   rowSub: { fontSize: 11, color: colors.textMuted, marginTop: 3, lineHeight: 15 },
   chev: { fontSize: 22, color: colors.textMuted, marginLeft: 8 },

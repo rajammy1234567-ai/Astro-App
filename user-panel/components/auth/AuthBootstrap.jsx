@@ -41,51 +41,53 @@ export default function AuthBootstrap({ children }) {
     started.current = true;
     let cancelled = false;
 
-    const run = async () => {
-      const t0 = Date.now();
-      setPhase('Restoring session…');
-
-      // Auth + cart in parallel
-      await Promise.all([
-        restoreSession().catch(() => null),
-        Promise.resolve(dispatch(hydrateCart())).catch(() => null),
-      ]);
-
-      if (cancelled) return;
-      setPhase('Loading content…');
-
-      // Prefetch home data — don't block forever if server is slow
-      await withTimeout(
-        Promise.allSettled([
-          dispatch(fetchAstrologers()),
-          dispatch(fetchBlogs()),
-          dispatch(fetchProducts()),
-        ]),
-        PREFETCH_TIMEOUT_MS,
-        null
-      );
-
-      if (cancelled) return;
-
-      // Smooth min display
-      const elapsed = Date.now() - t0;
-      if (elapsed < SPLASH_MIN_MS) {
-        await delay(SPLASH_MIN_MS - elapsed);
-      }
-
-      // Hard cap already roughly handled by timeouts above
-      const total = Date.now() - t0;
-      if (total > SPLASH_MAX_MS) {
-        // already past max — continue immediately
-      }
-
+    const finish = async () => {
       try {
         await SplashScreen.hideAsync?.();
       } catch {
         /* ignore */
       }
-
       if (!cancelled) setReady(true);
+    };
+
+    const run = async () => {
+      try {
+        const t0 = Date.now();
+        setPhase('Restoring session…');
+
+        // Auth + cart in parallel
+        await Promise.all([
+          restoreSession().catch(() => null),
+          Promise.resolve(dispatch(hydrateCart())).catch(() => null),
+        ]);
+
+        if (cancelled) return;
+        setPhase('Loading content…');
+
+        // Prefetch home data — don't block forever if server is slow
+        await withTimeout(
+          Promise.allSettled([
+            dispatch(fetchAstrologers()),
+            dispatch(fetchBlogs()),
+            dispatch(fetchProducts()),
+          ]),
+          PREFETCH_TIMEOUT_MS,
+          null
+        );
+
+        if (cancelled) return;
+
+        // Smooth min display
+        const elapsed = Date.now() - t0;
+        if (elapsed < SPLASH_MIN_MS) {
+          await delay(SPLASH_MIN_MS - elapsed);
+        }
+
+        await finish();
+      } catch (err) {
+        console.warn('[AuthBootstrap] bootstrap failed, opening app anyway', err?.message);
+        await finish();
+      }
     };
 
     // Absolute safety net: never leave user on splash forever

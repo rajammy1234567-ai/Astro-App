@@ -56,6 +56,13 @@ const login = async (req, res) => {
     if (astrologer.isBlocked) {
       return res.status(403).json({ message: astrologer.blockReason || 'Your account has been blocked by admin.' });
     }
+    if (astrologer.credentialsActive === false) {
+      return res.status(403).json({
+        message:
+          astrologer.credentialsDeactivatedReason ||
+          'Your login ID/password has been deactivated by admin. Contact support.',
+      });
+    }
     res.json({
       token: signAstroToken(astrologer._id),
       astrologer: toPublicProfile(astrologer),

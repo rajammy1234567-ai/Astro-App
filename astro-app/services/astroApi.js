@@ -34,4 +34,10 @@ export const astroApi = {
   deleteService: (id) => api.delete(`/services/${id}`),
   getServiceBookings: () => api.get('/service-bookings'),
   getEarnings: () => api.get('/earnings'),
+
+  /** Blogs posted by this astrologer (user app when published) */
+  getBlogs: () => api.get('/blogs'),
+  createBlog: (data) => api.post('/blogs', data),
+  updateBlog: (id, data) => api.put(`/blogs/${id}`, data),
+  deleteBlog: (id) => api.delete(`/blogs/${id}`),
 };
