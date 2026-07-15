@@ -1,10 +1,13 @@
 /**
  * Agora RTC — User Panel
  *
- * IMPORTANT (APK stability):
- * react-native-agora native .so was crashing release APKs on launch with RN 0.86.
- * It is excluded from Expo autolinking + Metro-stubbed. App stays open; voice
- * engine is disabled until a compatible Agora build is re-enabled.
+ * IMPORTANT (APK stability — do NOT re-enable without a full EAS rebuild test):
+ * react-native-agora native .so crashes many release APKs on launch with RN 0.86.
+ * Disabled via:
+ *  1) package.json expo.autolinking.exclude
+ *  2) react-native.config.js (platforms android/ios = null)
+ *  3) metro.config.js stub → empty module
+ * Call UI still opens in soft live mode (isAgoraNativeAvailable() === false).
  *
  * Web uses agoraService.web.js.
  */

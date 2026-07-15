@@ -3,8 +3,8 @@ import { getApiBaseUrl } from '../utils/platform';
 import { storage } from '../utils/storage';
 
 const api = axios.create({
-  // Keep snappy for mobile UX; long ops can override per-request
-  timeout: 18000,
+  // Auth is fast after wakeServer(); keep moderate timeout
+  timeout: 20000,
   headers: { 'Content-Type': 'application/json' },
 });
 

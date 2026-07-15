@@ -1,10 +1,12 @@
 {
   "name": "astrotalk-user-app",
   "main": "expo-router/entry",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "expo": {
     "autolinking": {
-      "exclude": []
+      "exclude": [
+        "react-native-agora"
+      ]
     }
   },
   "dependencies": {

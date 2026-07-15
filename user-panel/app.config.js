@@ -12,7 +12,7 @@ export default {
     name: 'AstroTalk',
     slug: 'astrotalk-user',
     owner: 'sunaina0',
-    version: '1.0.2',
+    version: '1.0.3',
     platforms: ['ios', 'android', 'web'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -32,7 +32,7 @@ export default {
     },
     ios: {
       bundleIdentifier: 'com.astrotalk.user',
-      buildNumber: '2',
+      buildNumber: '3',
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
@@ -45,7 +45,7 @@ export default {
     },
     android: {
       package: 'com.astrotalk.user',
-      versionCode: 3,
+      versionCode: 4,
       // edge-to-edge can crash some OEM launchers / older WebViews — keep off for stability
       edgeToEdgeEnabled: false,
       adaptiveIcon: {

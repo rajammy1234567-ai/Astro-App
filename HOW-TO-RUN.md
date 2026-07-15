@@ -33,6 +33,31 @@ The APK files named `Expo-Go-57.0.2.apk` in the folder are **not** the standalon
 
 ---
 
+## ⚡ Login slow? (30–60 seconds)
+
+Most common cause: apps point at **Render free tier** (`https://astro-app-ru1d.onrender.com/api`). Free dynos **sleep after idle**; first request wakes them (30–90s).
+
+### Fastest for daily testing (recommended)
+1. Double-click **`START-EVERYTHING.bat`** — sets LAN IP in `.env` + starts local server + Expo.
+2. Phone + PC same Wi‑Fi.
+3. Expo Go se open karo.
+
+Dev mode ab **local PC API prefer** karta hai (Render HTTPS se pehle), isliye login 1–2 sec me hona chahiye.
+
+### Agar APK / cloud API use kar rahe ho
+- Login screen pe status dikhega: *“Render server wake ho raha hai…”*
+- Pehli login slow normal hai; uske baad 15 min tak fast rehta hai.
+- Permanent fast cloud chahiye to Render pe **paid always-on** plan ya external uptime ping lagao.
+
+### Force cloud API from Expo (optional)
+`.env` me:
+```
+EXPO_PUBLIC_FORCE_REMOTE=1
+EXPO_PUBLIC_API_URL=https://astro-app-ru1d.onrender.com/api
+```
+
+---
+
 ## 💬 2. Chat & Calling Test Flow
 
 We have verified that the chat and calling signaling code is fully integrated. Here is how they work and how to test them:
@@ -60,10 +85,30 @@ We have verified that the chat and calling signaling code is fully integrated. H
 
 ---
 
-## 🛠️ 3. Standalone APKs Crash Issue (Why it happens and how to fix it)
-If you built standalone APKs previously and they crashed on launch ("open-band"):
-1. **Stale Cache / Location Change**:
-   - If you moved the folder (e.g., from Desktop to a different directory), the old Metro build cache was pointing to the old paths. Clean the cache by running the packagers with the `-c --clear` flags (which our batch scripts do automatically).
-2. **Proguard/R8 Obfuscation**:
-   - In production release builds, the code shrinker (R8) obfuscates native classes. Since Agora RTC utilizes native C++ binaries (`.so` files), you must add Proguard rules to prevent these classes from being removed.
-   - We can help you add these configurations to your build profile if you are ready to configure EAS builds.
+## 🛠️ 3. Standalone APKs Crash on Open (instant close)
+
+### Root cause (v1.0.2 builds)
+`react-native-agora` was re-linked into User + Astrologer APKs. On **React Native 0.86 / Expo 57**, loading Agora’s native `.so` libraries often **kills the app immediately on launch** (before any JS error screen).
+
+### Fix (v1.0.3+)
+Agora is **disabled for stability** in both apps:
+1. `package.json` → `expo.autolinking.exclude: ["react-native-agora"]`
+2. `react-native.config.js` → Android/iOS platforms set to `null`
+3. `metro.config.js` → stubs `react-native-agora` as an empty module
+
+Apps open normally. Chat works. Calls use **soft live mode** (UI + timer + session) without real RTC audio until a compatible Agora build is re-enabled later.
+
+### What you must do after this fix
+1. **Uninstall** the old crashing APK completely from the phone.
+2. Build a **new** APK: `npm run user:apk` / `npm run astro:apk` (or EAS profile `apk`).
+3. Install the new **v1.0.3** APK and open it.
+
+### Expo Go (dev) — if the project won’t open
+1. PC + phone same Wi‑Fi; mobile data off.
+2. Run `START-EVERYTHING.bat` (User) or `START-EXPO-ASTRO.bat` (Partner).
+3. Open **Expo Go** → scan QR or enter `exp://YOUR_PC_IP:8081` / `:8083`.
+4. If Metro fails: `npx expo start -c` inside `user-panel` or `astro-app`.
+
+### Other historical crash notes
+1. **Stale cache after folder move**: clear with `-c --clear` (batch scripts do this).
+2. **R8 minify**: our configs keep minify/shrink **off** on Android release for stability.

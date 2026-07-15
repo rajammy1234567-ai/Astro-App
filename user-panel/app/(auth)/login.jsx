@@ -18,7 +18,12 @@ import { COLORS } from '../../constants/colors';
 import { SHADOW_LG } from '../../constants/theme';
 import { hasCompleteProfile } from '../../utils/birthDetails';
 import { getApiBaseUrl } from '../../utils/platform';
-import api from '../../services/api';
+import {
+  wakeServer,
+  wakeStatusMessage,
+  isRemoteApi,
+  isRenderApi,
+} from '../../utils/serverHealth';
 
 /** Accepts normal emails; trims spaces (mobile keyboards add them sometimes) */
 const isValidEmail = (email) => {
@@ -72,11 +77,14 @@ export default function LoginScreen() {
   const [successMsg, setSuccessMsg] = useState('');
   const [serverOk, setServerOk] = useState(null);
   const [checkingServer, setCheckingServer] = useState(true);
+  const [serverStatus, setServerStatus] = useState('Server check…');
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const { register, login, authLoading, error, clearError } = useAuth();
   const apiUrl = getApiBaseUrl();
+  const remoteApi = isRemoteApi(apiUrl);
 
+  // Don't lock form during background wake — submit will wake if needed
   const busy = authLoading || submitting;
 
   useEffect(() => {
@@ -85,24 +93,43 @@ export default function LoginScreen() {
     setSuccessMsg('');
   }, [authMode, clearError]);
 
+  // Wake Render (or check local) on login screen open — login feels fast after this
   useEffect(() => {
     let cancelled = false;
     setCheckingServer(true);
-    api
-      .get('/health')
-      .then(() => {
-        if (!cancelled) setServerOk(true);
-      })
-      .catch(() => {
-        if (!cancelled) setServerOk(false);
-      })
-      .finally(() => {
-        if (!cancelled) setCheckingServer(false);
-      });
+    setServerOk(null);
+    setServerStatus(remoteApi ? 'Server wake start…' : 'Server check…');
+
+    wakeServer({
+      maxMs: remoteApi ? 75000 : 8000,
+      onProgress: (info) => {
+        if (!cancelled) setServerStatus(wakeStatusMessage(info));
+      },
+    }).then((result) => {
+      if (cancelled) return;
+      setServerOk(result.ok);
+      setCheckingServer(false);
+      if (result.ok) {
+        const sec = Math.max(1, Math.round((result.elapsed || 0) / 1000));
+        setServerStatus(
+          result.remote && sec > 3
+            ? `✓ Server ready (${sec}s me wake hua)`
+            : '✓ Server connected'
+        );
+      } else {
+        setServerStatus(
+          result.message ||
+            (remoteApi
+              ? 'Server abhi slow/sleep — Login dabao, hum dubara try karenge'
+              : '✗ Server offline — cd server → npm run dev')
+        );
+      }
+    });
+
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [remoteApi]);
 
   const normalizedEmail = email.trim().toLowerCase();
   const nameOk = authMode === 'login' || name.trim().length >= 2;
@@ -142,7 +169,8 @@ export default function LoginScreen() {
       return;
     }
 
-    if (serverOk === false) {
+    // Local offline: hard block. Remote (Render): still try after wake.
+    if (serverOk === false && !remoteApi) {
       setLocalError(
         `Server offline. PC pe:\ncd server\nnpm run dev\n\nAPI: ${apiUrl}`
       );
@@ -157,6 +185,28 @@ export default function LoginScreen() {
 
     setSubmitting(true);
     try {
+      // Ensure server is awake before auth (Render free cold-start)
+      if (serverOk !== true) {
+        setServerStatus(
+          isRenderApi(apiUrl)
+            ? 'Login se pehle server wake… (30–60s ho sakta hai)'
+            : 'Server check…'
+        );
+        const woke = await wakeServer({
+          maxMs: remoteApi ? 75000 : 8000,
+          onProgress: (info) => setServerStatus(wakeStatusMessage(info)),
+        });
+        setServerOk(woke.ok);
+        if (!woke.ok) {
+          setLocalError(
+            woke.message ||
+              `Server se connect nahi hua.\nAPI: ${apiUrl}`
+          );
+          return;
+        }
+        setServerStatus('✓ Server ready — logging in…');
+      }
+
       const result =
         authMode === 'signup' ? await register(payload) : await login(payload);
 
@@ -181,7 +231,9 @@ export default function LoginScreen() {
         (authMode === 'signup' ? 'Account create nahi hua' : 'Login fail');
 
       if (result.payload?.networkError || /connect|network|timeout/i.test(msg)) {
-        msg = `Server se connect nahi hua.\n\n1) cd server → npm run dev\n2) Expo restart\n\nAPI: ${apiUrl}`;
+        msg = remoteApi
+          ? `Server slow / sleep (Render free).\n1) 30 sec wait karke dubara Login\n2) Ya local: START-EVERYTHING.bat\n\nAPI: ${apiUrl}`
+          : `Server se connect nahi hua.\n\n1) cd server → npm run dev\n2) Expo restart\n\nAPI: ${apiUrl}`;
       }
       if (/already registered/i.test(msg)) {
         msg = 'Yeh email pehle se hai. Upar Login tab dabao.';
@@ -226,15 +278,19 @@ export default function LoginScreen() {
           ]}
         >
           {checkingServer ? (
-            <Text style={styles.serverText}>Checking server…</Text>
+            <Text style={styles.serverText}>{serverStatus}</Text>
           ) : serverOk ? (
-            <Text style={styles.serverText}>✓ Server connected</Text>
+            <Text style={styles.serverText}>{serverStatus || '✓ Server connected'}</Text>
           ) : (
             <Text style={styles.serverText}>
-              ✗ Server offline — pehle PC pe: cd server → npm run dev
+              {serverStatus ||
+                (remoteApi
+                  ? 'Server sleep mode — Login dabao, wake ho jayega'
+                  : '✗ Server offline — pehle PC pe: cd server → npm run dev')}
             </Text>
           )}
         </View>
+
 
         <View style={styles.card}>
           <View style={styles.authModeRow}>
@@ -371,7 +427,11 @@ export default function LoginScreen() {
               <View style={styles.btnRow}>
                 <ActivityIndicator size="small" color={COLORS.text} />
                 <Text style={[styles.continueText, styles.continueTextActive]}>
-                  {authMode === 'signup' ? 'Creating…' : 'Logging in…'}
+                  {serverOk !== true && remoteApi
+                    ? 'Server wake…'
+                    : authMode === 'signup'
+                      ? 'Creating…'
+                      : 'Logging in…'}
                 </Text>
               </View>
             ) : (
@@ -402,7 +462,11 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.apiHint}>API: {apiUrl}</Text>
+        <Text style={styles.apiHint}>
+          {remoteApi
+            ? `Cloud API (Render free pe pehli baar 30–60s lag sakta hai)\n${apiUrl}`
+            : `Local API · fast\n${apiUrl}`}
+        </Text>
       </ScrollView>
     </Screen>
   );

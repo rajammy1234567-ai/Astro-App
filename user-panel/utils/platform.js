@@ -48,33 +48,37 @@ function isLocalOnlyUrl(url) {
 /**
  * API base URL resolution
  *
- * DEV (Expo):
- *  1) Web → always http://localhost:5000/api
- *  2) Phone/emulator → Expo packager host IP :5000 (auto, not stale .env)
- *  3) EXPO_PUBLIC_API_URL only as last LAN fallback
+ * DEV (Expo Go / metro):
+ *  Prefer PC LAN (fast login) over sleeping Render HTTPS.
+ *  1) Web → localhost:5000
+ *  2) Phone → Expo packager host :5000
+ *  3) http EXPO_PUBLIC_API_URL (setup-mobile-env LAN)
+ *  4) https Render only as last resort
  *
- * PROD / release:
+ * PROD / release APK:
  *  Prefer https EXPO_PUBLIC_API_URL (Render etc.)
+ *
+ * Force remote in Expo: EXPO_PUBLIC_FORCE_REMOTE=1
  */
 export function getApiBaseUrl() {
   const configUrl = Constants.expoConfig?.extra?.apiUrl;
   const envUrl = process.env.EXPO_PUBLIC_API_URL || configUrl;
   const candidate = (envUrl || '').replace(/\/$/, '');
   const dev = typeof __DEV__ !== 'undefined' && __DEV__;
+  const forceRemote =
+    process.env.EXPO_PUBLIC_FORCE_REMOTE === '1' ||
+    process.env.EXPO_PUBLIC_FORCE_REMOTE === 'true';
 
-  // Production HTTPS always wins (Render / custom domain)
+  // Production / release: HTTPS cloud wins
   if (!dev && candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
     return candidate;
   }
-  if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
-    return candidate;
-  }
 
-  if (dev) {
+  if (dev && !forceRemote) {
     // Browser on same PC as server
     if (isWeb) return 'http://localhost:5000/api';
 
-    // Expo Go / device — use the same machine Expo is running on
+    // Expo Go / device — same machine as Metro (fast local API)
     const devHost = getExpoDevHost();
     if (isNative && devHost && !isLocalOnlyUrl(`http://${devHost}`)) {
       return `http://${devHost}:5000/api`;
@@ -85,9 +89,10 @@ export function getApiBaseUrl() {
       return `http://${packagerHost}:5000/api`;
     }
 
-    // Explicit env LAN IP (may be stale — used only if auto-detect failed)
+    // Explicit LAN from setup-mobile-env (http://192.168.x.x:5000/api)
     if (
       isHttpUrl(candidate) &&
+      candidate.startsWith('http://') &&
       !isPlaceholderUrl(candidate) &&
       !isLocalOnlyUrl(candidate)
     ) {
@@ -96,10 +101,19 @@ export function getApiBaseUrl() {
 
     // Android emulator → host machine
     if (isAndroid) return 'http://10.0.2.2:5000/api';
+
+    // Only then fall back to remote HTTPS (slow cold start)
+    if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
+      return candidate;
+    }
+
     return 'http://localhost:5000/api';
   }
 
-  // Release build without https — still try env if set
+  // forceRemote or production-like path
+  if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
+    return candidate;
+  }
   if (isHttpUrl(candidate) && !isPlaceholderUrl(candidate) && !isLocalOnlyUrl(candidate)) {
     return candidate;
   }

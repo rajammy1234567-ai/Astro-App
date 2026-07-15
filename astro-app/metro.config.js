@@ -47,10 +47,16 @@ function resolveFile(...parts) {
   return null;
 }
 
-// Agora stub removed for calling feature
-
+// Stub Agora on all platforms — native .so was crashing release APKs on launch.
+// package.json also excludes it from autolinking. Soft live / call UI still works.
 const defaultResolve = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (
+    moduleName === 'react-native-agora' ||
+    moduleName.startsWith('react-native-agora/')
+  ) {
+    return { type: 'empty' };
+  }
 
   // Force healthy root @expo/metro-runtime (nested copy under expo-router can be incomplete on OneDrive)
   if (moduleName === '@expo/metro-runtime') {

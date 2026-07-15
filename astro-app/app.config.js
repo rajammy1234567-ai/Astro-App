@@ -10,7 +10,7 @@ export default {
     name: 'AstroTalk Partner',
     slug: 'astrotalk-astro',
     owner: 'sunaina0s-team',
-    version: '1.0.2',
+    version: '1.0.3',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -29,7 +29,7 @@ export default {
     },
     ios: {
       bundleIdentifier: 'com.astrotalk.astro',
-      buildNumber: '2',
+      buildNumber: '3',
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
@@ -42,7 +42,7 @@ export default {
     },
     android: {
       package: 'com.astrotalk.astro',
-      versionCode: 3,
+      versionCode: 4,
       edgeToEdgeEnabled: false,
       adaptiveIcon: {
         backgroundColor: '#1E1033',

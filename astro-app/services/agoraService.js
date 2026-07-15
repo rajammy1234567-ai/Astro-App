@@ -1,6 +1,10 @@
 /**
  * Agora RTC — Astrologer Panel
- * Native Agora excluded from APK autolink (launch crash on RN 0.86). Soft-disabled.
+ *
+ * IMPORTANT (APK stability — do NOT re-enable without a full EAS rebuild test):
+ * react-native-agora native .so crashes many release APKs on launch with RN 0.86.
+ * Disabled via package.json autolinking exclude + react-native.config.js + Metro stub.
+ * Soft live mode when isAgoraNativeAvailable() === false.
  * Web uses agoraService.web.js.
  */
 import { Platform, PermissionsAndroid } from 'react-native';

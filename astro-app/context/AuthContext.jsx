@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../services/api';
 import { storage } from '../utils/storage';
+import { wakeServer, isRemoteApi } from '../utils/serverHealth';
 
-const BOOTSTRAP_TIMEOUT_MS = 8000;
+const BOOTSTRAP_TIMEOUT_MS = 10000;
 
 const AuthContext = createContext(null);
 
@@ -16,18 +17,36 @@ export function AuthProvider({ children }) {
 
     const timeout = setTimeout(() => {
       if (!cancelled) {
-        setBootstrapError('Connection timeout — check backend & WiFi');
+        // Don't block login forever on cold Render — open app with soft error
+        setBootstrapError(
+          isRemoteApi()
+            ? 'Server wake slow (Render free). Login screen se try karo.'
+            : 'Connection timeout — check backend & WiFi'
+        );
         setLoading(false);
       }
     }, BOOTSTRAP_TIMEOUT_MS);
 
     (async () => {
+      // Start wake early (non-blocking for no-token path)
+      const wakePromise = isRemoteApi()
+        ? wakeServer({ maxMs: 20000 }).catch(() => null)
+        : Promise.resolve(null);
+
       const token = await storage.get('astroToken');
       if (!token) {
+        // Still warm remote server while user sees login
+        wakePromise.catch(() => null);
         clearTimeout(timeout);
         if (!cancelled) setLoading(false);
         return;
       }
+
+      // Logged-in: ensure host is up before /me (avoids long hang then fail)
+      if (isRemoteApi()) {
+        await wakePromise;
+      }
+
       try {
         const data = await api.get('/me');
         if (!cancelled) {
@@ -36,8 +55,11 @@ export function AuthProvider({ children }) {
           await storage.set('astroUser', data);
         }
       } catch (err) {
-        await storage.remove('astroToken');
-        await storage.remove('astroUser');
+        // Only wipe session on real auth errors — keep token on network blips
+        if (err?.status === 401 || err?.status === 403) {
+          await storage.remove('astroToken');
+          await storage.remove('astroUser');
+        }
         if (!cancelled && err.networkError) {
           setBootstrapError(err.message);
         }

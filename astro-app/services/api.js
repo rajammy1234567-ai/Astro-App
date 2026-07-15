@@ -3,7 +3,8 @@ import { getApiBaseUrl } from '../utils/platform';
 import { storage } from '../utils/storage';
 
 const api = axios.create({
-  timeout: 45000,
+  // After wakeServer() on login screen, auth should be fast
+  timeout: 20000,
   headers: { 'Content-Type': 'application/json' },
 });
 

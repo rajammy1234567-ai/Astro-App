@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ScrollView,
@@ -8,6 +8,12 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getApiBaseUrl } from '../../utils/platform';
+import {
+  wakeServer,
+  wakeStatusMessage,
+  isRemoteApi,
+  isRenderApi,
+} from '../../utils/serverHealth';
 import AppLogo from '../../components/common/AppLogo';
 import { colors, COLORS, SHADOW_LG } from '../../constants/theme';
 
@@ -16,8 +22,44 @@ export default function Login() {
   const [password, setPassword] = useState('astro123');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [serverOk, setServerOk] = useState(null);
+  const [serverStatus, setServerStatus] = useState('Server check…');
   const { login } = useAuth();
   const router = useRouter();
+  const apiUrl = getApiBaseUrl();
+  const remoteApi = isRemoteApi(apiUrl);
+
+  useEffect(() => {
+    let cancelled = false;
+    setServerStatus(remoteApi ? 'Server wake start…' : 'Server check…');
+    wakeServer({
+      maxMs: remoteApi ? 75000 : 8000,
+      onProgress: (info) => {
+        if (!cancelled) setServerStatus(wakeStatusMessage(info));
+      },
+    }).then((result) => {
+      if (cancelled) return;
+      setServerOk(result.ok);
+      if (result.ok) {
+        const sec = Math.max(1, Math.round((result.elapsed || 0) / 1000));
+        setServerStatus(
+          result.remote && sec > 3
+            ? `✓ Server ready (${sec}s me wake hua)`
+            : '✓ Server connected'
+        );
+      } else {
+        setServerStatus(
+          result.message ||
+            (remoteApi
+              ? 'Server sleep — Login dabao, wake try hoga'
+              : 'Server offline — cd server → npm run dev')
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [remoteApi]);
 
   const handleLogin = async () => {
     if (!phone.trim() || !password) {
@@ -26,10 +68,39 @@ export default function Login() {
     }
     setLoading(true);
     try {
+      if (serverOk !== true) {
+        setServerStatus(
+          isRenderApi(apiUrl)
+            ? 'Login se pehle server wake… (30–60s ho sakta hai)'
+            : 'Server check…'
+        );
+        const woke = await wakeServer({
+          maxMs: remoteApi ? 75000 : 8000,
+          onProgress: (info) => setServerStatus(wakeStatusMessage(info)),
+        });
+        setServerOk(woke.ok);
+        if (!woke.ok) {
+          Alert.alert(
+            'Server',
+            woke.message ||
+              (remoteApi
+                ? 'Render server sleep pe hai. 30 sec baad dubara try karo.'
+                : 'Local server band hai. cd server → npm run dev')
+          );
+          return;
+        }
+        setServerStatus('✓ Server ready — logging in…');
+      }
       await login(phone.trim(), password);
       router.replace('/(tabs)/dashboard');
     } catch (err) {
-      Alert.alert('Login Failed', err.message || 'Invalid credentials');
+      Alert.alert(
+        'Login Failed',
+        err.message ||
+          (remoteApi
+            ? 'Invalid credentials ya server slow. Dubara try karo.'
+            : 'Invalid credentials')
+      );
     } finally {
       setLoading(false);
     }
@@ -67,6 +138,16 @@ export default function Login() {
               Partner credentials se sign in karein. Chats, calls aur earnings yahin manage hote hain.
             </Text>
 
+            <View
+              style={[
+                styles.serverPill,
+                serverOk === true && styles.serverOk,
+                serverOk === false && styles.serverBad,
+              ]}
+            >
+              <Text style={styles.serverText}>{serverStatus}</Text>
+            </View>
+
             <Text style={styles.label}>Phone</Text>
             <View style={styles.field}>
               <Ionicons name="call-outline" size={18} color={colors.textMuted} />
@@ -103,7 +184,12 @@ export default function Login() {
               activeOpacity={0.9}
             >
               {loading ? (
-                <ActivityIndicator color={COLORS.bannerDark} />
+                <>
+                  <ActivityIndicator color={COLORS.bannerDark} />
+                  <Text style={styles.btnText}>
+                    {serverOk !== true && remoteApi ? 'Server wake…' : 'Signing in…'}
+                  </Text>
+                </>
               ) : (
                 <>
                   <Text style={styles.btnText}>Enter Partner Panel</Text>
@@ -132,7 +218,11 @@ export default function Login() {
           <Text style={styles.note}>
             Ye alag app hai (port 8083). User panel ka QR mat scan karo.
           </Text>
-          <Text style={styles.api}>API · {getApiBaseUrl()}</Text>
+          <Text style={styles.api}>
+            {remoteApi
+              ? `Cloud API (Render free · pehli baar 30–60s)\n${apiUrl}`
+              : `Local API · fast\n${apiUrl}`}
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -183,7 +273,17 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '900', color: COLORS.text, textAlign: 'center' },
   sub: {
     fontSize: 13, color: colors.textMuted, textAlign: 'center',
-    marginTop: 6, marginBottom: 18, lineHeight: 19,
+    marginTop: 6, marginBottom: 12, lineHeight: 19,
+  },
+  serverPill: {
+    borderRadius: 12, padding: 10, marginBottom: 14,
+    backgroundColor: COLORS.soft || '#F5F0FF',
+  },
+  serverOk: { backgroundColor: 'rgba(34,197,94,0.12)' },
+  serverBad: { backgroundColor: 'rgba(239,68,68,0.12)' },
+  serverText: {
+    fontSize: 12, fontWeight: '700', color: COLORS.text,
+    textAlign: 'center', lineHeight: 17,
   },
   label: {
     fontSize: 11, fontWeight: '800', color: COLORS.textLight,

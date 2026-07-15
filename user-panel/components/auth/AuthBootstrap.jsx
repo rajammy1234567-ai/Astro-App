@@ -14,6 +14,7 @@ import {
   SPLASH_MAX_MS,
   PREFETCH_TIMEOUT_MS,
 } from '../../utils/bootstrap';
+import { wakeServer, isRemoteApi } from '../../utils/serverHealth';
 
 // Keep native splash visible until we say hide (native only; web no-ops safely)
 try {
@@ -40,6 +41,11 @@ export default function AuthBootstrap({ children }) {
     if (started.current) return undefined;
     started.current = true;
     let cancelled = false;
+
+    // Fire-and-forget: wake Render free tier early (login feels faster)
+    if (isRemoteApi()) {
+      wakeServer({ maxMs: 60000 }).catch(() => null);
+    }
 
     const finish = async () => {
       try {

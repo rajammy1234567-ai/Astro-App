@@ -1,11 +1,13 @@
 {
   "name": "astro-panel-app",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "main": "expo-router/entry",
   "expo": {
     "autolinking": {
-      "exclude": []
+      "exclude": [
+        "react-native-agora"
+      ]
     }
   },
   "scripts": {
