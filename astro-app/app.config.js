@@ -132,7 +132,9 @@ export default {
     extra: {
       apiUrl,
       // projectId injected by `eas init` / `eas build` under account viz_eas_001
-      eas: {},
+      eas: {
+          "projectId": "68bac3a5-d716-46d8-857f-cd332e3040f5"
+      },
     },
   },
 };
