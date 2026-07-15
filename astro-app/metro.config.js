@@ -5,35 +5,26 @@ const { getDefaultConfig } = require('expo/metro-config');
 const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
 
-// OneDrive + Windows: avoid symlink / vanished-temp-folder crashes
+// OneDrive + Windows: Watchman often breaks
 config.resolver.useWatchman = false;
-// Ignore npm install temp dirs + common junk so watcher does not crash (ENOENT)
 config.watcher = {
   ...(config.watcher || {}),
   healthCheck: { enabled: false },
-  additionalExts: config.watcher?.additionalExts,
 };
-// Do not crawl npm temp folders like node_modules/.any-promise-XXXX
-const prevBlock = config.resolver.blockList;
-const tempDirBlock = /[\\/]node_modules[\\/]\.[^\\/]+-[A-Za-z0-9]{6,}([\\/]|$)/;
-config.resolver.blockList = prevBlock
-  ? [prevBlock, tempDirBlock].flat()
-  : tempDirBlock;
 
-const reactNativeRoot = path.join(projectRoot, 'node_modules/react-native');
+const expoRouterRoot = path.join(projectRoot, 'node_modules', 'expo-router');
 const metroRuntimeRoot = path.join(projectRoot, 'node_modules', '@expo', 'metro-runtime');
+const rnRoot = path.join(projectRoot, 'node_modules', 'react-native');
+
 config.watchFolders = [
   ...new Set([
     ...(config.watchFolders || []),
-    reactNativeRoot,
+    projectRoot,
+    rnRoot,
+    expoRouterRoot,
     ...(fs.existsSync(metroRuntimeRoot) ? [metroRuntimeRoot] : []),
   ]),
 ];
-
-// Prefer project root node_modules only.
-// Nested copies under expo/expo-router are often incomplete on OneDrive (missing build/*.js).
-config.resolver.nodeModulesPaths = [path.join(projectRoot, 'node_modules')];
-config.resolver.disableHierarchicalLookup = true;
 
 function resolveFile(...parts) {
   const filePath = path.join(...parts);
@@ -47,10 +38,9 @@ function resolveFile(...parts) {
   return null;
 }
 
-// Stub Agora on all platforms — native .so was crashing release APKs on launch.
-// package.json also excludes it from autolinking. Soft live / call UI still works.
 const defaultResolve = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Stub Agora — native .so crashes release APKs on RN 0.86
   if (
     moduleName === 'react-native-agora' ||
     moduleName.startsWith('react-native-agora/')
@@ -58,22 +48,35 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: 'empty' };
   }
 
-  // Force healthy root @expo/metro-runtime (nested copy under expo-router can be incomplete on OneDrive)
+  // Force-resolve expo-router subpaths (fixes Expo Go 404)
+  if (
+    moduleName === 'expo-router/entry-classic' ||
+    moduleName === 'expo-router/entry'
+  ) {
+    const file =
+      moduleName === 'expo-router/entry'
+        ? 'entry.js'
+        : 'entry-classic.js';
+    const hit = resolveFile(expoRouterRoot, file);
+    if (hit) return hit;
+  }
+
+  if (moduleName.startsWith('expo-router/')) {
+    const sub = moduleName.slice('expo-router/'.length);
+    const hit =
+      resolveFile(expoRouterRoot, `${sub}.js`) ||
+      resolveFile(expoRouterRoot, sub) ||
+      resolveFile(expoRouterRoot, 'build', `${sub}.js`) ||
+      resolveFile(expoRouterRoot, 'build', sub + '.js') ||
+      resolveFile(expoRouterRoot, 'build', sub, 'index.js');
+    if (hit) return hit;
+  }
+
   if (moduleName === '@expo/metro-runtime') {
     const hit =
       resolveFile(metroRuntimeRoot, 'src', 'index.ts') ||
       resolveFile(metroRuntimeRoot, 'src', 'index.js') ||
       resolveFile(metroRuntimeRoot, 'build', 'index.js');
-    if (hit) return hit;
-  }
-  if (moduleName.startsWith('@expo/metro-runtime/')) {
-    const sub = moduleName.slice('@expo/metro-runtime/'.length);
-    const hit =
-      resolveFile(metroRuntimeRoot, sub) ||
-      resolveFile(metroRuntimeRoot, `${sub}.ts`) ||
-      resolveFile(metroRuntimeRoot, `${sub}.js`) ||
-      resolveFile(metroRuntimeRoot, 'src', `${sub}.ts`) ||
-      resolveFile(metroRuntimeRoot, 'src', `${sub}.js`);
     if (hit) return hit;
   }
 

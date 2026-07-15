@@ -1,0 +1,22 @@
+# Keep EAS upload small (was ~150MB)
+node_modules/
+.expo/
+dist/
+.bundle-test-*/
+*.apk
+*.aab
+*.jks
+*.keystore
+google-service-account.json
+.git/
+.idea/
+.vscode/
+*.log
+npm-debug.*
+.DS_Store
+Thumbs.db
+Expo-Go-*.apk
+android/
+ios/
+coverage/
+web-build/

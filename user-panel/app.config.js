@@ -2,17 +2,21 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://astro-app-ru1d.onrend
 const isHttp = apiUrl.startsWith('http://');
 
 /**
- * Crash-safe Android APK config
- * - New Architecture OFF (Agora + reanimated more stable)
- * - packagingOptions pickFirst for libc++_shared (Agora vs RN clash)
- * - Production default API = Render HTTPS (not localhost)
+ * Crash-safe Android APK config (User app) — v1.0.4
+ * - New Architecture OFF
+ * - Agora package REMOVED (was crashing release APKs on launch)
+ * - edge-to-edge OFF
+ * - minify/shrink OFF
+ * - legacy packaging + pickFirst for native lib clashes
+ * - Production API = Render HTTPS
+ * EAS owner: viz_eas_001
  */
 export default {
   expo: {
     name: 'AstroTalk',
     slug: 'astrotalk-user',
-    owner: 'sunaina0',
-    version: '1.0.3',
+    owner: 'viz_eas_001',
+    version: '1.0.4',
     platforms: ['ios', 'android', 'web'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -20,19 +24,20 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'astrotalkuser',
     userInterfaceStyle: 'automatic',
-    // New Arch often crashes release APKs with some native modules
     newArchEnabled: false,
     jsEngine: 'hermes',
-    // EAS Update (required for eas build / eas update)
+    // Disabled until eas init writes real projectId — avoids update-check crashes on launch
     updates: {
-      url: 'https://u.expo.dev/7636ced8-8e7e-456d-9e88-1a8a802d3bf6',
+      enabled: false,
+      checkAutomatically: 'NEVER',
+      fallbackToCacheTimeout: 0,
     },
     runtimeVersion: {
       policy: 'appVersion',
     },
     ios: {
       bundleIdentifier: 'com.astrotalk.user',
-      buildNumber: '3',
+      buildNumber: '4',
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
@@ -45,8 +50,7 @@ export default {
     },
     android: {
       package: 'com.astrotalk.user',
-      versionCode: 4,
-      // edge-to-edge can crash some OEM launchers / older WebViews — keep off for stability
+      versionCode: 5,
       edgeToEdgeEnabled: false,
       adaptiveIcon: {
         backgroundColor: '#1E1033',
@@ -63,7 +67,6 @@ export default {
         'BLUETOOTH',
         'BLUETOOTH_CONNECT',
       ],
-      // true so misconfigured LAN builds still work; HTTPS preferred via env
       usesCleartextTraffic: true,
       softwareKeyboardLayoutMode: 'pan',
     },
@@ -99,7 +102,6 @@ export default {
         'expo-build-properties',
         {
           android: {
-            // Expo 57 / androidx need compileSdk 36+
             compileSdkVersion: 36,
             targetSdkVersion: 35,
             minSdkVersion: 24,
@@ -107,7 +109,6 @@ export default {
             enableMinifyInReleaseBuilds: false,
             enableShrinkResourcesInReleaseBuilds: false,
             usesCleartextTraffic: true,
-            // Helps some OEM devices load native libs without instant-close
             useLegacyPackaging: true,
             packagingOptions: {
               pickFirst: [
@@ -131,7 +132,8 @@ export default {
     experiments: { typedRoutes: true },
     extra: {
       apiUrl,
-      eas: { projectId: '7636ced8-8e7e-456d-9e88-1a8a802d3bf6' },
+      // projectId injected by `eas init` / `eas build` under account viz_eas_001
+      eas: { "projectId": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac"},
     },
   },
 };

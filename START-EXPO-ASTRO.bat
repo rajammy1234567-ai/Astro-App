@@ -16,6 +16,10 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8083 ^| findstr LISTENING') 
   taskkill /F /PID %%a >nul 2>&1
 )
 
+echo Patching expo-router entry (fixes 500 entry-classic)...
+call node scripts\patch-expo-router-entry.js
+
+
 for /f "usebackq tokens=1* delims==" %%A in ("%~dp0astro-app\.env") do (
   if /I "%%A"=="EXPO_PUBLIC_API_URL" set EXPO_PUBLIC_API_URL=%%B
 )

@@ -2,15 +2,21 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://astro-app-ru1d.onrend
 const isHttp = apiUrl.startsWith('http://');
 
 /**
- * Crash-safe Android APK config (Partner / Astrologer panel)
- * Same stability fixes as user-panel: New Arch OFF, Agora packaging pickFirst.
+ * Crash-safe Android APK config (Partner / Astrologer) — v1.0.4
+ * - New Architecture OFF
+ * - Agora package REMOVED (was crashing release APKs on launch)
+ * - edge-to-edge OFF
+ * - minify/shrink OFF
+ * - legacy packaging + pickFirst
+ * - Production API = Render HTTPS
+ * EAS owner: viz_eas_001
  */
 export default {
   expo: {
     name: 'AstroTalk Partner',
     slug: 'astrotalk-astro',
-    owner: 'sunaina0s-team',
-    version: '1.0.3',
+    owner: 'viz_eas_001',
+    version: '1.0.4',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -20,16 +26,18 @@ export default {
     userInterfaceStyle: 'automatic',
     newArchEnabled: false,
     jsEngine: 'hermes',
-    // EAS Update (required for eas build / eas update)
+    // Disabled until eas init writes real projectId — avoids update-check crashes on launch
     updates: {
-      url: 'https://u.expo.dev/bd897ff7-209e-4dc9-a215-33ae6875352f',
+      enabled: false,
+      checkAutomatically: 'NEVER',
+      fallbackToCacheTimeout: 0,
     },
     runtimeVersion: {
       policy: 'appVersion',
     },
     ios: {
       bundleIdentifier: 'com.astrotalk.astro',
-      buildNumber: '3',
+      buildNumber: '4',
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
@@ -42,7 +50,7 @@ export default {
     },
     android: {
       package: 'com.astrotalk.astro',
-      versionCode: 4,
+      versionCode: 5,
       edgeToEdgeEnabled: false,
       adaptiveIcon: {
         backgroundColor: '#1E1033',
@@ -93,7 +101,6 @@ export default {
         'expo-build-properties',
         {
           android: {
-            // Expo 57 / androidx need compileSdk 36+
             compileSdkVersion: 36,
             targetSdkVersion: 35,
             minSdkVersion: 24,
@@ -124,7 +131,8 @@ export default {
     experiments: { typedRoutes: true },
     extra: {
       apiUrl,
-      eas: { projectId: 'bd897ff7-209e-4dc9-a215-33ae6875352f' },
+      // projectId injected by `eas init` / `eas build` under account viz_eas_001
+      eas: {},
     },
   },
 };

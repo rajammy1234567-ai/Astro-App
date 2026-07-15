@@ -85,23 +85,31 @@ We have verified that the chat and calling signaling code is fully integrated. H
 
 ---
 
-## 🛠️ 3. Standalone APKs Crash on Open (instant close)
+## 🛠️ 3. Standalone APKs Crash on Open (splash ~1s then auto-close)
 
-### Root cause (v1.0.2 builds)
-`react-native-agora` was re-linked into User + Astrologer APKs. On **React Native 0.86 / Expo 57**, loading Agora’s native `.so` libraries often **kills the app immediately on launch** (before any JS error screen).
+Classic symptom: **install → open → splash 1 second → app band**. No error screen = **native crash** (JS error boundary nahi pakadta).
 
-### Fix (v1.0.3+)
-Agora is **disabled for stability** in both apps:
-1. `package.json` → `expo.autolinking.exclude: ["react-native-agora"]`
-2. `react-native.config.js` → Android/iOS platforms set to `null`
-3. `metro.config.js` → stubs `react-native-agora` as an empty module
+### Root causes (fixed in repo)
+1. **`react-native-agora` native libs** (User + Partner, older v1.0.2 builds): on RN 0.86 / Expo 57, loading `libagora*.so` often kills the app on launch.
+2. **New Architecture ON in committed `astro-app/android`**: `gradle.properties` had `newArchEnabled=true` while `app.config.js` said `false`. Local/EAS builds that reuse the `android/` folder could ship New Arch and crash on many devices.
+
+### Fix (v1.0.3+ / current main)
+- Agora **disabled for stability** in User + Partner:
+  1. `package.json` → `expo.autolinking.exclude: ["react-native-agora"]`
+  2. `react-native.config.js` → Android/iOS platforms set to `null`
+  3. `metro.config.js` → stubs `react-native-agora` as empty
+- Partner native project: `astro-app/android/gradle.properties` → **`newArchEnabled=false`**, **`edgeToEdgeEnabled=false`** (matches `app.config.js`).
 
 Apps open normally. Chat works. Calls use **soft live mode** (UI + timer + session) without real RTC audio until a compatible Agora build is re-enabled later.
 
 ### What you must do after this fix
-1. **Uninstall** the old crashing APK completely from the phone.
-2. Build a **new** APK: `npm run user:apk` / `npm run astro:apk` (or EAS profile `apk`).
-3. Install the new **v1.0.3** APK and open it.
+1. Phone se **purana APK completely uninstall** karo (Settings → Apps → Uninstall). Sirf overwrite se purana native binary reh sakta hai.
+2. **Naya APK build** karo:
+   - User: `npm run user:apk`
+   - Partner/Astro: `npm run astro:apk`
+   - Admin: `npm run admin:apk`
+3. Naya **v1.0.3+** APK install karke open karo.
+4. Agar Partner app local Gradle se banate ho: pehle `astro-app/android` me `newArchEnabled=false` confirm karo, phir clean rebuild.
 
 ### Expo Go (dev) — if the project won’t open
 1. PC + phone same Wi‑Fi; mobile data off.
