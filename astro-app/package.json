@@ -2,21 +2,21 @@
   "name": "astro-panel-app",
   "version": "1.0.4",
   "private": true,
-  "main": "index.js",
+  "main": "expo-router/entry",
   "scripts": {
-    "start": "node scripts/patch-expo-router-entry.js && node ../shared/block-onedrive.js expo start --host lan --port 8083",
-    "dev": "node scripts/patch-expo-router-entry.js && node ../shared/block-onedrive.js expo start --host lan --port 8083 --clear",
-    "fresh": "node scripts/patch-expo-router-entry.js && node ../shared/block-onedrive.js expo start -c --clear --host lan --port 8083",
-    "phone": "node scripts/patch-expo-router-entry.js && node ../shared/block-onedrive.js expo start -c --clear --host lan --port 8083",
-    "dev:lan": "node scripts/patch-expo-router-entry.js && node ../shared/block-onedrive.js expo start -c --clear --host lan --port 8083",
-    "tunnel": "node scripts/patch-expo-router-entry.js && node ../shared/block-onedrive.js expo start --host tunnel -c --port 8083",
-    "android": "node scripts/patch-expo-router-entry.js && node ../shared/block-onedrive.js expo start --android --host lan --port 8083",
+    "prestart": "node scripts/patch-expo-router-entry.js",
+    "start": "node ../shared/patch-metro-sha1-fallback.js && node ../shared/patch-metro-treefs-sha1.js && node ../shared/block-onedrive.js expo start --host lan --port 8083",
+    "dev": "node ../shared/patch-metro-sha1-fallback.js && node ../shared/patch-metro-treefs-sha1.js && node ../shared/block-onedrive.js expo start --host lan --port 8083 --clear",
+    "fresh": "node ../shared/patch-metro-sha1-fallback.js && node ../shared/patch-metro-treefs-sha1.js && node ../shared/block-onedrive.js expo start -c --clear --host lan --port 8083",
+    "phone": "node ../shared/patch-metro-sha1-fallback.js && node ../shared/patch-metro-treefs-sha1.js && node ../shared/block-onedrive.js expo start -c --clear --host lan --port 8083",
+    "dev:lan": "node ../shared/patch-metro-sha1-fallback.js && node ../shared/patch-metro-treefs-sha1.js && node ../shared/block-onedrive.js expo start -c --clear --host lan --port 8083",
+    "tunnel": "node ../shared/patch-metro-sha1-fallback.js && node ../shared/patch-metro-treefs-sha1.js && node ../shared/block-onedrive.js expo start --host tunnel -c --port 8083",
+    "android": "node ../shared/patch-metro-sha1-fallback.js && node ../shared/patch-metro-treefs-sha1.js && node ../shared/block-onedrive.js expo start --android --host lan --port 8083",
     "ios": "expo start --ios --host lan --port 8083",
     "build:apk": "eas build --platform android --profile apk --clear-cache --non-interactive",
     "build:apk:preview": "eas build --platform android --profile preview --clear-cache --non-interactive",
     "build:playstore": "eas build --platform android --profile production --non-interactive",
     "postinstall": "node scripts/patch-metro-onedrive.js && node scripts/patch-expo-router-entry.js",
-    "prestart": "node scripts/patch-expo-router-entry.js",
     "predev": "node scripts/patch-expo-router-entry.js"
   },
   "dependencies": {
@@ -50,7 +50,8 @@
     "react-native-worklets": "0.10.0",
     "react-refresh": "^0.18.0",
     "semver": "^7.8.5",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "whatwg-fetch": "^3.6.20"
   },
   "devDependencies": {
     "@types/react": "~19.2.4",

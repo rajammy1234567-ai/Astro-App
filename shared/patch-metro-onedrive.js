@@ -136,6 +136,18 @@ function patchFallbackWatcher(projectRoot) {
 }
 
 function applyMetroOneDrivePatches(projectRoot = process.cwd()) {
+  // SHA-1 map misses under OneDrive → Expo Go error 500
+  try {
+    require('./patch-metro-sha1-fallback').apply(projectRoot);
+  } catch (e) {
+    console.warn('sha1 fallback patch skipped:', e.message);
+  }
+  try {
+    require('./patch-metro-treefs-sha1').apply(projectRoot);
+  } catch (e) {
+    console.warn('treefs sha1 patch skipped:', e.message);
+  }
+
   patchFile(projectRoot, 'node_modules/metro/src/node-haste/DependencyGraph/createFileMap.js', [
     ['enableSymlinks: true,', 'enableSymlinks: false,'],
   ]);
