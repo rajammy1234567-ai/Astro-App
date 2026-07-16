@@ -82,6 +82,9 @@ export default {
     },
     plugins: [
       'expo-router',
+      'expo-image',
+      'expo-status-bar',
+      'expo-web-browser',
       [
         'expo-image-picker',
         {

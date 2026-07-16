@@ -53,6 +53,7 @@ export default {
         },
       ],
       'expo-router',
+      'expo-status-bar',
       [
         'expo-splash-screen',
         {
