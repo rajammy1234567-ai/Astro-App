@@ -9,13 +9,13 @@ const isHttp = apiUrl.startsWith('http://');
  * - minify/shrink OFF
  * - legacy packaging + pickFirst
  * - Production API = Render HTTPS
- * EAS owner: viz_eas_001
+ * EAS owner: sharma_sunaina
  */
 export default {
   expo: {
     name: 'AstroTalk Partner',
     slug: 'astrotalk-astro',
-    owner: 'viz_eas_001',
+    owner: 'sharma_sunaina',
     version: '1.0.5',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
@@ -112,15 +112,7 @@ export default {
             enableMinifyInReleaseBuilds: false,
             enableShrinkResourcesInReleaseBuilds: false,
             usesCleartextTraffic: true,
-            useLegacyPackaging: true,
-            packagingOptions: {
-              pickFirst: [
-                '**/libc++_shared.so',
-                '**/libfbjni.so',
-                '**/libjsc.so',
-                '**/libreactnative.so',
-              ],
-            },
+            useLegacyPackaging: false,
             buildArchs: ['armeabi-v7a', 'arm64-v8a'],
           },
         },
@@ -135,9 +127,9 @@ export default {
     experiments: { typedRoutes: true },
     extra: {
       apiUrl,
-      // projectId injected by `eas init` / `eas build` under account viz_eas_001
+      // projectId from eas init under @sharma_sunaina/astrotalk-astro
       eas: {
-          "projectId": "68bac3a5-d716-46d8-857f-cd332e3040f5"
+        projectId: 'cffd31e4-2038-47e4-ab8a-8865811975ba',
       },
     },
   },

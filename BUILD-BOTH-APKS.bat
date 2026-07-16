@@ -4,8 +4,8 @@ cd /d "%~dp0"
 
 echo ============================================
 echo  AstroTalk — Build User + Partner APKs
-echo  EAS account: viz_eas_001
-echo  Profile: apk (crash-safe v1.0.4)
+echo  EAS account: sharma_sunaina
+echo  Profile: apk (crash-safe v1.0.5)
 echo ============================================
 echo.
 
@@ -21,14 +21,14 @@ if errorlevel 1 (
   echo.
   echo *** NOT LOGGED IN ***
   echo Run:  eas login
-  echo Username: viz_eas_001
+  echo Account: sharma_sunaina
   echo Then re-run this script.
   pause
   exit /b 1
 )
 
 echo.
-echo [2/5] Init / link USER project under viz_eas_001...
+echo [2/5] Init / link USER project under sharma_sunaina...
 cd /d "%~dp0user-panel"
 call eas init --non-interactive --force 2>nul
 if errorlevel 1 (
@@ -46,7 +46,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [4/5] Init / link ASTRO project under viz_eas_001...
+echo [4/5] Init / link ASTRO project under sharma_sunaina...
 cd /d "%~dp0astro-app"
 call eas init --non-interactive --force 2>nul
 if errorlevel 1 (
@@ -68,6 +68,6 @@ echo  Both builds QUEUED on Expo.
 echo  Check status:
 echo    cd user-panel ^&^& eas build:list
 echo    cd astro-app  ^&^& eas build:list
-echo  Or open: https://expo.dev/accounts/viz_eas_001/projects
+echo  Or open: https://expo.dev/accounts/sharma_sunaina/projects
 echo ============================================
 pause

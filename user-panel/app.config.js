@@ -9,13 +9,13 @@ const isHttp = apiUrl.startsWith('http://');
  * - minify/shrink OFF
  * - legacy packaging + pickFirst for native lib clashes
  * - Production API = Render HTTPS
- * EAS owner: viz_eas_001
+ * EAS owner: sharma_sunaina
  */
 export default {
   expo: {
     name: 'AstroTalk',
     slug: 'astrotalk-user',
-    owner: 'viz_eas_001',
+    owner: 'sharma_sunaina',
     version: '1.0.5',
     platforms: ['ios', 'android', 'web'],
     orientation: 'portrait',
@@ -33,6 +33,7 @@ export default {
       enabled: false,
       checkAutomatically: 'NEVER',
       fallbackToCacheTimeout: 0,
+       "url": "https://u.expo.dev/d71e8444-effb-4251-9fb8-a9164c5deffa",
     },
     runtimeVersion: {
       policy: 'appVersion',
@@ -114,15 +115,7 @@ export default {
             enableMinifyInReleaseBuilds: false,
             enableShrinkResourcesInReleaseBuilds: false,
             usesCleartextTraffic: true,
-            useLegacyPackaging: true,
-            packagingOptions: {
-              pickFirst: [
-                '**/libc++_shared.so',
-                '**/libfbjni.so',
-                '**/libjsc.so',
-                '**/libreactnative.so',
-              ],
-            },
+            useLegacyPackaging: false,
             buildArchs: ['armeabi-v7a', 'arm64-v8a'],
           },
         },
@@ -137,8 +130,10 @@ export default {
     experiments: { typedRoutes: true },
     extra: {
       apiUrl,
-      // projectId injected by `eas init` / `eas build` under account viz_eas_001
-      eas: { "projectId": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac"},
+      // projectId from eas init under @sharma_sunaina/astrotalk-user
+      eas: {
+        projectId: 'd71e8444-effb-4251-9fb8-a9164c5deffa',
+      },
     },
   },
 };
