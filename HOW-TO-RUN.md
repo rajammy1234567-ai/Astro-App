@@ -89,27 +89,27 @@ We have verified that the chat and calling signaling code is fully integrated. H
 
 Classic symptom: **install → open → splash 1 second → app band**. No error screen = **native crash** (JS error boundary nahi pakadta).
 
-### Root causes (fixed in repo)
-1. **`react-native-agora` native libs** (User + Partner, older v1.0.2 builds): on RN 0.86 / Expo 57, loading `libagora*.so` often kills the app on launch.
-2. **New Architecture ON in committed `astro-app/android`**: `gradle.properties` had `newArchEnabled=true` while `app.config.js` said `false`. Local/EAS builds that reuse the `android/` folder could ship New Arch and crash on many devices.
+### Root causes (fixed in repo — v1.0.5)
+1. **`react-native-agora` native libs** (older builds): on RN 0.86 / Expo 57, loading `libagora*.so` often kills the app on launch.
+2. **`newArchEnabled: false` + Reanimated 4**: Expo SDK 57 / RN 0.86 always runs New Architecture. Reanimated 4 + Worklets **require** New Arch. Setting `newArchEnabled: false` left a broken native state → **instant open crash** on both User + Partner APKs.
+3. **Mismatched / half-upgraded reanimated** (3.x vs 4.x flip-flops) caused EAS “Install dependencies” failures and bad APKs.
 
-### Fix (v1.0.3+ / current main)
+### Fix (v1.0.5 / current main)
 - Agora **disabled for stability** in User + Partner:
   1. `package.json` → `expo.autolinking.exclude: ["react-native-agora"]`
   2. `react-native.config.js` → Android/iOS platforms set to `null`
   3. `metro.config.js` → stubs `react-native-agora` as empty
-- Partner native project: `astro-app/android/gradle.properties` → **`newArchEnabled=false`**, **`edgeToEdgeEnabled=false`** (matches `app.config.js`).
-
-Apps open normally. Chat works. Calls use **soft live mode** (UI + timer + session) without real RTC audio until a compatible Agora build is re-enabled later.
+- **`newArchEnabled: true`** in `user-panel/app.config.js` and `astro-app/app.config.js` (required for Expo 57 + Reanimated 4.5 + Worklets 0.10).
+- Root layouts import `react-native-gesture-handler` + `react-native-reanimated` first.
+- Calls use **soft live mode** (UI + timer + session) without real RTC audio until a compatible Agora build is re-enabled later.
 
 ### What you must do after this fix
 1. Phone se **purana APK completely uninstall** karo (Settings → Apps → Uninstall). Sirf overwrite se purana native binary reh sakta hai.
-2. **Naya APK build** karo:
-   - User: `npm run user:apk`
-   - Partner/Astro: `npm run astro:apk`
-   - Admin: `npm run admin:apk`
-3. Naya **v1.0.3+** APK install karke open karo.
-4. Agar Partner app local Gradle se banate ho: pehle `astro-app/android` me `newArchEnabled=false` confirm karo, phir clean rebuild.
+2. **Naya APK build** karo (profile `apk` or `preview`):
+   - User: `cd user-panel && npm run build:apk`
+   - Partner/Astro: `cd astro-app && npm run build:apk`
+   - Or root: `BUILD-BOTH-APKS.bat`
+3. Naya **v1.0.5** APK install karke open karo (About / app info me version check karo).
 
 ### Expo Go (dev) — if the project won’t open
 1. PC + phone same Wi‑Fi; mobile data off.

@@ -53,6 +53,24 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: 'empty' };
   }
 
+  // expo-router depends on standard-navigation; OneDrive/Metro TreeFS often
+  // finds package.json but misses lib/src/index.js → break APK export:embed.
+  if (moduleName === 'standard-navigation') {
+    const hit =
+      resolveIfExists(projectRoot, 'node_modules', 'standard-navigation', 'lib', 'src', 'index.js') ||
+      resolveIfExists(
+        projectRoot,
+        'node_modules',
+        'expo-router',
+        'node_modules',
+        'standard-navigation',
+        'lib',
+        'src',
+        'index.js'
+      );
+    if (hit) return hit;
+  }
+
   // Force expo package entry (Metro mishandles main: "src/Expo.ts" → looks for .ts.ts)
   if (moduleName === 'expo') {
     const hit =

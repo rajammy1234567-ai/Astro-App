@@ -2,6 +2,7 @@
  * Ensure expo-router entry files are healthy after npm install.
  * Copies known-good entry stubs if package subpath resolution breaks.
  * Prefer NOT rewriting relative imports unless original files are missing.
+ * Must never fail npm/EAS install (exit 0 on any error).
  */
 const fs = require('fs');
 const path = require('path');
@@ -9,6 +10,8 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const entry = path.join(root, 'node_modules', 'expo-router', 'entry.js');
 const classic = path.join(root, 'node_modules', 'expo-router', 'entry-classic.js');
+
+try {
 
 if (!fs.existsSync(entry) || !fs.existsSync(classic)) {
   console.warn('expo-router entry files missing — run npm install in astro-app');
@@ -64,4 +67,9 @@ if (entrySrc.includes("./entry-classic") && !entrySrc.includes("expo-router/entr
 
 if (!changed) {
   console.log('expo-router entry files OK');
+}
+
+} catch (e) {
+  console.warn('[postinstall] expo-router entry patch skipped:', e?.message || e);
+  process.exit(0);
 }

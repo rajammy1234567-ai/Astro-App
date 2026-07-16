@@ -1,0 +1,397 @@
+﻿node.exe : Γÿà eas-cli@21.0.1 is now available.
+At C:\Users\hi\AppData\Roaming\npm\eas.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/eas-cli/bin/run" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Γÿà eas-cli@21.0.1 is now available.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+To upgrade, run:
+npm install -g eas-cli
+Proceeding with outdated version.
+
+[
+  {
+    "id": "c9d261d8-be53-49e9-8f20-71e7e823f317",
+    "status": "ERRORED",
+    "platform": "ANDROID",
+    "error": {
+      "errorCode": "UNKNOWN_ERROR",
+      "message": "Unknown error. See logs of the Install dependencies build phase for more information."
+    },
+    "artifacts": {},
+    "fingerprint": {
+      "id": "019f6979-e5d5-78bb-aa9b-5b256de11b0d",
+      "hash": "84e390c9986427d8758a4e5a0f1dd2472b86d422"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/c9d261d8-be53-49e9-8f20-71e7e823f317/2026-07-16T09%3A59%3A32Z-14ee5ca3-2525-4cd1-a8d1-7e1ff35368ad.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103654Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=a67752c8c51096b2fa2cfd734253b9522e7a7d24278106ccd0a7cc42160be868f5dacdc8a0297f2a8b26402a2aa2c7ef3b67e729fc16ea9b3ca91367a458213e5a34bf5fa92c8542cf55429394cca5c985c2b1bf9743aa9f4c2a08be22c359bc7870fc68b13ade064962da628cb998e80f028ff62e238fc72a15082c0c8621c75d877bbaebb0a2527767433fa12abfcef3eba0b9887d332507997b858e6a9ce2cddee116dcb01ae5125620348962fb817cbd2b76548e798ff22d7bac54b23a075485ee00b0aa5603a2428b1973c9294042a23e0b17410961c319b1e63cab31f4ca63ebbc89b8112fc54552f37631401aafaa0645dd232f1ae4103520877c5223"
+    ],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "d8dc24955a362afb9da1bfb38a9a6455210863ea",
+    "gitCommitMessage": "added",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-16T09:55:07.058Z",
+    "updatedAt": "2026-07-16T09:59:47.701Z",
+    "completedAt": "2026-07-16T09:59:47.554Z",
+    "expirationDate": "2026-07-30T09:55:07.094Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 1136,
+      "buildQueueTime": 269028,
+      "buildDuration": 10332
+    }
+  },
+  {
+    "id": "97309800-c661-4013-b486-b57f94d3366e",
+    "status": "ERRORED",
+    "platform": "ANDROID",
+    "error": {
+      "errorCode": "UNKNOWN_ERROR",
+      "message": "Unknown error. See logs of the Bundle JavaScript build phase for more information."
+    },
+    "artifacts": {},
+    "fingerprint": {
+      "id": "019f6a3f-68dc-776b-99dd-f6f7c5a1ccfe",
+      "hash": "9ffc56f9d41766d89086b79e1a8efa3eca4394b0"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/97309800-c661-4013-b486-b57f94d3366e/2026-07-16T09%3A27%3A00Z-6042fe33-ede6-4057-9241-eb8707eb05f0.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103654Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=a9596836b23eb950dc98817134121e6736a22a3c1ce0cca61704782a2c5e9af021b21187319ffeda144f11a810d46ed3e4855ec78a3e656cb147c24767472d1acfe8fdf199c86078e99d95f59cd88d0165ddb126f9befdef7ebf3ab4823459316a58e5e2410a493997dc3238291762ab2af3933834ec6cd61aaea8132d6bdb12167f748c589a501c070d375b9826a0c2ba720aa2fbc95ef3482681ca701697adee904c4fb7e20f0fdd0c0d6f6945bf9e85a81d42a3b1499e93c4ffb9343f86b6eb210bb3f9a2a853c02e4cb8c6b13afe7e50e02561210f1d5ca41a3fe49e476efda8986fbfef9dc00125911a05a0bae329fbcc8e7ca1fafcd22063aeddb37afc"
+    ],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "d6b3801e75a2ecde25c210de3705e4467ce6eb5b",
+    "gitCommitMessage": "added",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-16T09:26:08.277Z",
+    "updatedAt": "2026-07-16T09:27:56.067Z",
+    "completedAt": "2026-07-16T09:27:55.912Z",
+    "expirationDate": "2026-07-30T09:26:08.339Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 4824,
+      "buildQueueTime": 52356,
+      "buildDuration": 50455
+    }
+  },
+  {
+    "id": "c063d4b2-dfda-4d8f-9660-82db76886252",
+    "status": "FINISHED",
+    "platform": "ANDROID",
+    "artifacts": {
+      "buildUrl": "https://expo.dev/artifacts/eas/A3ge5zf77UYBGUZdZH3JBckVdeLV5KE_m-hbfM3jwqI.apk",
+      "applicationArchiveUrl": "https://expo.dev/artifacts/eas/A3ge5zf77UYBGUZdZH3JBckVdeLV5KE_m-hbfM3jwqI.apk"
+    },
+    "fingerprint": {
+      "id": "019f6979-e5d5-78bb-aa9b-5b256de11b0d",
+      "hash": "84e390c9986427d8758a4e5a0f1dd2472b86d422"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/c063d4b2-dfda-4d8f-9660-82db76886252/2026-07-16T06%3A14%3A13Z-c5a0549c-96a5-45f3-8221-39d156dde3ba.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103654Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=9c57fb178772f440840d41ac4e5f93b7cf4b38d91262a25e0b3469f484e4d6180160f1a45ce128867d3f3fab0f372e2b01fbb706d008287d13323a8e9009ab3000e39e8a55af70117d902755b3795099c10b7df00380416c219d9d720f37342bb27182bba6c10b510b318b004fa6530b82ecd843cf7e05a83ec7e818c1d603a3a873a979b8d86041a17a6c6d09a5af6633de29e53fd80d2ec7d2c9992ad70ccec5855baf5012c9da27ee3af89a2e2838fc80f77d31a35791d9bb54297647208fa74f00a65b8246c0e59697937842ba83f66ca7d2a353ac69d1210b97be474079711195d8b17991aba99454d86db36ea7f9e5b12b38b1a734ef70f8351bbe5cbb"
+    ],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "07b80a02f10c75e3f04a46bca1d146fb7385cf2c",
+    "gitCommitMessage": "changes",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-16T06:14:08.278Z",
+    "updatedAt": "2026-07-16T10:00:51.486Z",
+    "completedAt": "2026-07-16T06:24:53.783Z",
+    "expirationDate": "2026-07-30T06:14:08.297Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 4794,
+      "buildQueueTime": 4392,
+      "buildDuration": 636319
+    }
+  },
+  {
+    "id": "cd3cd29a-9327-422b-97b6-0180aed71f93",
+    "status": "FINISHED",
+    "platform": "ANDROID",
+    "artifacts": {
+      "buildUrl": "https://expo.dev/artifacts/eas/8ik45wuSOFHC8aa6fzqG75T1ucRxR6nbJeFFKVIKhTY.apk",
+      "applicationArchiveUrl": "https://expo.dev/artifacts/eas/8ik45wuSOFHC8aa6fzqG75T1ucRxR6nbJeFFKVIKhTY.apk"
+    },
+    "fingerprint": {
+      "id": "019f6979-e5d5-78bb-aa9b-5b256de11b0d",
+      "hash": "84e390c9986427d8758a4e5a0f1dd2472b86d422"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/cd3cd29a-9327-422b-97b6-0180aed71f93/2026-07-16T05%3A50%3A28Z-440ff458-a9bf-4113-8c18-2ad4738b6fd1.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103654Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=8f030c9aa6d7f59ee78943ef62ea5e6185e0f6013c1d8124e720a4e07dccead5a72a5362e65dd6760bb7f3802929a562bb3d6bd4b8b1165d8b4ee71c677f1cbf94d700197e100eea3f2a2819e5ecee6f25228b294ec0345fbfcecc9a84dcd9e4493a9ffb1fa771888504f92b774cca3febe61556e6fab6342f434445302038a11347110146b67a69e63186d36e1c69be32e8e4d7ef921f9448e488a9136b2ee69b05c2b0f3dd548182007fc6f84834ed4d78ad9157ce1ac854b822e0607efea52de2ffff9f54fb5f67a08cca8c145793d79f445826627d0c4adc9749eb0fbb3579ce7e55d99379b3b4a0f5715eb5f66f113b95513816d9611d2bd2a0ce106171"
+    ],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "2ce9824c9685539cd9cf2ab3dfa1c0a79c0cb301",
+    "gitCommitMessage": "edited",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-16T05:50:24.160Z",
+    "updatedAt": "2026-07-16T10:00:19.206Z",
+    "completedAt": "2026-07-16T06:02:36.334Z",
+    "expirationDate": "2026-07-30T05:50:24.202Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 4008,
+      "buildQueueTime": 4919,
+      "buildDuration": 723247
+    }
+  },
+  {
+    "id": "46f5c812-e513-4e7a-a2ca-1fd6a5314fa7",
+    "status": "FINISHED",
+    "platform": "ANDROID",
+    "artifacts": {
+      "buildUrl": "https://expo.dev/artifacts/eas/lDp8m4iXVqmodDSb7N_Us58b4lS4lIcC1g0xY071pZE.apk",
+      "applicationArchiveUrl": "https://expo.dev/artifacts/eas/lDp8m4iXVqmodDSb7N_Us58b4lS4lIcC1g0xY071pZE.apk"
+    },
+    "fingerprint": {
+      "id": "019f653a-1b0d-7f39-bf6a-e164774b980d",
+      "hash": "dbaedc1eab0bf06917aa71e1cca531f06781339e"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/46f5c812-e513-4e7a-a2ca-1fd6a5314fa7/2026-07-15T18%3A06%3A02Z-e57262df-f121-4eb1-8935-b7a6d5405443.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103654Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=2f5d59128276c635d1b6e69a673b354abe8d9e9a495376f07e80987624aa283852dd2363e1259cc0c0398dc349f9b3b9198cd788f708a58db8637b81cb73c8daae4556339269e87d6cd85f228b23fc5eeb1829b7f5f68cd47d3d78c2be1af4e4ae46a606e25a7d8767530ea29a2a2414cd9c4ff53c7e13335c7559a023cf799b565ef3bced2be4260a78483be1db83b17bb9c8aaf3b640535b1df70ee62d7d6286353f397f3cad9eb850dc4de187c0c97b00743acd4767fc38a66732ffa803a2f4521a16900f6788c923867aa1a344cdb310ebe24322f3bf928ccefb175e47e5b0faf5d00b3e3ef30c78cfe8c5b4cdaa08e65ff58cc60d3cedd0032788d6b5ed"
+    ],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "2ce9824c9685539cd9cf2ab3dfa1c0a79c0cb301",
+    "gitCommitMessage": "edited",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-15T16:38:05.370Z",
+    "updatedAt": "2026-07-15T22:00:42.942Z",
+    "completedAt": "2026-07-15T18:16:59.226Z",
+    "expirationDate": "2026-07-29T16:38:05.405Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 2908,
+      "buildQueueTime": 5278746,
+      "buildDuration": 652202
+    }
+  },
+  {
+    "id": "20c4195f-e1d0-431c-b744-4fbbf75100c1",
+    "status": "CANCELED",
+    "platform": "ANDROID",
+    "artifacts": {},
+    "fingerprint": {
+      "id": "019f653a-1b0d-7f39-bf6a-e164774b980d",
+      "hash": "dbaedc1eab0bf06917aa71e1cca531f06781339e"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "2ce9824c9685539cd9cf2ab3dfa1c0a79c0cb301",
+    "gitCommitMessage": "edited",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-15T16:22:32.731Z",
+    "updatedAt": "2026-07-15T20:01:14.525Z",
+    "completedAt": "2026-07-15T16:34:38.096Z",
+    "expirationDate": "2026-07-29T16:22:32.781Z",
+    "isForIosSimulator": false
+  },
+  {
+    "id": "4ad82604-585f-4eb6-a87a-07c01f8453b7",
+    "status": "FINISHED",
+    "platform": "ANDROID",
+    "artifacts": {
+      "buildUrl": "https://expo.dev/artifacts/eas/LQplsCUzpKYBGB4wxiQOkcEabhL3l8AUZXGEbBF4qHI.apk",
+      "applicationArchiveUrl": "https://expo.dev/artifacts/eas/LQplsCUzpKYBGB4wxiQOkcEabhL3l8AUZXGEbBF4qHI.apk"
+    },
+    "fingerprint": {
+      "id": "019f653a-1b0d-7f39-bf6a-e164774b980d",
+      "hash": "dbaedc1eab0bf06917aa71e1cca531f06781339e"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/4ad82604-585f-4eb6-a87a-07c01f8453b7/2026-07-15T13%3A00%3A49Z-df73bdfe-d108-47c7-80a0-c6ba412452e6.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103654Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=75a495ca8e1399c83468cf93f74d640b3d45fd87358d92593e2a938a64e66a44c2b03824d5cd481357fa3ad5c0d258cd16334f4169e4854d1d75058120abc0b1217e340a4c27ef31029f64831fea4d4a9b6e51412641bd946f3e090916d7b4f20925e89a41c1fe19df44cda887a63893206ec085a2a757c612b4733694d268b5081a8a14e0f11e7f1c1705f9b9d08c30eeed432d67d800d294c8a3c6088df4d5dd30342b5b06309ff8a286b8128e8553152eb5b975d68bc6c9c98795595ffbadc2c5083e3038e5675b256092137fc0f82bafd7cb9045f99b329c8b2132b60f133649a0a89a291c7878459eb9e10f5815fe94aeea7a23bfae5ccfe18f58e92064"
+    ],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "2ce9824c9685539cd9cf2ab3dfa1c0a79c0cb301",
+    "gitCommitMessage": "edited",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-15T12:40:14.844Z",
+    "updatedAt": "2026-07-15T17:00:28.448Z",
+    "completedAt": "2026-07-15T13:12:03.367Z",
+    "expirationDate": "2026-07-29T12:40:14.887Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 3306,
+      "buildQueueTime": 1236070,
+      "buildDuration": 669147
+    }
+  },
+  {
+    "id": "f4cbe3b9-c8d3-4e53-8438-f3d9c455c150",
+    "status": "FINISHED",
+    "platform": "ANDROID",
+    "artifacts": {
+      "buildUrl": "https://expo.dev/artifacts/eas/MOIk2oZ-dChxvaPpYa0oJFmRyWic61O5lZ9h7Yu7q14.apk",
+      "applicationArchiveUrl": "https://expo.dev/artifacts/eas/MOIk2oZ-dChxvaPpYa0oJFmRyWic61O5lZ9h7Yu7q14.apk"
+    },
+    "fingerprint": {
+      "id": "019f653a-1b0d-7f39-bf6a-e164774b980d",
+      "hash": "dbaedc1eab0bf06917aa71e1cca531f06781339e"
+    },
+    "initiatingActor": {
+      "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+      "displayName": "viz_eas_001"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/f4cbe3b9-c8d3-4e53-8438-f3d9c455c150/2026-07-15T10%3A05%3A24Z-4e0ac795-3f24-47aa-a97c-dc368e244f3e.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103654Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=5d736e2a939a061596a033c8109266bd3770c972c2eb886efbb61bc8314ef27c653923f0bf77de5b564aba37b9b98a9871c577992d20a236753f61517c6560292e7c90330e2db9b3aad9d6e77b7183b615eec0f6be46fea61407881c08e3c7c223837708dca7b8316f438c51b69522f1097af6773d1e9c356a22eeb9d6b7d41277b7c34d74dad6c872ce5f3b3c7ef5ad588290a47ac08825e460b33dfc289b3aded8bc07868848efc19d8c499107115961b27c647e6960f02d731fbd83a6799dd524ee3232963a3cf73b5bd804fc7f5cd52b193b0755607d5dd2e833acbc345519dde2b430affe40d289186d41cdeba6ecc51b4e0db33f6e22f9e8c41b70b840"
+    ],
+    "project": {
+      "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+      "name": "astrotalk-user",
+      "slug": "astrotalk-user",
+      "ownerAccount": {
+        "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+        "name": "viz_eas_001"
+      }
+    },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "57.0.0",
+    "appVersion": "1.0.4",
+    "appBuildVersion": "5",
+    "runtimeVersion": "1.0.4",
+    "gitCommitHash": "f918a03ab0c0e3e248c89e620a6f7705d88cfa67",
+    "gitCommitMessage": "code updated",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-15T10:02:14.636Z",
+    "updatedAt": "2026-07-15T14:00:59.655Z",
+    "completedAt": "2026-07-15T10:20:03.922Z",
+    "expirationDate": "2026-07-29T10:02:14.660Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 3466,
+      "buildQueueTime": 190524,
+      "buildDuration": 875296
+    }
+  }
+]

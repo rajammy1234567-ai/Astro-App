@@ -1,0 +1,50 @@
+﻿{
+  "id": "c9d261d8-be53-49e9-8f20-71e7e823f317",
+  "status": "ERRORED",
+  "platform": "ANDROID",
+  "error": {
+    "errorCode": "UNKNOWN_ERROR",
+    "message": "Unknown error. See logs of the Install dependencies build phase for more information."
+  },
+  "artifacts": {},
+  "fingerprint": {
+    "id": "019f6979-e5d5-78bb-aa9b-5b256de11b0d",
+    "hash": "84e390c9986427d8758a4e5a0f1dd2472b86d422"
+  },
+  "initiatingActor": {
+    "id": "b83e174c-a405-431d-a940-d6784cd15e05",
+    "displayName": "viz_eas_001"
+  },
+  "logFiles": [
+    "https://storage.googleapis.com/eas-workflows-production/logs/38f0d308-dfc1-45c5-9ffa-408a3277c7ac/c9d261d8-be53-49e9-8f20-71e7e823f317/2026-07-16T09%3A59%3A32Z-14ee5ca3-2525-4cd1-a8d1-7e1ff35368ad.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260716%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260716T103715Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=ac13ddc1c3011b5e741c473529801240d9e0ed85298e3114f81accca533a7ea0e3a0b31c5c069acfb2b09f02622655d79116e9e4d93dec3820a289389e276c55e07211b29aac8653ec03f763467601c6aa73e750ca3e73074d39d7c6739c9865a0b82dcde16cfbcbe52628d382df506e3230c54918215bf7f0c95f9bc1920ae45bb84444d4ed4c87809b6e493379e86fb7d6fdfdee7ecbb2fed205a8b75796c63362614d6ebcade0e1f787206d175baa8fa34202924ef8988034cffe1fe89a22453d0627e306a03b2b8ebf5d0aed0e83dcc6a9ea1115904efdf91398f8f2e0dded43607ec27be8e1f5999e5c6520c98d3bcb9f4d75f5e289bbe07fb0445bf806"
+  ],
+  "project": {
+    "id": "38f0d308-dfc1-45c5-9ffa-408a3277c7ac",
+    "name": "astrotalk-user",
+    "slug": "astrotalk-user",
+    "ownerAccount": {
+      "id": "cc039574-b8d8-4dc8-9200-6b7a0b1942cd",
+      "name": "viz_eas_001"
+    }
+  },
+  "channel": "preview",
+  "distribution": "INTERNAL",
+  "buildProfile": "preview",
+  "sdkVersion": "57.0.0",
+  "appVersion": "1.0.4",
+  "appBuildVersion": "5",
+  "runtimeVersion": "1.0.4",
+  "gitCommitHash": "d8dc24955a362afb9da1bfb38a9a6455210863ea",
+  "gitCommitMessage": "added",
+  "priority": "NORMAL",
+  "createdAt": "2026-07-16T09:55:07.058Z",
+  "updatedAt": "2026-07-16T09:59:47.701Z",
+  "completedAt": "2026-07-16T09:59:47.554Z",
+  "expirationDate": "2026-07-30T09:55:07.094Z",
+  "isForIosSimulator": false,
+  "metrics": {
+    "buildWaitTime": 1136,
+    "buildQueueTime": 269028,
+    "buildDuration": 10332
+  }
+}

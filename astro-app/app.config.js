@@ -2,9 +2,9 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://astro-app-ru1d.onrend
 const isHttp = apiUrl.startsWith('http://');
 
 /**
- * Crash-safe Android APK config (Partner / Astrologer) — v1.0.4
- * - New Architecture OFF
- * - Agora package REMOVED (was crashing release APKs on launch)
+ * Crash-safe Android APK config (Partner / Astrologer) — v1.0.5
+ * - New Architecture ON (required for Expo SDK 57 / RN 0.86 / Reanimated 4)
+ * - Agora package REMOVED (libagora*.so was crashing release APKs on launch)
  * - edge-to-edge OFF
  * - minify/shrink OFF
  * - legacy packaging + pickFirst
@@ -16,7 +16,7 @@ export default {
     name: 'AstroTalk Partner',
     slug: 'astrotalk-astro',
     owner: 'viz_eas_001',
-    version: '1.0.4',
+    version: '1.0.5',
     platforms: ['android', 'ios'],
     orientation: 'portrait',
     backgroundColor: '#1E1033',
@@ -24,9 +24,11 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'astro-app',
     userInterfaceStyle: 'automatic',
-    newArchEnabled: false,
+    // Expo 55+ / RN 0.82+: New Arch is mandatory. false is ignored and leaves
+    // Reanimated 4 / Worklets in a broken native state → instant open crash.
+    newArchEnabled: true,
     jsEngine: 'hermes',
-    // Disabled until eas init writes real projectId — avoids update-check crashes on launch
+    // Disabled — avoids update-check crashes on launch for internal APKs
     updates: {
       enabled: false,
       checkAutomatically: 'NEVER',
@@ -37,7 +39,7 @@ export default {
     },
     ios: {
       bundleIdentifier: 'com.astrotalk.astro',
-      buildNumber: '4',
+      buildNumber: '5',
       supportsTablet: false,
       icon: './assets/images/icon.png',
       infoPlist: {
@@ -50,7 +52,7 @@ export default {
     },
     android: {
       package: 'com.astrotalk.astro',
-      versionCode: 5,
+      versionCode: 6,
       edgeToEdgeEnabled: false,
       adaptiveIcon: {
         backgroundColor: '#1E1033',

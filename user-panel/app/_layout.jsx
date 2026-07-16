@@ -1,4 +1,6 @@
+// Must be first — native gesture + reanimated/worklets init before any UI
 import 'react-native-gesture-handler';
+import 'react-native-reanimated';
 import { Stack } from 'expo-router';
 import { Platform } from 'react-native';
 import { Provider } from 'react-redux';
