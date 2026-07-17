@@ -24,6 +24,13 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'astro-app',
     userInterfaceStyle: 'automatic',
+    // EAS Update (required when eas.json has channel: "preview")
+    updates: {
+      url: 'https://u.expo.dev/cffd31e4-2038-47e4-ab8a-8865811975ba',
+    },
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
     // Expo 55+ / RN 0.82+: New Arch is mandatory. false is ignored and leaves
     // Reanimated 4 / Worklets in a broken native state → instant open crash.
     newArchEnabled: true,
