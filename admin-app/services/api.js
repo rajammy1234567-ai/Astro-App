@@ -18,9 +18,14 @@ api.interceptors.response.use(
   (res) => res.data,
   async (err) => {
     if (!err.response) {
+      const base = err.config?.baseURL || `${getApiBaseUrl()}/admin`;
+      const isRemote = String(base).startsWith('https://');
       return Promise.reject({
-        message: 'Server connect nahi ho raha. APK me Render EXPO_PUBLIC_API_URL set karke rebuild karo.',
+        message: isRemote
+          ? `Server connect nahi ho raha (${base}). Render sleep pe ho sakta hai — 30–60s baad try karo.`
+          : `Server connect nahi ho raha (${base}). Local server chalu karo ya Render URL set karo.`,
         networkError: true,
+        baseURL: base,
       });
     }
     if (err.response?.status === 401 && !err.config?.url?.includes('/login')) {

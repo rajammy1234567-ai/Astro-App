@@ -8,6 +8,9 @@ export const isNative = isIOS || isAndroid;
 
 export const MOBILE_MAX_WIDTH = 430;
 
+/** Live backend on Render (default for all panels). */
+export const RENDER_API_URL = 'https://astro-app-ru1d.onrender.com/api';
+
 function getExpoDevHost() {
   const hostUri =
     Constants.expoConfig?.hostUri
@@ -48,17 +51,13 @@ function isLocalOnlyUrl(url) {
 /**
  * API base URL resolution
  *
- * DEV (Expo Go / metro):
- *  Prefer PC LAN (fast login) over sleeping Render HTTPS.
- *  1) Web → localhost:5000
- *  2) Phone → Expo packager host :5000
- *  3) http EXPO_PUBLIC_API_URL (setup-mobile-env LAN)
- *  4) https Render only as last resort
+ * Priority:
+ *  1) Explicit https EXPO_PUBLIC_API_URL / app.config extra (Render)
+ *  2) Explicit non-local http LAN URL (only if FORCE_REMOTE is off)
+ *  3) Dev local heuristics (localhost / Expo host / emulator)
+ *  4) RENDER_API_URL fallback
  *
- * PROD / release APK:
- *  Prefer https EXPO_PUBLIC_API_URL (Render etc.)
- *
- * Force remote in Expo: EXPO_PUBLIC_FORCE_REMOTE=1
+ * Force cloud always: EXPO_PUBLIC_FORCE_REMOTE=1
  */
 export function getApiBaseUrl() {
   const configUrl = Constants.expoConfig?.extra?.apiUrl;
@@ -69,16 +68,31 @@ export function getApiBaseUrl() {
     process.env.EXPO_PUBLIC_FORCE_REMOTE === '1' ||
     process.env.EXPO_PUBLIC_FORCE_REMOTE === 'true';
 
-  // Production / release: HTTPS cloud wins
-  if (!dev && candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
+  // Configured HTTPS (Render etc.) always wins
+  if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
     return candidate;
   }
 
-  if (dev && !forceRemote) {
-    // Browser on same PC as server
+  if (forceRemote) {
+    if (isHttpUrl(candidate) && !isPlaceholderUrl(candidate) && !isLocalOnlyUrl(candidate)) {
+      return candidate;
+    }
+    return RENDER_API_URL;
+  }
+
+  // Explicit LAN from setup-mobile-env (http://192.168.x.x:5000/api)
+  if (
+    isHttpUrl(candidate) &&
+    candidate.startsWith('http://') &&
+    !isPlaceholderUrl(candidate) &&
+    !isLocalOnlyUrl(candidate)
+  ) {
+    return candidate;
+  }
+
+  if (dev) {
     if (isWeb) return 'http://localhost:5000/api';
 
-    // Expo Go / device — same machine as Metro (fast local API)
     const devHost = getExpoDevHost();
     if (isNative && devHost && !isLocalOnlyUrl(`http://${devHost}`)) {
       return `http://${devHost}:5000/api`;
@@ -89,36 +103,10 @@ export function getApiBaseUrl() {
       return `http://${packagerHost}:5000/api`;
     }
 
-    // Explicit LAN from setup-mobile-env (http://192.168.x.x:5000/api)
-    if (
-      isHttpUrl(candidate) &&
-      candidate.startsWith('http://') &&
-      !isPlaceholderUrl(candidate) &&
-      !isLocalOnlyUrl(candidate)
-    ) {
-      return candidate;
-    }
-
-    // Android emulator → host machine
     if (isAndroid) return 'http://10.0.2.2:5000/api';
-
-    // Only then fall back to remote HTTPS (slow cold start)
-    if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
-      return candidate;
-    }
-
     return 'http://localhost:5000/api';
   }
 
-  // forceRemote or production-like path
-  if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
-    return candidate;
-  }
-  if (isHttpUrl(candidate) && !isPlaceholderUrl(candidate) && !isLocalOnlyUrl(candidate)) {
-    return candidate;
-  }
-
-  if (isWeb) return 'http://localhost:5000/api';
-  if (isAndroid) return 'http://10.0.2.2:5000/api';
-  return 'http://localhost:5000/api';
+  // Production fallback
+  return RENDER_API_URL;
 }

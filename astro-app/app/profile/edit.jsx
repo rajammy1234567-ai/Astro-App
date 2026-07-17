@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { astroApi } from '../../services/astroApi';
 import { safeGoBack } from '../../utils/navigation';
 import { colors } from '../../constants/theme';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const PACKAGE_MINS = [1, 10, 20, 30];
 
@@ -140,7 +141,7 @@ export default function EditProfile() {
           <Text style={styles.section}>Profile Photo</Text>
           <TouchableOpacity style={styles.photoBox} onPress={() => uploadFromPicker('profile')} disabled={uploading}>
             {form.image ? (
-              <Image source={{ uri: form.image }} style={styles.profileImg} />
+              <Image source={{ uri: resolveMediaUrl(form.image) }} style={styles.profileImg} />
             ) : (
               <Text style={styles.photoPlaceholder}>+ Upload Photo</Text>
             )}

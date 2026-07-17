@@ -1,6 +1,6 @@
 import { getApiBaseUrl } from './platform';
 
-/** Rewrite localhost / old hosts so phone APK can load Render uploads. */
+/** Rewrite localhost / old LAN hosts so phone can load Render uploads. */
 export function resolveMediaUrl(url) {
   if (!url || typeof url !== 'string') return url;
   const serverBase = getApiBaseUrl().replace(/\/api\/?$/, '');

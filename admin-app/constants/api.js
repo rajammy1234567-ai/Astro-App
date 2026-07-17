@@ -1,5 +1,11 @@
 import { getApiBaseUrl } from '../utils/platform';
 
+/** Live getter — do not cache at import time. */
+export function getApiBase() {
+  return getApiBaseUrl();
+}
+
+/** @deprecated use getApiBase() */
 export const API_BASE_URL = getApiBaseUrl();
 
 export const ENDPOINTS = {

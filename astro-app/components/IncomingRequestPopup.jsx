@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../constants/theme';
 import { astroApi } from '../services/astroApi';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 /**
  * WhatsApp-style full-screen-ish banner for incoming chat/call.
@@ -119,7 +120,7 @@ export default function IncomingRequestPopup() {
 
         <Animated.View style={[styles.avatarWrap, { transform: [{ scale: pulse }] }]}>
           {request.userImage ? (
-            <Image source={{ uri: request.userImage }} style={styles.avatar} />
+            <Image source={{ uri: resolveMediaUrl(request.userImage) }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarFallback}>
               <Text style={styles.avatarLetter}>{name.charAt(0).toUpperCase()}</Text>

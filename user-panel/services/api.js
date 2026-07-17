@@ -22,8 +22,11 @@ api.interceptors.response.use(
   (error) => {
     if (!error.response) {
       const base = error.config?.baseURL || getApiBaseUrl();
+      const isRemote = String(base).startsWith('https://');
       return Promise.reject({
-        message: `Server se connect nahi hua (${base}). PC pe server chalu karo: cd server → npm run dev. Phir Expo restart: npx expo start -c`,
+        message: isRemote
+          ? `Server se connect nahi hua (${base}). Render free tier sleep pe ho sakta hai — 30–60s baad dubara try karo.`
+          : `Server se connect nahi hua (${base}). PC pe server chalu karo: cd server → npm run dev. Phir Expo restart: npx expo start -c`,
         networkError: true,
         baseURL: base,
       });

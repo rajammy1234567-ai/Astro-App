@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
@@ -7,6 +7,12 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getApiBaseUrl } from '../../utils/platform';
+import {
+  wakeServer,
+  wakeStatusMessage,
+  isRemoteApi,
+  isRenderApi,
+} from '../../utils/serverHealth';
 import { colors } from '../../constants/theme';
 
 const brandLogo = require('../../assets/images/icon.png');
@@ -16,12 +22,71 @@ export default function Login() {
   const [password, setPassword] = useState('admin123');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [serverOk, setServerOk] = useState(null);
+  const [serverStatus, setServerStatus] = useState('Server check…');
   const { login } = useAuth();
   const router = useRouter();
+  const apiUrl = getApiBaseUrl();
+  const remoteApi = isRemoteApi(apiUrl);
+
+  useEffect(() => {
+    let cancelled = false;
+    setServerStatus(remoteApi ? 'Server wake start…' : 'Server check…');
+    wakeServer({
+      maxMs: remoteApi ? 75000 : 8000,
+      onProgress: (info) => {
+        if (!cancelled) setServerStatus(wakeStatusMessage(info));
+      },
+    }).then((result) => {
+      if (cancelled) return;
+      setServerOk(result.ok);
+      if (result.ok) {
+        const sec = Math.max(1, Math.round((result.elapsed || 0) / 1000));
+        setServerStatus(
+          result.remote && sec > 3
+            ? `✓ Server ready (${sec}s me wake hua)`
+            : '✓ Server connected'
+        );
+      } else {
+        setServerStatus(
+          result.message ||
+            (remoteApi
+              ? 'Server sleep — Login dabao, wake try hoga'
+              : 'Server offline — cd server → npm run dev')
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [remoteApi]);
 
   const handleLogin = async () => {
     setLoading(true);
     try {
+      if (serverOk !== true) {
+        setServerStatus(
+          isRenderApi(apiUrl)
+            ? 'Login se pehle server wake… (30–60s ho sakta hai)'
+            : 'Server check…'
+        );
+        const woke = await wakeServer({
+          maxMs: remoteApi ? 75000 : 8000,
+          onProgress: (info) => setServerStatus(wakeStatusMessage(info)),
+        });
+        setServerOk(woke.ok);
+        if (!woke.ok) {
+          Alert.alert(
+            'Server',
+            woke.message ||
+              (remoteApi
+                ? 'Render server sleep pe hai. 30 sec baad dubara try karo.'
+                : 'Local server band hai. cd server → npm run dev')
+          );
+          return;
+        }
+        setServerStatus('✓ Server ready — logging in…');
+      }
       await login(email.trim(), password);
       router.replace('/(tabs)/dashboard');
     } catch (err) {
@@ -72,7 +137,8 @@ export default function Login() {
         </TouchableOpacity>
 
         <Text style={styles.hint}>Default: admin@astrotalk.com / admin123</Text>
-        {__DEV__ && <Text style={styles.apiHint}>API: {getApiBaseUrl()}</Text>}
+        <Text style={styles.serverStatus}>{serverStatus}</Text>
+        {__DEV__ && <Text style={styles.apiHint}>API: {apiUrl}</Text>}
       </View>
     </KeyboardAvoidingView>
   );
@@ -99,10 +165,11 @@ const styles = StyleSheet.create({
   passInput: { flex: 1, padding: 14, color: colors.text, fontSize: 15 },
   eyeBtn: { paddingHorizontal: 12, paddingVertical: 10 },
   btn: {
-    backgroundColor: colors.primary, borderRadius: 10, padding: 16,
+    backgroundColor: colors.primary, borderRadius: 12, padding: 16,
     alignItems: 'center', marginTop: 24,
   },
   btnText: { color: '#0f172a', fontWeight: '700', fontSize: 16 },
   hint: { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 16 },
-  apiHint: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 8 },
+  serverStatus: { fontSize: 12, color: colors.primary, textAlign: 'center', marginTop: 10 },
+  apiHint: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 6 },
 });

@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { astroApi } from '../../services/astroApi';
 import { safeGoBack } from '../../utils/navigation';
 import { colors, COLORS } from '../../constants/theme';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 function formatTime(seconds) {
   const s = Math.max(0, Math.floor(seconds));
@@ -399,7 +400,7 @@ export default function ChatScreen() {
             );
           }
           const isAstro = item.sender === 'astrologer';
-          const mediaUrl = item.mediaUrl || '';
+          const mediaUrl = item.mediaUrl ? resolveMediaUrl(item.mediaUrl) : '';
           const isImage = item.mediaType === 'image' && mediaUrl;
           const isVideo = item.mediaType === 'video' && mediaUrl;
           return (

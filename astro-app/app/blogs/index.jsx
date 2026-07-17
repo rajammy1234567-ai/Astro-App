@@ -22,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { astroApi } from '../../services/astroApi';
 import PanelHeader from '../../components/common/PanelHeader';
 import { COLORS, colors, RADIUS, SHADOW_SM } from '../../constants/theme';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const emptyForm = {
   title: '',
@@ -198,7 +199,7 @@ export default function MyBlogsScreen() {
           renderItem={({ item }) => (
             <View style={styles.card}>
               {item.image ? (
-                <Image source={{ uri: item.image }} style={styles.cover} />
+                <Image source={{ uri: resolveMediaUrl(item.image) }} style={styles.cover} />
               ) : (
                 <View style={[styles.cover, styles.coverPlaceholder]}>
                   <Ionicons name="newspaper-outline" size={28} color={colors.textMuted} />
@@ -287,7 +288,7 @@ export default function MyBlogsScreen() {
                 )}
               </TouchableOpacity>
               {!!form.image && (
-                <Image source={{ uri: form.image }} style={styles.preview} />
+                <Image source={{ uri: resolveMediaUrl(form.image) }} style={styles.preview} />
               )}
               <View style={styles.switchRow}>
                 <View style={{ flex: 1 }}>

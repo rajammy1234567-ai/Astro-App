@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { astroApi } from '../../services/astroApi';
 import agoraService, { isAgoraNativeAvailable } from '../../services/agoraService';
 import { safeGoBack } from '../../utils/navigation';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const WA = {
   bg: '#0B141A',
@@ -241,7 +242,7 @@ export default function AstroCallScreen() {
           ]}
         >
           {photo ? (
-            <Image source={{ uri: photo }} style={styles.avatar} />
+            <Image source={{ uri: resolveMediaUrl(photo) }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarFallback}>
               <Text style={styles.avatarLetter}>{userName.charAt(0).toUpperCase()}</Text>

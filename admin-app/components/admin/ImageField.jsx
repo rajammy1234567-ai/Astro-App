@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ActivityInd
 import { colors } from '../../constants/theme';
 import { uploadImageBase64 } from '../../services/uploadApi';
 import { pickLocalImage } from '../../services/pickLocalImage';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 export default function ImageField({ label, value, onChange, placeholder }) {
   const [uploading, setUploading] = useState(false);
@@ -44,7 +45,7 @@ export default function ImageField({ label, value, onChange, placeholder }) {
         )}
       </TouchableOpacity>
       {value ? (
-        <Image source={{ uri: value }} style={styles.preview} resizeMode="cover" />
+        <Image source={{ uri: resolveMediaUrl(value) }} style={styles.preview} resizeMode="cover" />
       ) : null}
     </View>
   );

@@ -6,6 +6,9 @@ export const isIOS = Platform.OS === 'ios';
 export const isNative = isAndroid || isIOS;
 export const isWeb = Platform.OS === 'web';
 
+/** Live backend on Render (default for all panels). */
+export const RENDER_API_URL = 'https://astro-app-ru1d.onrender.com/api';
+
 function getExpoDevHost() {
   const hostUri =
     Constants.expoConfig?.hostUri
@@ -38,9 +41,14 @@ function isLocalOnlyUrl(url) {
 
 /**
  * API base URL
- * DEV: prefer Expo LAN host (fast) over sleeping Render HTTPS.
- * PROD: use https EXPO_PUBLIC_API_URL.
- * Force remote in Expo: EXPO_PUBLIC_FORCE_REMOTE=1
+ *
+ * Priority:
+ *  1) Explicit https EXPO_PUBLIC_API_URL / app.config (Render)
+ *  2) Explicit non-local http LAN (if FORCE_REMOTE off)
+ *  3) Dev local heuristics
+ *  4) RENDER_API_URL fallback
+ *
+ * Force cloud: EXPO_PUBLIC_FORCE_REMOTE=1
  */
 export function getApiBaseUrl() {
   const configUrl = Constants.expoConfig?.extra?.apiUrl;
@@ -51,11 +59,31 @@ export function getApiBaseUrl() {
     process.env.EXPO_PUBLIC_FORCE_REMOTE === '1' ||
     process.env.EXPO_PUBLIC_FORCE_REMOTE === 'true';
 
-  if (!dev && candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
+  // Configured HTTPS (Render) always wins
+  if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
     return candidate;
   }
 
-  if (dev && !forceRemote) {
+  if (forceRemote) {
+    if (
+      (candidate.startsWith('http://') || candidate.startsWith('https://')) &&
+      !isPlaceholderUrl(candidate) &&
+      !isLocalOnlyUrl(candidate)
+    ) {
+      return candidate;
+    }
+    return RENDER_API_URL;
+  }
+
+  if (
+    candidate.startsWith('http://') &&
+    !isPlaceholderUrl(candidate) &&
+    !isLocalOnlyUrl(candidate)
+  ) {
+    return candidate;
+  }
+
+  if (dev) {
     if (isWeb) return 'http://localhost:5000/api';
 
     const devHost = getExpoDevHost();
@@ -68,34 +96,9 @@ export function getApiBaseUrl() {
       return `http://${packagerHost}:5000/api`;
     }
 
-    if (
-      candidate.startsWith('http://') &&
-      !isPlaceholderUrl(candidate) &&
-      !isLocalOnlyUrl(candidate)
-    ) {
-      return candidate;
-    }
-
     if (isAndroid) return 'http://10.0.2.2:5000/api';
-
-    if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
-      return candidate;
-    }
-
     return 'http://localhost:5000/api';
   }
 
-  if (candidate.startsWith('https://') && !isPlaceholderUrl(candidate)) {
-    return candidate;
-  }
-  if (
-    (candidate.startsWith('http://') || candidate.startsWith('https://')) &&
-    !isPlaceholderUrl(candidate) &&
-    !isLocalOnlyUrl(candidate)
-  ) {
-    return candidate;
-  }
-
-  if (isAndroid) return 'http://10.0.2.2:5000/api';
-  return 'http://localhost:5000/api';
+  return RENDER_API_URL;
 }

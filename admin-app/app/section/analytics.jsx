@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import api from '../../services/api';
 import { colors } from '../../constants/theme';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const fmt = (n) => `₹${(n || 0).toLocaleString('en-IN')}`;
 const num = (n) => (n || 0).toLocaleString('en-IN');
@@ -99,7 +100,7 @@ export default function AnalyticsScreen() {
           <View style={styles.detailHero}>
             {selected.image || detail?.astrologer?.image ? (
               <Image
-                source={{ uri: selected.image || detail?.astrologer?.image }}
+                source={{ uri: resolveMediaUrl(selected.image || detail?.astrologer?.image) }}
                 style={styles.detailAvatar}
               />
             ) : (
@@ -225,7 +226,7 @@ export default function AnalyticsScreen() {
         {(data?.allAstrologers || data?.topAstrologers || []).map((a) => (
           <TouchableOpacity key={a._id} style={styles.row} onPress={() => openAstro(a)} activeOpacity={0.85}>
             {a.image ? (
-              <Image source={{ uri: a.image }} style={styles.listAvatar} />
+              <Image source={{ uri: resolveMediaUrl(a.image) }} style={styles.listAvatar} />
             ) : (
               <View style={[styles.listAvatar, styles.listAvatarFallback]}>
                 <Text style={styles.listAvatarLetter}>{(a.name || '?').charAt(0).toUpperCase()}</Text>

@@ -14,11 +14,12 @@ import FormFields from '../../components/admin/FormFields';
 import { getItemLabel, getItemSub } from '../../components/admin/SectionList';
 import { normalizeAdminList, rowKey } from '../../utils/normalizeList';
 import { colors } from '../../constants/theme';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
 function AstroAvatar({ item, size = 48 }) {
-  const uri = item?.image;
+  const uri = item?.image ? resolveMediaUrl(item.image) : null;
   const letter = (item?.name || '?').charAt(0).toUpperCase();
   if (uri) {
     return (
