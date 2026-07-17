@@ -28,16 +28,6 @@ export default {
     // Reanimated 4 / Worklets in a broken native state → instant open crash.
     newArchEnabled: true,
     jsEngine: 'hermes',
-    // Disabled — avoids update-check crashes on launch for internal APKs
-    updates: {
-      enabled: false,
-      checkAutomatically: 'NEVER',
-      fallbackToCacheTimeout: 0,
-       "url": "https://u.expo.dev/d71e8444-effb-4251-9fb8-a9164c5deffa",
-    },
-    runtimeVersion: {
-      policy: 'appVersion',
-    },
     ios: {
       bundleIdentifier: 'com.astrotalk.user',
       buildNumber: '5',
