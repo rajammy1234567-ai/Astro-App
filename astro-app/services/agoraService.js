@@ -60,9 +60,10 @@ async function requestMediaPermissions(video = false) {
     }
   }
 
+  // iOS / shared: also use expo-audio when present
   try {
     // eslint-disable-next-line global-require
-    const { Audio } = require('expo-av');
+    const { Audio } = require('expo-audio');
     const { status } = await Audio.requestPermissionsAsync();
     if (status !== 'granted') {
       throw new Error('Microphone permission required for call.');
@@ -76,6 +77,7 @@ async function requestMediaPermissions(video = false) {
     });
   } catch (e) {
     if (e?.message?.includes('permission')) throw e;
+    // expo-audio optional on some builds
   }
 }
 

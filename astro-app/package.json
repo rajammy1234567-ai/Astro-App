@@ -28,9 +28,9 @@
     "babel-preset-expo": "~57.0.0",
     "expo": "~57.0.6",
     "expo-asset": "~57.0.3",
-    "expo-av": "^16.0.8",
+    "expo-audio": "~57.0.2",
     "expo-build-properties": "~57.0.5",
-    "expo-camera": "~57.0.2",
+    "expo-camera": "~57.0.3",
     "expo-constants": "~57.0.3",
     "expo-font": "~57.0.0",
     "expo-image": "~57.0.1",
@@ -63,13 +63,6 @@
       "exclude": [
         "react-native-agora"
       ]
-    },
-    "doctor": {
-      "reactNativeDirectoryCheck": {
-        "exclude": [
-          "expo-av"
-        ]
-      }
     }
   }
 }

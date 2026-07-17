@@ -14,13 +14,6 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'astrotalkadmin',
     userInterfaceStyle: 'dark',
-    // EAS Update (required for eas build / eas update)
-    updates: {
-      url: 'https://u.expo.dev/359dc5a5-10f0-4799-857b-fc16fe693d6c',
-    },
-    runtimeVersion: {
-      policy: 'appVersion',
-    },
     ios: {
       bundleIdentifier: 'com.astrotalk.admin',
       buildNumber: '1',

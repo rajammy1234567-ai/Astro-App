@@ -18,6 +18,9 @@
       "channel": "preview",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://astro-app-ru1d.onrender.com/api"
+      },
+      "cache": {
+        "disabled": true
       }
     },
     "production": {
@@ -31,6 +34,9 @@
       "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://astro-app-ru1d.onrender.com/api"
+      },
+      "cache": {
+        "disabled": true
       }
     }
   },

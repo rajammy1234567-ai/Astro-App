@@ -116,9 +116,9 @@ export default {
         },
       ],
       [
-        'expo-av',
+        'expo-audio',
         {
-          microphonePermission: 'Call ke liye microphone access chahiye.',
+          microphonePermission: 'Voice call ke liye microphone access chahiye.',
         },
       ],
     ],
